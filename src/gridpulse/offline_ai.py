@@ -3,12 +3,11 @@
 This module deliberately makes no remote API calls and uses no external model weights.
 It is a transparent statistical assistant, not a trained language model or a safety system.
 """
-from __future__ import annotations  # noqa: I001
+from __future__ import annotations
 
 import argparse
 import json
 import sys
-
 from collections import defaultdict
 from datetime import date
 from math import isfinite
