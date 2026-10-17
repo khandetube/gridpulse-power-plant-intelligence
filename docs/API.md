@@ -64,7 +64,8 @@ The data-quality report summarizes record counts, plant/metric/source coverage, 
 
 - This service has no plant telemetry, SCADA, historian, or dispatch connection.
 - Caller-supplied observations can be persisted to SQLite using the ingest endpoint. Docker Compose stores the database in the named `gridpulse-data` volume. Direct API analytics requests remain stateless. The static GitHub Pages dashboard is not connected to this API automatically.
-- No authentication, multi-user access control, or tenant isolation is implemented. Keep it local/private; do not expose it to the public internet or submit confidential operational data.
+- Optional API key protection is enabled by setting a strong `GRIDPULSE_API_KEY`; requests to `/api/v1/*` must then send it in the `X-API-Key` header. With the variable unset, the API has no authentication and is intended only for the loopback-bound local Compose setup.
+- The API key is a shared secret, not multi-user authentication: roles, per-user identity, tenant isolation, key rotation workflows, and rate limiting are not implemented. Do not expose the service publicly until these controls and a security review are complete.
 - The container runs as a non-root user, uses a read-only root filesystem, drops Linux capabilities, and binds the published port to loopback.
 - Before shared or production deployment, add authentication/authorization, rate limits, structured audit logging, durable storage, backups, retention rules, threat modelling, and an authorized data-ingestion agreement.
 
