@@ -62,6 +62,10 @@ def connect() -> sqlite3.Connection:
         audit_id INTEGER PRIMARY KEY AUTOINCREMENT, plan_id TEXT NOT NULL, action TEXT NOT NULL,
         from_status TEXT, to_status TEXT, source_id TEXT NOT NULL,
         recorded_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))""")
+    db.execute("""CREATE TABLE IF NOT EXISTS turnaround_task_audit_events (
+        audit_id INTEGER PRIMARY KEY AUTOINCREMENT, plan_id TEXT NOT NULL, task_id TEXT NOT NULL,
+        from_status TEXT, to_status TEXT NOT NULL, source_id TEXT NOT NULL,
+        recorded_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))""")
     db.execute("CREATE INDEX IF NOT EXISTS idx_turnaround_tasks_plan_status ON turnaround_tasks(plan_id,status)")
     return db
 
@@ -150,6 +154,9 @@ def create_turnaround_plan(request: TurnaroundPlanInput) -> dict[str, object]:
                               VALUES (?,?,?,?,?,?,'pending',?)""",
                            (task["task_id"], payload["plan_id"], task["asset_id"], task["title"],
                             task["duration_hours"], task["crew"], payload["source_id"]))
+            for task in payload["tasks"]:
+                db.execute("INSERT INTO turnaround_task_audit_events(plan_id,task_id,from_status,to_status,source_id) VALUES (?,?,?,?,?)",
+                           (payload["plan_id"], task["task_id"], None, "pending", payload["source_id"]))
             for task in payload["tasks"]:
                 for dependency in task["depends_on"]:
                     db.execute("INSERT INTO turnaround_dependencies(plan_id,task_id,depends_on_task_id) VALUES (?,?,?)",
@@ -250,6 +257,15 @@ def update_turnaround_task(plan_id: str, task_id: str,
             raise HTTPException(status_code=404, detail="Plan or task not found")
         if plan["status"] not in {"approved", "in_progress", "on_hold"}:
             raise HTTPException(status_code=409, detail="Tasks can only be updated for an approved or active plan")
+        allowed_transitions = {
+            "pending": {"ready", "blocked"},
+            "ready": {"in_progress", "blocked", "pending"},
+            "in_progress": {"completed", "blocked"},
+            "blocked": {"pending", "ready"},
+            "completed": set(),
+        }
+        if status != task["status"] and status not in allowed_transitions[task["status"]]:
+            raise HTTPException(status_code=409, detail=f"Invalid task transition: {task['status']} -> {status}")
         dependencies = db.execute("SELECT depends_on_task_id FROM turnaround_dependencies WHERE task_id=?", (task_id,)).fetchall()
         if status in {"ready", "in_progress", "completed"}:
             incomplete = [r["depends_on_task_id"] for r in dependencies if db.execute(
@@ -258,7 +274,23 @@ def update_turnaround_task(plan_id: str, task_id: str,
                 raise HTTPException(status_code=409, detail={"message": "Dependencies must be completed first", "blocked_by": incomplete})
         db.execute("UPDATE turnaround_tasks SET status=?,source_id=? WHERE task_id=? AND plan_id=?",
                    (status, source_id, task_id, plan_id))
+        db.execute("INSERT INTO turnaround_task_audit_events(plan_id,task_id,from_status,to_status,source_id) VALUES (?,?,?,?,?)",
+                   (plan_id, task_id, task["status"], status, source_id))
         return _plan_payload(db, plan_id)
+
+
+@router.get("/plans/{plan_id}/tasks/{task_id}/audit")
+def list_turnaround_task_audit(plan_id: str, task_id: str,
+                               limit: int = Query(default=100, ge=1, le=1000),
+                               offset: int = Query(default=0, ge=0)) -> dict[str, object]:
+    with connect() as db:
+        if db.execute("SELECT 1 FROM turnaround_tasks WHERE plan_id=? AND task_id=?", (plan_id, task_id)).fetchone() is None:
+            raise HTTPException(status_code=404, detail="Plan task not found")
+        total = db.execute("SELECT COUNT(*) FROM turnaround_task_audit_events WHERE plan_id=? AND task_id=?",
+                           (plan_id, task_id)).fetchone()[0]
+        rows = db.execute("SELECT * FROM turnaround_task_audit_events WHERE plan_id=? AND task_id=? ORDER BY audit_id LIMIT ? OFFSET ?",
+                          (plan_id, task_id, limit, offset)).fetchall()
+        return {"total": total, "limit": limit, "offset": offset, "events": [dict(r) for r in rows]}
 
 
 @router.get("/plans/{plan_id}/audit")
