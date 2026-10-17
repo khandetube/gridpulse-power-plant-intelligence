@@ -19,6 +19,7 @@ from gridpulse.assets_api import router as assets_router
 from gridpulse.engineering import calculate_generation_performance
 from gridpulse.fmea_api import router as fmea_router
 from gridpulse.inspections_api import router as inspections_router
+from gridpulse.offline_ai_api import router as offline_ai_router
 from gridpulse.storage import ObservationStore
 from gridpulse.testing_api import router as testing_router
 from gridpulse.turnarounds_api import router as turnarounds_router
@@ -34,6 +35,7 @@ app.include_router(assets_router)
 app.include_router(testing_router)
 app.include_router(fmea_router)
 app.include_router(inspections_router)
+app.include_router(offline_ai_router)
 app.include_router(work_orders_router)
 app.include_router(turnarounds_router)
 
