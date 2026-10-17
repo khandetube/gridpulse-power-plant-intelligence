@@ -62,10 +62,6 @@ def test_observation_quality_report_summarizes_provenance_and_coverage(tmp_path)
 
 
 def test_ingestion_audit_records_are_written_atomically(tmp_path):
-    import sqlite3
-
-    import pytest
-
     store = ObservationStore(tmp_path / "audit.db")
     store.insert_many([observation("obs-a")])
     audit, total = store.list_audit_events(entity_type="observation")
