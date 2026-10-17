@@ -11,6 +11,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from gridpulse.analytics import analyze_observations
@@ -45,6 +46,17 @@ async def optional_api_key_guard(request: Request, call_next):
         if not secrets.compare_digest(supplied_key, expected_key):
             return JSONResponse(status_code=401, content={"detail": "Missing or invalid API key."}, headers={"WWW-Authenticate": "ApiKey"})
     return await call_next(request)
+
+
+# Permit the public static dashboard to talk only to a loopback API instance.
+# The API key remains mandatory when configured; CORS is not authentication.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://khandetube.github.io", "http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["X-API-Key", "Content-Type"],
+)
 
 
 class SourceRecord(BaseModel):
