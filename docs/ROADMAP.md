@@ -19,7 +19,10 @@
 - [x] CSV import with local schema validation
 - [x] Trend chart for user-imported dated observations
 - [x] Clear empty states when source-backed observations are unavailable
-- [ ] Add maintenance-event import and timeline to dashboard
+- [x] Add local maintenance-event CSV import, validation, filtering, and timeline to dashboard
+- [x] Persist imported maintenance events in browser local storage with a clear-data action
+- [x] Export imported maintenance events as CSV
+- [ ] Add cross-session backup/import guidance and browser-storage size handling
 
 ## Phase 4 — reliability analytics
 - [ ] Define data requirements with an authorized data provider
