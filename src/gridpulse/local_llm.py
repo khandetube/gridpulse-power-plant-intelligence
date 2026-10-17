@@ -79,6 +79,8 @@ def generate_local_answer(question: str, context_records: list[dict[str, Any]] |
     gpu_layers = max(0, min(128, int(os.environ.get("GRIDPULSE_LOCAL_MODEL_GPU_LAYERS", "0"))))
     model = _load_model(str(path), context_size, threads, gpu_layers)
     context = json.dumps(context_records, ensure_ascii=False, allow_nan=False)
+    if len(context) > 20000:
+        raise ValueError("Serialized context must not exceed 20000 characters.")
     system_prompt = (
         "You are GridPulse, an offline engineering decision-support assistant. "
         "You have no network, tools, or access to plant systems. Never claim to have live telemetry. "
