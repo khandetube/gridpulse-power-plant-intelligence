@@ -68,5 +68,5 @@
 - [x] Optional shared API-key guard for `/api/v1/*` routes and secret injection through Compose
 - [x] API runbook and deployment-boundary documentation
 - [ ] Security and safety review
-- [ ] Multi-user authentication, roles, rate limits, audit actor identity and tamper-resistant audit export
+- [ ] Multi-user authentication, roles, rate limits, audit actor identity, CSRF/abuse controls and tamper-resistant audit export
 - [ ] Authorized integration boundary for telemetry/EMS/SCADA only after security, authorization and safety review
