@@ -295,3 +295,15 @@ def test_audit_api_returns_observation_ingest_event(tmp_path, monkeypatch):
     assert payload["total"] == 1
     assert payload["events"][0]["entity_id"] == "audited-1"
     assert payload["events"][0]["source_id"] == "SRC-001"
+
+
+
+def test_api_key_guard_protects_versioned_api_when_configured(monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_API_KEY", "test-only-secret")
+    missing = client.get("/api/v1/project")
+    assert missing.status_code == 401
+    wrong = client.get("/api/v1/project", headers={"X-API-Key": "wrong"})
+    assert wrong.status_code == 401
+    valid = client.get("/api/v1/project", headers={"X-API-Key": "test-only-secret"})
+    assert valid.status_code == 200
+    assert client.get("/health").status_code == 200
