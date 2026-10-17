@@ -12,6 +12,7 @@
 - [x] Create typed API schemas and validation endpoint
 - [x] Add SQLite persistence for caller-supplied observations, transactional batch ingestion, duplicate protection, filtered queries, and pagination
 - [x] Add persistent maintenance-event API with timezone-aware validation, UTC normalization, overlap-aware date filtering, and duplicate protection
+- [x] Require registered source IDs for observation and maintenance ingestion; distinguish source catalogue presence from fact verification
 - [x] Add SQL-backed maintenance summaries grouped by event type and equipment; elapsed time is not labelled downtime
 - [x] Add grouped descriptive-statistics and IQR review endpoint for source-labelled observation batches
 - [x] Add tests for numeric values, dates, duplicate IDs, and event chronology
