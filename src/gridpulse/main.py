@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from gridpulse.analytics import analyze_observations
+from gridpulse.assets_api import router as assets_router
 from gridpulse.engineering import calculate_generation_performance
 from gridpulse.storage import ObservationStore
 
@@ -38,6 +39,7 @@ app = FastAPI(
         "No live telemetry or dispatch connection is configured."
     ),
 )
+app.include_router(assets_router)
 
 @app.middleware("http")
 async def optional_api_key_guard(request: Request, call_next):
@@ -179,13 +181,11 @@ def ensure_registered_sources(records: list[ObservationInput | MaintenanceEventI
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    """Health check for local development and deployment probes."""
     return {"status": "ok", "service": "gridpulse-api", "version": "0.1.0"}
 
 
 @app.get("/api/v1/project")
 def project_info() -> dict[str, object]:
-    """Return project scope and data-integrity guarantees."""
     return {
         "name": "GridPulse AI",
         "version": "0.1.0",
@@ -198,59 +198,31 @@ def project_info() -> dict[str, object]:
 
 
 def get_observation_store() -> ObservationStore:
-    """Resolve the database path at request time for container and test isolation."""
     database_path = os.environ.get("GRIDPULSE_DB_PATH", "/tmp/gridpulse-observations.sqlite3")
     return ObservationStore(database_path)
 
 
 @app.post("/api/v1/observations", status_code=201)
 def create_observations(batch: ObservationBatch) -> dict[str, object]:
-    """Persist a validated observation batch in one SQLite transaction."""
     ensure_registered_sources(batch.records)
     records = [record.model_dump(mode="json") for record in batch.records]
     try:
         count = get_observation_store().insert_many(records)
     except sqlite3.IntegrityError as exc:
-        raise HTTPException(
-            status_code=409,
-            detail="At least one record_id already exists; no records from this batch were stored.",
-        ) from exc
-    return {
-        "inserted_count": count,
-        "record_ids": [record["record_id"] for record in records],
-        "storage": "sqlite",
-        "message": "Caller-supplied observations stored; source truth is not independently verified.",
-    }
+        raise HTTPException(status_code=409, detail="At least one record_id already exists; no records from this batch were stored.") from exc
+    return {"inserted_count": count, "record_ids": [record["record_id"] for record in records], "storage": "sqlite", "message": "Caller-supplied observations stored; source truth is not independently verified."}
 
 
 @app.get("/api/v1/observations")
-def get_observations(
-    plant: str | None = Query(default=None, min_length=1, max_length=200),
-    metric: str | None = Query(default=None, min_length=1, max_length=160),
-    status: Literal["unverified", "reviewed", "verified"] | None = None,
-    start_date: date | None = None,
-    end_date: date | None = None,
-    limit: int = Query(default=100, ge=1, le=1000),
-    offset: int = Query(default=0, ge=0),
-) -> dict[str, object]:
-    """Query stored observations with filters and bounded pagination."""
+def get_observations(plant: str | None = Query(default=None, min_length=1, max_length=200), metric: str | None = Query(default=None, min_length=1, max_length=160), status: Literal["unverified", "reviewed", "verified"] | None = None, start_date: date | None = None, end_date: date | None = None, limit: int = Query(default=100, ge=1, le=1000), offset: int = Query(default=0, ge=0)) -> dict[str, object]:
     if start_date and end_date and start_date > end_date:
         raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
-    records, total = get_observation_store().list_records(
-        plant=plant,
-        metric=metric,
-        status=status,
-        start_date=start_date.isoformat() if start_date else None,
-        end_date=end_date.isoformat() if end_date else None,
-        limit=limit,
-        offset=offset,
-    )
+    records, total = get_observation_store().list_records(plant=plant, metric=metric, status=status, start_date=start_date.isoformat() if start_date else None, end_date=end_date.isoformat() if end_date else None, limit=limit, offset=offset)
     return {"total": total, "limit": limit, "offset": offset, "records": records}
 
 
 @app.post("/api/v1/maintenance/events", status_code=201)
 def create_maintenance_events(batch: MaintenanceEventBatch) -> dict[str, object]:
-    """Persist validated, offset-aware maintenance events in one transaction."""
     ensure_registered_sources(batch.records)
     records = []
     for event in batch.records:
@@ -261,147 +233,62 @@ def create_maintenance_events(batch: MaintenanceEventBatch) -> dict[str, object]
     try:
         count = get_observation_store().insert_maintenance_many(records)
     except sqlite3.IntegrityError as exc:
-        raise HTTPException(
-            status_code=409,
-            detail="At least one event_id already exists; no events from this batch were stored.",
-        ) from exc
-    return {
-        "inserted_count": count,
-        "event_ids": [record["event_id"] for record in records],
-        "storage": "sqlite",
-        "duration_semantics": "Elapsed event duration; not necessarily equipment downtime.",
-    }
+        raise HTTPException(status_code=409, detail="At least one event_id already exists; no events from this batch were stored.") from exc
+    return {"inserted_count": count, "event_ids": [record["event_id"] for record in records], "storage": "sqlite", "duration_semantics": "Elapsed event duration; not necessarily equipment downtime."}
 
 
 @app.get("/api/v1/maintenance/events")
-def get_maintenance_events(
-    plant: str | None = Query(default=None, min_length=1, max_length=200),
-    equipment: str | None = Query(default=None, min_length=1, max_length=200),
-    event_type: Literal["inspection", "preventive", "corrective", "overhaul", "test", "other"] | None = None,
-    status: Literal["unverified", "reviewed", "verified"] | None = None,
-    start_date: date | None = None,
-    end_date: date | None = None,
-    limit: int = Query(default=100, ge=1, le=1000),
-    offset: int = Query(default=0, ge=0),
-) -> dict[str, object]:
-    """Query maintenance events with validated filters and bounded pagination."""
+def get_maintenance_events(plant: str | None = Query(default=None, min_length=1, max_length=200), equipment: str | None = Query(default=None, min_length=1, max_length=200), event_type: Literal["inspection", "preventive", "corrective", "overhaul", "test", "other"] | None = None, status: Literal["unverified", "reviewed", "verified"] | None = None, start_date: date | None = None, end_date: date | None = None, limit: int = Query(default=100, ge=1, le=1000), offset: int = Query(default=0, ge=0)) -> dict[str, object]:
     if start_date and end_date and start_date > end_date:
         raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
-    records, total = get_observation_store().list_maintenance_events(
-        plant=plant,
-        equipment=equipment,
-        event_type=event_type,
-        status=status,
-        start_date=start_date.isoformat() + "T00:00:00" if start_date else None,
-        end_date=(end_date + timedelta(days=1)).isoformat() + "T00:00:00" if end_date else None,
-        limit=limit,
-        offset=offset,
-    )
-    return {
-        "total": total,
-        "limit": limit,
-        "offset": offset,
-        "records": records,
-        "duration_semantics": "Elapsed event duration; not necessarily equipment downtime.",
-    }
+    records, total = get_observation_store().list_maintenance_events(plant=plant, equipment=equipment, event_type=event_type, status=status, start_date=start_date.isoformat() + "T00:00:00" if start_date else None, end_date=(end_date + timedelta(days=1)).isoformat() + "T00:00:00" if end_date else None, limit=limit, offset=offset)
+    return {"total": total, "limit": limit, "offset": offset, "records": records, "duration_semantics": "Elapsed event duration; not necessarily equipment downtime."}
 
 
 @app.get("/api/v1/maintenance/summary")
-def maintenance_summary(
-    plant: str | None = Query(default=None, min_length=1, max_length=200),
-    start_date: date | None = None,
-    end_date: date | None = None,
-) -> dict[str, object]:
-    """Return SQL-backed maintenance counts and elapsed-time summaries."""
+def maintenance_summary(plant: str | None = Query(default=None, min_length=1, max_length=200), start_date: date | None = None, end_date: date | None = None) -> dict[str, object]:
     if start_date and end_date and start_date > end_date:
         raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
-    summary = get_observation_store().summarize_maintenance_events(
-        plant=plant,
-        start_date=start_date.isoformat() + "T00:00:00" if start_date else None,
-        end_date=(end_date + timedelta(days=1)).isoformat() + "T00:00:00" if end_date else None,
-    )
-    return summary
+    return get_observation_store().summarize_maintenance_events(plant=plant, start_date=start_date.isoformat() + "T00:00:00" if start_date else None, end_date=(end_date + timedelta(days=1)).isoformat() + "T00:00:00" if end_date else None)
 
 
 @app.get("/api/v1/analytics/data-quality")
-def observation_data_quality(
-    plant: str | None = Query(default=None, min_length=1, max_length=200),
-) -> dict[str, object]:
-    """Report dataset coverage and provenance distribution from persisted records."""
+def observation_data_quality(plant: str | None = Query(default=None, min_length=1, max_length=200)) -> dict[str, object]:
     return get_observation_store().observation_quality_report(plant=plant)
 
 
 @app.post("/api/v1/engineering/generation-performance")
-def generation_performance(
-    request: GenerationPerformanceInput,
-) -> dict[str, object]:
-    """Calculate net efficiency, net heat rate, and capacity factor from explicit units."""
+def generation_performance(request: GenerationPerformanceInput) -> dict[str, object]:
     ensure_registered_sources([request])
     try:
-        result = calculate_generation_performance(
-            net_generation_mwh=request.net_generation_mwh,
-            fuel_thermal_input_mwh=request.fuel_thermal_input_mwh,
-            net_capacity_mw=request.net_capacity_mw,
-            period_hours=request.period_hours,
-        )
+        result = calculate_generation_performance(net_generation_mwh=request.net_generation_mwh, fuel_thermal_input_mwh=request.fuel_thermal_input_mwh, net_capacity_mw=request.net_capacity_mw, period_hours=request.period_hours)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return {
-        "plant": request.plant,
-        "period_start": request.period_start.isoformat(),
-        "period_end": request.period_end.isoformat(),
-        "source_id": request.source_id,
-        "verification_status": request.verification_status,
-        **result,
-    }
+    return {"plant": request.plant, "period_start": request.period_start.isoformat(), "period_end": request.period_end.isoformat(), "source_id": request.source_id, "verification_status": request.verification_status, **result}
 
 
 @app.get("/api/v1/audit/events")
-def get_audit_events(
-    entity_type: Literal["observation", "maintenance_event"] | None = None,
-    entity_id: str | None = Query(default=None, min_length=1, max_length=128),
-    limit: int = Query(default=100, ge=1, le=1000),
-    offset: int = Query(default=0, ge=0),
-) -> dict[str, object]:
-    """Return append-only ingestion audit records with bounded pagination."""
-    records, total = get_observation_store().list_audit_events(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        limit=limit,
-        offset=offset,
-    )
+def get_audit_events(entity_type: Literal["observation", "maintenance_event"] | None = None, entity_id: str | None = Query(default=None, min_length=1, max_length=128), limit: int = Query(default=100, ge=1, le=1000), offset: int = Query(default=0, ge=0)) -> dict[str, object]:
+    records, total = get_observation_store().list_audit_events(entity_type=entity_type, entity_id=entity_id, limit=limit, offset=offset)
     return {"total": total, "limit": limit, "offset": offset, "events": records}
 
 
 @app.post("/api/v1/analytics/observations")
 def analyze_observation_batch(batch: ObservationBatch) -> dict[str, object]:
-    """Return grouped descriptive statistics and conservative IQR review flags."""
     ensure_registered_sources(batch.records)
-    payload = [
-        {
-            **record.model_dump(mode="json"),
-            "period_start": record.period_start.isoformat(),
-            "period_end": record.period_end.isoformat(),
-        }
-        for record in batch.records
-    ]
+    payload = [{**record.model_dump(mode="json"), "period_start": record.period_start.isoformat(), "period_end": record.period_end.isoformat()} for record in batch.records]
     return analyze_observations(payload)
 
 
 @app.get("/api/v1/sources", response_model=list[SourceRecord])
-def list_sources(
-    status: Literal["unverified", "reviewed", "verified"] | None = None,
-) -> list[SourceRecord]:
-    """List source leads; optionally filter by verification status."""
+def list_sources(status: Literal["unverified", "reviewed", "verified"] | None = None) -> list[SourceRecord]:
     if not SOURCE_REGISTRY.exists():
         raise HTTPException(status_code=503, detail="Source registry is unavailable")
-
     try:
         with SOURCE_REGISTRY.open("r", encoding="utf-8", newline="") as csv_file:
             records = [SourceRecord.model_validate(row) for row in csv.DictReader(csv_file)]
     except (OSError, csv.Error, ValueError) as exc:
         raise HTTPException(status_code=500, detail="Unable to read source registry") from exc
-
     if status is not None:
         records = [record for record in records if record.verification_status == status]
     return records
