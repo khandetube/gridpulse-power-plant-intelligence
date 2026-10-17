@@ -5,6 +5,9 @@ It is a transparent statistical assistant, not a trained language model or a saf
 """
 from __future__ import annotations
 
+import argparse
+import json
+import sys
 from collections import defaultdict
 from datetime import date
 from math import isfinite, sqrt
@@ -170,3 +173,31 @@ def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
         "limitations": LIMITATIONS,
         "safety_notice": "Review findings against original records and approved engineering limits. Never use this output alone to operate equipment.",
     }
+
+
+def main() -> int:
+    """Run the analytics engine directly against a local JSON file."""
+    parser = argparse.ArgumentParser(description="Run GridPulse offline analytics on a local JSON file.")
+    parser.add_argument("input", help="UTF-8 JSON file containing an object with a 'records' array")
+    parser.add_argument("--output", help="Optional output JSON path; defaults to stdout")
+    args = parser.parse_args()
+    try:
+        with open(args.input, encoding="utf-8") as stream:
+            payload = json.load(stream)
+        if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
+            raise ValueError("Input JSON must be an object containing a 'records' array.")
+        result = analyze_offline(payload["records"])
+        rendered = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + "\\n"
+        if args.output:
+            with open(args.output, "w", encoding="utf-8", newline="\\n") as stream:
+                stream.write(rendered)
+        else:
+            sys.stdout.write(rendered)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"offline analysis failed: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
