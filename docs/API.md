@@ -149,3 +149,14 @@ Critical-path and labor estimates are planning aids only. The current estimator 
 A browser console is available at `docs/maintenance-console.html` and is linked from the main dashboard. It can create work orders and turnaround plans and display records from the connected API. The browser must be able to reach the local API at the configured URL; the API has a restricted CORS allowlist for `https://khandetube.github.io` and loopback origins. If the console cannot connect, first start `docker compose up -d --build`, then enter the configured API key in the console. The key is kept only in page memory and is not persisted by the console. Do not put a production API key into a shared/public browser or expose the loopback-bound API to the internet.
 
 The console is a thin browser client, not an authorization layer. The shared API key is not per-user identity, roles or audit actor identity. Use an approved private deployment with HTTPS, proper identity and authorization controls before multi-user or production use.
+
+
+## Maintenance workflow controls in the browser console
+
+The static [Maintenance Operations Console](https://khandetube.github.io/gridpulse-power-plant-intelligence/docs/maintenance-console.html) can submit guarded status updates when it is connected to an API instance you run locally. It renders allowed next-state choices from the current record state and sends updates to the existing workflow endpoints:
+
+- Work orders: `PATCH /api/v1/work-orders/{work_order_id}`. Completing a work order requires a completion summary and after-work evidence reference; verification requires a verified label and evidence reference. The console prompts for these values.
+- Turnaround plans: `PATCH /api/v1/turnarounds/plans/{plan_id}`. Approval and closure constraints are enforced by the API.
+- Turnaround tasks: `PATCH /api/v1/turnarounds/plans/{plan_id}/tasks/{task_id}?status=...&source_id=...`. The console shows each plan's tasks and allows state changes only while the plan is approved or active. The API enforces dependency completion and records audit events.
+
+The UI is a convenience layer, not a safety interlock or permit-to-work system. Source IDs must already exist in the source registry. Status updates are planning records only and do not communicate with plant control systems or authorize isolation, switching, start/stop, or return-to-service decisions. The static page does not host the API or store operational records itself.
