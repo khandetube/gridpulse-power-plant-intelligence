@@ -84,3 +84,33 @@ def test_observation_analytics_rejects_non_finite_value():
         json={"records": [_observation("a", "NaN")]},
     )
     assert response.status_code == 422
+
+
+
+def test_persisted_observation_ingest_and_query(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "api.db"))
+    first = client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("persist-1", 12.5), _observation("persist-2", 20)]},
+    )
+    assert first.status_code == 201
+    assert first.json()["inserted_count"] == 2
+    queried = client.get("/api/v1/observations?metric=net_generation&limit=1")
+    assert queried.status_code == 200
+    assert queried.json()["total"] == 2
+    assert len(queried.json()["records"]) == 1
+
+
+def test_persisted_observation_duplicate_batch_is_atomic(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "atomic.db"))
+    assert client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("persist-existing")]},
+    ).status_code == 201
+    response = client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("persist-new"), _observation("persist-existing", 20)]},
+    )
+    assert response.status_code == 409
+    records = client.get("/api/v1/observations").json()["records"]
+    assert [record["record_id"] for record in records] == ["persist-existing"]
