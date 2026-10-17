@@ -10,6 +10,7 @@
 
 ## Phase 2 — analytics backend
 - [x] Create typed API schemas and validation endpoint
+- [x] Add SQLite persistence for caller-supplied observations, transactional batch ingestion, duplicate protection, filtered queries, and pagination
 - [x] Add grouped descriptive-statistics and IQR review endpoint for source-labelled observation batches
 - [x] Add tests for numeric values, dates, duplicate IDs, and event chronology
 - [ ] Add unit-conversion rules only where source units and metric definitions support them
@@ -33,6 +34,6 @@
 
 ## Phase 5 — delivery quality
 - [x] CI checks and automated tests
-- [x] Docker-based local setup with non-root container, read-only filesystem, loopback-only host binding, and dropped capabilities
+- [x] Docker-based local setup with non-root container, read-only filesystem, loopback-only host binding, dropped capabilities, and persistent database volume
 - [x] API runbook and deployment-boundary documentation
 - [ ] Security and safety review
