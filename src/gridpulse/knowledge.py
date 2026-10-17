@@ -30,7 +30,7 @@ def search_documents(query: str, documents: list[dict[str, Any]], limit: int = 5
     prepared: list[dict[str, Any]] = []
     for index, document in enumerate(documents):
         if not isinstance(document, dict):
-            raise ValueError(f"document {index} must be an object")
+            raise TypeError(f"document {index} must be an object")
         title = document.get("title")
         source_id = document.get("source_id")
         text = document.get("text")
