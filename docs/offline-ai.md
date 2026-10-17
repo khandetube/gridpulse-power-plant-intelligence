@@ -104,3 +104,8 @@ Example request:
 ```
 
 The text above is illustrative. Search results only indicate lexical matches; a high score does not certify that a source is authoritative or that a retrieved requirement applies to a particular asset.
+
+
+## Retrieval evaluation benchmark
+
+A local benchmark runner is available as `python -m gridpulse.evaluation benchmark.json --output report.json --k 5`. The input file must contain a `cases` array; each case has a `query`, a `documents` array (same shape as the search API), and `relevant_source_ids`. An empty relevance list marks a case where the correct behavior is to return no matching evidence. The report measures recall@k, mean reciprocal rank, and abstention behavior, while listing invalid cases. Build a domain-specific benchmark from approved examples and independently reviewed expected source IDs before using scores to compare retrieval changes. Scores on a small synthetic set are not proof of real-world accuracy or safety.
