@@ -43,5 +43,6 @@
 - [x] CI checks and automated tests
 - [x] CI Docker image build and hardened-container runtime smoke test
 - [x] Docker-based local setup with non-root container, read-only filesystem, loopback-only host binding, dropped capabilities, and persistent database volume
+- [x] Optional shared API-key guard for `/api/v1/*` routes and secret injection through Compose
 - [x] API runbook and deployment-boundary documentation
 - [ ] Security and safety review
