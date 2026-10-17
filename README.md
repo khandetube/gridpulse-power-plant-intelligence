@@ -80,4 +80,4 @@ The backend includes a local SQLite backup utility with online consistent snapsh
 
 ## Offline AI decision support
 
-A local, network-free deterministic analytics engine is available for group statistics, robust outlier candidates, trend estimates, and input-quality checks. It requires no hosted AI service or downloaded model weights. It is **not a trained language model** and its statistical flags are not alarms or failure predictions. See [the offline AI guide](docs/offline-ai.md) for endpoints, limits, and offline deployment notes.
+A network-free deterministic analytics engine is available for group statistics, robust outlier candidates, trend estimates, and input-quality checks. An optional local GGUF language-model adapter can generate natural-language answers when the operator supplies compatible model weights and installs the optional runtime; there is no hosted service or remote fallback. Model weights are not bundled. Statistical flags are not alarms or failure predictions. See [the offline AI guide](docs/offline-ai.md) for setup, limits, and offline deployment notes.
