@@ -19,6 +19,7 @@ The API binds to `127.0.0.1:8000` on the host, not all host interfaces.
 - Persist observations: `POST http://127.0.0.1:8000/api/v1/observations`
 - Query stored observations: `GET http://127.0.0.1:8000/api/v1/observations`
 - Descriptive analytics (stateless batch): `POST http://127.0.0.1:8000/api/v1/analytics/observations`
+- Persisted data-quality report: `GET http://127.0.0.1:8000/api/v1/analytics/data-quality`
 
 Stop the service with `docker compose down`.
 
@@ -55,7 +56,7 @@ Example body:
 
 The example is synthetic API documentation only; it is not a claim about a real plant. The `source_id` must nevertheless exist in the source registry. An existing registry entry proves only that the source is catalogued, not that the submitted observation is true.
 
-The response groups statistics by metric and unit, retains verification-status counts, and emits conservative Tukey 1.5×IQR review flags only when a group has at least four observations and a non-zero IQR. Results are descriptive, not forecasts, alarms, diagnoses, or operating instructions. Grouping by metric and unit does not guarantee that different plant scopes are comparable.
+The data-quality report summarizes record counts, plant/metric/source coverage, verification labels, scope distribution, and top source usage. It is not a completeness score against real plant telemetry.\n\nThe analytics response groups statistics by metric and unit, retains verification-status counts, and emits conservative Tukey 1.5×IQR review flags only when a group has at least four observations and a non-zero IQR. Results are descriptive, not forecasts, alarms, diagnoses, or operating instructions. Grouping by metric and unit does not guarantee that different plant scopes are comparable.
 
 ## Security and deployment boundaries
 
