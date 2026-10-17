@@ -318,8 +318,8 @@ function exportEngineeringReportCSV(){
     ["metadata","generated_at",lastEngineeringReport.generated_at],
     ["metadata","input_basis",lastEngineeringReport.input_basis],
     ["metadata","not_a_diagnosis",lastEngineeringReport.not_a_diagnosis]];
-  const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\\r\\n");
-  const blob=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="gridpulse-generation-performance.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 document.getElementById("engineeringForm").addEventListener("submit",calculateLocalEngineering);
