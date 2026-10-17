@@ -6,6 +6,16 @@ GridPulse includes a deterministic, local analytics engine at `src/gridpulse/off
 
 This is a useful offline decision-support component, but **it is not a trained LLM** and does not generate open-ended natural-language answers. No large model weights are bundled. A trained language model requires a compatible model file, local inference runtime, hardware sizing, license review, and separate validation; none should be implied to exist until packaged and tested.
 
+## Run directly from local files
+
+The command-line mode does not start a web server and does not require network access during analysis. Prepare a UTF-8 JSON input with a `records` array, then run:
+
+```sh
+python -m gridpulse.offline_ai observations.json --output analysis-report.json
+```
+
+If `--output` is omitted, the report is printed to standard output. Keep original source files and the generated report together for auditability.
+
 ## API
 
 - `GET /api/v1/ai/status`: capabilities and limits.
