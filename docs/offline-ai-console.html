@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1324">
+<title>GridPulse | Offline AI Console</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1324;--panel:#111e33;--line:#263852;--text:#edf4ff;--muted:#a7b7ce;--cyan:#66e3d3;--blue:#8eb7ff;--warn:#ffd18a;--red:#ff9eab}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top right,#172d4b 0,transparent 48%),var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1200px;margin:auto;padding:24px}header{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:22px}.brand{font-size:1.35rem;font-weight:800;letter-spacing:.02em}.brand span{color:var(--cyan)}.sub{color:var(--muted);max-width:780px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:linear-gradient(145deg,#14243a,#0f1a2d);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0;box-shadow:0 12px 30px #0002}.full{grid-column:1/-1}h1{font-size:clamp(1.6rem,3vw,2.5rem);line-height:1.15;margin:.2em 0}.card h2{margin:0 0 8px;font-size:1.15rem}.muted{color:var(--muted)}label{display:block;font-weight:650;margin:12px 0 6px}textarea,input{width:100%;background:#091322;color:var(--text);border:1px solid #314762;border-radius:10px;padding:12px;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}textarea{min-height:240px;resize:vertical}#question{min-height:100px}button{background:var(--cyan);color:#062020;border:0;border-radius:10px;padding:10px 15px;font-weight:800;cursor:pointer;margin:10px 6px 0 0}button.secondary{background:#243c5b;color:var(--text);border:1px solid #385574}button:disabled{opacity:.5;cursor:wait}.status{padding:12px;border-radius:12px;background:#0a1727;border:1px solid var(--line);white-space:pre-wrap;overflow-wrap:anywhere}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:4px 4px 4px 0;color:var(--muted);font-size:.82rem}.ok{color:var(--cyan)}.bad{color:var(--red)}.caution{color:var(--warn)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#08111f;border:1px solid var(--line);padding:14px;border-radius:12px;max-height:500px;overflow:auto;min-height:70px}a{color:var(--blue)}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:200px}.small{font-size:.88rem}.rtl{direction:rtl;text-align:right}@media(max-width:760px){main{padding:14px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.card{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><div class="brand">GRID<span>PULSE</span> / AI LAB</div><div class="sub">Local-first engineering intelligence · transparent analytics · no cloud AI calls</div></div><div><a href="../index.html">← Main dashboard</a> · <a href="offline-ai.md">Technical guide</a></div></header>
+<section class="card full">
+<h1>Offline AI Console</h1>
+<p class="sub">Run deterministic analytics against your own verified records, then optionally ask a local GGUF language model to explain the evidence. This page talks only to the API at <code>127.0.0.1</code>. It does not upload records to a remote AI service.</p>
+<div class="row"><div><label for="apiKey">Local API key (kept only in this page's memory)</label><input id="apiKey" type="password" autocomplete="off" placeholder="Required if GRIDPULSE_API_KEY is enabled"></div><div><label>Local engine status</label><div id="status" class="status">Checking local API…</div><button class="secondary" id="refreshStatus">Refresh status</button></div></div>
+<p class="small caution">Use only on a computer where you trust the local API. Never expose port 8000 to the public internet. No plant telemetry is connected by this demo page.</p>
+</section>
+<div class="grid" style="margin-top:16px">
+<section class="card">
+<h2>1 · Evidence records</h2><p class="muted small">Paste JSON with a top-level <code>records</code> array. Each record must retain source, scope, unit, dates and verification status. Sample below is synthetic, not plant data.</p>
+<label for="records">Observation JSON</label>
+<textarea id="records" spellcheck="false"></textarea>
+<button id="sample" class="secondary">Load synthetic sample</button><button id="analyze">Analyze records</button>
+</section>
+<section class="card">
+<h2>2 · Statistical analysis</h2><p class="muted small">Transparent group summaries, robust outlier candidates, trend estimates and input checks. Results are review aids—not certified alarms or predictions.</p>
+<div id="analysisState" class="status">No analysis run yet.</div><pre id="analysisResult">Your analysis report will appear here.</pre>
+</section>
+<section class="card">
+<h2>3 · Ask your local model</h2><p class="muted small">Optional language generation requires a compatible GGUF file already on this computer plus the optional llama-cpp-python runtime. Without those, chat stays unavailable; there is no remote fallback.</p>
+<label for="question">Question</label><textarea id="question">Summarize the evidence, identify uncertainty, and suggest non-operational follow-up checks. Cite record IDs and sources where available.</textarea>
+<button id="ask">Ask local model</button><div id="chatState" class="status">No question submitted.</div><pre id="chatResult">Local model answer will appear here.</pre>
+</section>
+<section class="card">
+<h2>4 · Operating principles</h2>
+<div class="pill">Offline-first</div><div class="pill">Source traceability</div><div class="pill">No remote fallback</div><div class="pill">Human review</div>
+<ul class="muted"><li>Unknown or unverified records must not be treated as confirmed plant facts.</li><li>Trends and outliers depend on data quality, time scope, units and adequate history.</li><li>The language model may hallucinate; validate every claim against source records.</li><li>This tool never sends control commands or authorizes switching, trips, or return to service.</li></ul>
+</section>
+</div>
+<footer class="muted small" style="padding:18px 2px">GridPulse AI Lab · local API expected at <code>http://127.0.0.1:8000</code> · If connection fails, start the local API and check its API key and CORS settings.</footer>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const apiBase = "http://127.0.0.1:8000";
+const sample = {records:[
+ {record_id:"DEMO-01",plant:"Synthetic Training Plant",metric:"net_generation",value:100,unit:"MWh",period_start:"2026-01-01",period_end:"2026-01-01",scope:"plant",source_id:"SYNTHETIC-TRAINING",verification_status:"unverified"},
+ {record_id:"DEMO-02",plant:"Synthetic Training Plant",metric:"net_generation",value:102,unit:"MWh",period_start:"2026-01-02",period_end:"2026-01-02",scope:"plant",source_id:"SYNTHETIC-TRAINING",verification_status:"unverified"},
+ {record_id:"DEMO-03",plant:"Synthetic Training Plant",metric:"net_generation",value:99,unit:"MWh",period_start:"2026-01-03",period_end:"2026-01-03",scope:"plant",source_id:"SYNTHETIC-TRAINING",verification_status:"unverified"},
+ {record_id:"DEMO-04",plant:"Synthetic Training Plant",metric:"net_generation",value:160,unit:"MWh",period_start:"2026-01-04",period_end:"2026-01-04",scope:"plant",source_id:"SYNTHETIC-TRAINING",verification_status:"unverified"}
+]};
+$("records").value = JSON.stringify(sample,null,2);
+function headers(){const h={"Content-Type":"application/json"};if($("apiKey").value.trim())h["X-API-Key"]=$("apiKey").value.trim();return h}
+function readRecords(){const data=JSON.parse($("records").value);if(!data||!Array.isArray(data.records))throw new Error('JSON must contain a top-level "records" array.');return data.records}
+async function api(path,options={}){const response=await fetch(apiBase+path,{...options,headers:{...headers(),...(options.headers||{})}});const text=await response.text();let body;try{body=JSON.parse(text)}catch{body={detail:text||"Empty response"}}if(!response.ok)throw new Error((body.detail&&typeof body.detail==="string")?body.detail:JSON.stringify(body.detail||body));return body}
+async function refresh(){ $("status").textContent="Checking local API…";try{const s=await api("/api/v1/ai/status");const m=s.optional_local_language_model||{};$("status").innerHTML="API reachable · deterministic engine: <span class='ok'>ready</span>\nNetwork access: "+s.network_access+"\nLocal language model: "+(m.ready?"<span class='ok'>ready</span>":"<span class='caution'>not ready</span>")+"\n"+(m.note||"");$("ask").disabled=!m.ready;$("chatState").textContent=m.ready?"Local model is ready.":"Chat requires a configured local GGUF file and runtime."}catch(e){$("status").innerHTML="<span class='bad'>Local API unavailable</span>\n"+e.message+"\nStart the API on 127.0.0.1:8000 and check API key/CORS settings.";$("ask").disabled=true}}
+$("refreshStatus").addEventListener("click",refresh);
+$("sample").addEventListener("click",()=>{$("records").value=JSON.stringify(sample,null,2);$("analysisState").textContent="Synthetic sample loaded. Do not interpret it as real plant data."});
+$("analyze").addEventListener("click",async()=>{const b=$("analyze");b.disabled=true;$("analysisState").textContent="Analyzing…";try{const records=readRecords();const result=await api("/api/v1/ai/analyze",{method:"POST",body:JSON.stringify({records})});$("analysisResult").textContent=JSON.stringify(result,null,2);$("analysisState").textContent="Analysis completed · "+records.length+" input records · inspect warnings and provenance in the report."}catch(e){$("analysisState").textContent="Analysis failed: "+e.message}finally{b.disabled=false}});
+$("ask").addEventListener("click",async()=>{const b=$("ask");b.disabled=true;$("chatState").textContent="Running inference locally…";try{const records=readRecords();const result=await api("/api/v1/ai/chat",{method:"POST",body:JSON.stringify({question:$("question").value,context_records:records.slice(0,20)})});$("chatResult").textContent=result.answer||JSON.stringify(result,null,2);$("chatState").textContent="Local inference completed · no remote fallback."}catch(e){$("chatState").textContent="Local chat failed: "+e.message}finally{b.disabled=false}});
+refresh();
+</script>
+</body>
+</html>
