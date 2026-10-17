@@ -6,6 +6,7 @@ services:
     image: gridpulse-api:local
     environment:
       GRIDPULSE_DB_PATH: /data/gridpulse.sqlite3
+      GRIDPULSE_API_KEY: ${GRIDPULSE_API_KEY:-}
     volumes:
       - gridpulse-data:/data
     ports:
