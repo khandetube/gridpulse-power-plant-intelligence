@@ -89,7 +89,7 @@ def validate_maintenance_event_rows(rows: list[dict[str, Any]]) -> list[dict[str
         if status not in ALLOWED_STATUS:
             raise DatasetValidationError(f"Row {line_number}: invalid verification_status {status}")
         try:
-            start = datetime.fromisoformat(str(row["start_time"]).strip().replace("Z", "+00:00"))
+            start = datetime.fromisoformat(str(row["start_time"]).strip())
             end = datetime.fromisoformat(str(row["end_time"]).strip().replace("Z", "+00:00"))
         except (TypeError, ValueError) as exc:
             raise DatasetValidationError(
