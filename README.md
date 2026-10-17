@@ -28,7 +28,7 @@ Every imported record should include its source, publication date (when known), 
 No credentials, private records, network addresses, control-system configurations, or confidential dispatch data belong in this repository.
 
 ## Development status
-**Prototype — active development.** The repository now includes a read-only FastAPI foundation, source-aware observation CSV validation, unit tests, and a GitHub Actions test workflow. Public-source figures still require record-by-record verification before they can be treated as validated dataset entries. No live plant telemetry, dispatch connection, or validated predictive model is available.
+**Prototype — active development.** The repository includes a FastAPI/SQLite API for caller-supplied observations, source-aware maintenance events, assets, test management, FMEA, inspections, and maintenance work orders, plus a bilingual static dashboard, local engineering workbenches, Docker deployment and CI tests. These modules are under active development and are not yet a production-validated plant system. Public-source figures still require record-by-record verification before they can be treated as validated dataset entries. No live plant telemetry, dispatch connection, multi-user authorization, or validated predictive model is available.
 
 ## Quick links
 - Dashboard preview (deployment depends on GitHub Pages setup): https://khandetube.github.io/gridpulse-power-plant-intelligence/
