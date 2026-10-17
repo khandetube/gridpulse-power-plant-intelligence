@@ -237,3 +237,45 @@ def test_data_quality_endpoint_reports_persisted_observation_coverage(tmp_path, 
     assert payload["overview"]["total_records"] == 2
     assert payload["verification_status_counts"] == {"reviewed": 2}
     assert payload["overview"]["source_count"] == 1
+
+
+
+def test_engineering_generation_performance_endpoint_returns_formula_results():
+    response = client.post(
+        "/api/v1/engineering/generation-performance",
+        json={
+            "plant": "Example plant",
+            "period_start": "2026-01-01",
+            "period_end": "2026-01-01",
+            "net_generation_mwh": 100,
+            "fuel_thermal_input_mwh": 250,
+            "net_capacity_mw": 50,
+            "period_hours": 4,
+            "source_id": "SRC-001",
+            "verification_status": "unverified",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["net_efficiency_percent"] == 40
+    assert payload["net_heat_rate_kj_per_kwh"] == 9000
+    assert payload["capacity_factor_percent"] == 50
+    assert payload["verification_status"] == "unverified"
+
+
+def test_engineering_endpoint_rejects_unknown_source_and_bad_capacity():
+    base = {
+        "plant": "Example plant",
+        "period_start": "2026-01-01",
+        "period_end": "2026-01-01",
+        "net_generation_mwh": 100,
+        "fuel_thermal_input_mwh": 250,
+        "net_capacity_mw": 50,
+        "period_hours": 4,
+        "source_id": "SRC-001",
+        "verification_status": "unverified",
+    }
+    bad_capacity = {**base, "net_capacity_mw": 0}
+    assert client.post("/api/v1/engineering/generation-performance", json=bad_capacity).status_code == 422
+    bad_source = {**base, "source_id": "SRC-DOES-NOT-EXIST"}
+    assert client.post("/api/v1/engineering/generation-performance", json=bad_source).status_code == 422
