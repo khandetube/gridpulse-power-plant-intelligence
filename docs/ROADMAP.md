@@ -41,6 +41,7 @@
 
 ## Phase 5 — delivery quality
 - [x] CI checks and automated tests
+- [x] CI Docker image build and hardened-container runtime smoke test
 - [x] Docker-based local setup with non-root container, read-only filesystem, loopback-only host binding, dropped capabilities, and persistent database volume
 - [x] API runbook and deployment-boundary documentation
 - [ ] Security and safety review
