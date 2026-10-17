@@ -18,6 +18,8 @@ def evaluate_retrieval(cases: list[dict[str, Any]], k: int = 5) -> dict[str, Any
     reciprocal_ranks: list[float] = []
     correct_abstentions = 0
     false_positive_abstentions = 0
+    answerable_count = 0
+    unanswerable_count = 0
     invalid_cases: list[dict[str, Any]] = []
     for index, case in enumerate(cases):
         if not isinstance(case, dict):
@@ -33,33 +35,32 @@ def evaluate_retrieval(cases: list[dict[str, Any]], k: int = 5) -> dict[str, Any
             result = search_documents(query, documents, limit=k)
         except ValueError as exc:
             invalid_cases.append({"case_index": index, "reason": str(exc)})
-            reciprocal_ranks.append(0.0)
             continue
         returned = [row["source_id"] for row in result["results"]]
         relevant_set = set(relevant)
         if relevant_set:
+            answerable_count += 1
             total_recall += len(set(returned) & relevant_set) / len(relevant_set)
             rank = next((position for position, source in enumerate(returned, start=1) if source in relevant_set), None)
             reciprocal_ranks.append(1.0 / rank if rank else 0.0)
         else:
+            unanswerable_count += 1
             reciprocal_ranks.append(1.0 if not returned else 0.0)
             if not returned:
                 correct_abstentions += 1
             else:
                 false_positive_abstentions += 1
     valid_count = len(cases) - len(invalid_cases)
-    answerable = sum(1 for case in cases if isinstance(case, dict) and case.get("relevant_source_ids"))
-    unanswerable = valid_count - answerable
     return {
         "engine": "gridpulse-retrieval-evaluation-v1",
         "network_access": False,
         "case_count": len(cases),
         "valid_case_count": valid_count,
         "invalid_case_count": len(invalid_cases),
-        "recall_at_k": round(total_recall / answerable, 6) if answerable else None,
+        "recall_at_k": round(total_recall / answerable_count, 6) if answerable_count else None,
         "mean_reciprocal_rank": round(sum(reciprocal_ranks) / valid_count, 6) if valid_count else None,
         "correct_abstentions": correct_abstentions,
-        "unanswerable_case_count": unanswerable,
+        "unanswerable_case_count": unanswerable_count,
         "false_positive_abstentions": false_positive_abstentions,
         "invalid_cases": invalid_cases,
         "interpretation": "Metrics apply only to this evaluation set; they do not prove real-world accuracy or engineering suitability.",
