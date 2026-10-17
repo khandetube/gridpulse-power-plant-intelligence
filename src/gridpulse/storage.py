@@ -181,10 +181,10 @@ class ObservationStore:
                 clauses.append(f"{column} = ?")
                 params.append(value)
         if start_date is not None:
-            clauses.append("start_time >= ?")
+            clauses.append("end_time >= ?")
             params.append(start_date)
         if end_date is not None:
-            clauses.append("end_time <= ?")
+            clauses.append("start_time < ?")
             params.append(end_date)
         where = " WHERE " + " AND ".join(clauses) if clauses else ""
         with self._connect() as connection:
