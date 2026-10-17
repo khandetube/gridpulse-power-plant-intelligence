@@ -52,6 +52,27 @@ class ObservationStore:
                 "CREATE INDEX IF NOT EXISTS idx_observations_verification "
                 "ON observations(verification_status)"
             )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audit_events (
+                    audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    entity_type TEXT NOT NULL,
+                    entity_id TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    source_id TEXT NOT NULL,
+                    verification_status TEXT NOT NULL,
+                    recorded_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_audit_entity "
+                "ON audit_events(entity_type, entity_id, audit_id)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_audit_recorded "
+                "ON audit_events(recorded_at)"
+            )
 
     def insert_many(self, records: list[dict[str, Any]]) -> int:
         """Insert a batch atomically; duplicate IDs reject and roll back the whole batch."""
@@ -66,6 +87,11 @@ class ObservationStore:
         """
         with self._connect() as connection:
             connection.executemany(sql, records)
+            connection.executemany(
+                "INSERT INTO audit_events(entity_type, entity_id, action, source_id, verification_status) "
+                "VALUES ('observation', :record_id, 'created', :source_id, :verification_status)",
+                records,
+            )
         return len(records)
 
     def list_records(
@@ -154,6 +180,11 @@ class ObservationStore:
         """
         with self._connect() as connection:
             connection.executemany(sql, records)
+            connection.executemany(
+                "INSERT INTO audit_events(entity_type, entity_id, action, source_id, verification_status) "
+                "VALUES ('maintenance_event', :event_id, 'created', :source_id, :verification_status)",
+                records,
+            )
         return len(records)
 
     def list_maintenance_events(
@@ -311,3 +342,34 @@ class ObservationStore:
                 "Counts and coverage do not establish accuracy, completeness against the real plant, or operational fitness.",
             ],
         }
+
+
+    def list_audit_events(
+        self,
+        *,
+        entity_type: str | None = None,
+        entity_id: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Read the append-only application audit trail with bounded pagination."""
+        clauses: list[str] = []
+        params: list[Any] = []
+        if entity_type is not None:
+            clauses.append("entity_type = ?")
+            params.append(entity_type)
+        if entity_id is not None:
+            clauses.append("entity_id = ?")
+            params.append(entity_id)
+        where = " WHERE " + " AND ".join(clauses) if clauses else ""
+        with self._connect() as connection:
+            total = connection.execute(
+                "SELECT COUNT(*) FROM audit_events" + where, params
+            ).fetchone()[0]
+            rows = connection.execute(
+                "SELECT audit_id, entity_type, entity_id, action, source_id, "
+                "verification_status, recorded_at FROM audit_events" + where
+                + " ORDER BY audit_id DESC LIMIT ? OFFSET ?",
+                [*params, limit, offset],
+            ).fetchall()
+        return [dict(row) for row in rows], int(total)
