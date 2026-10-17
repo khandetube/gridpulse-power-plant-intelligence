@@ -50,3 +50,19 @@ def test_duplicate_maintenance_event_batch_is_atomic(tmp_path):
     records, total = store.list_maintenance_events()
     assert total == 1
     assert [record["event_id"] for record in records] == ["existing"]
+
+
+
+def test_maintenance_summary_groups_elapsed_hours_without_claiming_downtime(tmp_path):
+    store = ObservationStore(tmp_path / "summary.db")
+    first = event("one")
+    second = event("two", equipment="ST-1")
+    second["event_type"] = "corrective"
+    second["start_time"] = "2026-01-02T08:00:00+00:00"
+    second["end_time"] = "2026-01-02T11:00:00+00:00"
+    store.insert_maintenance_many([first, second])
+    summary = store.summarize_maintenance_events(plant="Plant A")
+    assert summary["total_events"] == 2
+    assert len(summary["by_event_type"]) == 2
+    assert sum(row["elapsed_hours"] for row in summary["by_event_type"]) == pytest.approx(5.0, abs=0.01)
+    assert "not equipment downtime" in summary["duration_semantics"]
