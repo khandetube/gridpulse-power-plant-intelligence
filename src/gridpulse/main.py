@@ -7,12 +7,14 @@ from __future__ import annotations
 
 import csv
 import os
+import secrets
 import sqlite3
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from gridpulse.analytics import analyze_observations
@@ -36,6 +38,20 @@ app = FastAPI(
         "No live telemetry or dispatch connection is configured."
     ),
 )
+
+@app.middleware("http")
+async def optional_api_key_guard(request: Request, call_next):
+    """Protect API routes when a deployment configures GRIDPULSE_API_KEY."""
+    expected_key = os.environ.get("GRIDPULSE_API_KEY", "")
+    if expected_key and request.url.path.startswith("/api/v1/"):
+        supplied_key = request.headers.get("X-API-Key", "")
+        if not secrets.compare_digest(supplied_key, expected_key):
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Missing or invalid API key."},
+                headers={"WWW-Authenticate": "ApiKey"},
+            )
+    return await call_next(request)
 
 
 class SourceRecord(BaseModel):
