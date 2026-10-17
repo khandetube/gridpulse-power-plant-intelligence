@@ -22,7 +22,7 @@ The API binds to `127.0.0.1:8000` on the host, not all host interfaces.
 
 Stop the service with `docker compose down`.
 
-## Persist and query observations\n\nUse `POST /api/v1/observations` with the same `records` schema shown below. The complete batch is stored transactionally; duplicate record IDs return HTTP 409 and roll back the entire batch. `GET /api/v1/observations` supports `plant`, `metric`, `status`, `start_date`, `end_date`, `limit` (1–1000) and `offset` filters. The response includes `total` before pagination.\n\n## Analytics request
+## Persist and query observations\n\nUse `POST /api/v1/observations` with the same `records` schema shown below. The complete batch is stored transactionally; duplicate record IDs return HTTP 409 and roll back the entire batch. Each `source_id` must exist in `data/source_registry.csv`; unregistered IDs return HTTP 422. `GET /api/v1/observations` supports `plant`, `metric`, `status`, `start_date`, `end_date`, `limit` (1–1000) and `offset` filters. The response includes `total` before pagination.\n\n## Analytics request
 
 The endpoint accepts a JSON object with a `records` array. The array must contain 1–10,000 records. Each record includes:
 
@@ -53,7 +53,7 @@ Example body:
 }
 ```
 
-The example is synthetic API documentation only; it is not a claim about a real plant.
+The example is synthetic API documentation only; it is not a claim about a real plant. The `source_id` must nevertheless exist in the source registry. An existing registry entry proves only that the source is catalogued, not that the submitted observation is true.
 
 The response groups statistics by metric and unit, retains verification-status counts, and emits conservative Tukey 1.5×IQR review flags only when a group has at least four observations and a non-zero IQR. Results are descriptive, not forecasts, alarms, diagnoses, or operating instructions. Grouping by metric and unit does not guarantee that different plant scopes are comparable.
 
