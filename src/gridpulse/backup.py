@@ -55,9 +55,11 @@ def create_backup(database: Path, output_dir: Path) -> dict[str, Any]:
     os.close(fd)
     temporary = Path(temporary_name)
     try:
-        with sqlite3.connect(f"file:{database}?mode=ro", uri=True, timeout=10) as source:
-            with sqlite3.connect(temporary, timeout=10) as target:
-                source.backup(target)
+        with (
+            sqlite3.connect(f"file:{database}?mode=ro", uri=True, timeout=10) as source,
+            sqlite3.connect(temporary, timeout=10) as target,
+        ):
+            source.backup(target)
         _integrity_check(temporary)
         os.replace(temporary, backup)
         manifest = {
@@ -115,9 +117,11 @@ def restore_backup(backup: Path, destination: Path, *, overwrite: bool = False) 
     os.close(fd)
     temporary = Path(temporary_name)
     try:
-        with sqlite3.connect(f"file:{backup}?mode=ro", uri=True, timeout=10) as source:
-            with sqlite3.connect(temporary, timeout=10) as target:
-                source.backup(target)
+        with (
+            sqlite3.connect(f"file:{backup}?mode=ro", uri=True, timeout=10) as source,
+            sqlite3.connect(temporary, timeout=10) as target,
+        ):
+            source.backup(target)
         _integrity_check(temporary)
         if destination.exists() and not overwrite:
             raise FileExistsError(f"Destination exists; pass --overwrite to replace it: {destination}")
