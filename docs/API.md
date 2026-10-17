@@ -92,3 +92,42 @@ The service flags calculated efficiency or capacity factor above 100% for review
 ## Ingestion audit trail
 
 `GET /api/v1/audit/events` returns append-only application records for successful observation and maintenance-event creation. Filters: `entity_type` (`observation` or `maintenance_event`), `entity_id`, `limit` (1–1,000), and `offset`. Audit inserts occur in the same SQLite transaction as the source record, so failed duplicate batches do not leave false audit entries. The current audit records identify the entity, action, registered source ID, verification label, and recording time; they do not establish who the actor was because authentication and user identity are not yet implemented. This is an application audit log, not a tamper-proof external ledger.
+
+
+## Asset, test, risk, inspection and work-order registers
+
+The following endpoints are available in the local FastAPI service. All writes require a registered `source_id` where shown by the request schema. These are engineering records and review workflows; they do not constitute safety certification or operational commands.
+
+### Asset registry
+- `POST /api/v1/assets` — create an asset with a stable ID, plant, type, hierarchy, criticality, lifecycle, capacity metadata and source.
+- `GET /api/v1/assets` — filter and paginate assets.
+- `GET /api/v1/assets/hierarchy` — view parent/child relationships.
+- `GET /api/v1/assets/{asset_id}`, `PATCH /api/v1/assets/{asset_id}`, `DELETE /api/v1/assets/{asset_id}` — retrieve, update or delete; parent deletion is blocked while children exist.
+
+### Test management
+- `POST /api/v1/testing/plans` — create a source-labelled test plan.
+- `POST /api/v1/testing/cases` — add a test case with units and acceptance bounds.
+- `POST /api/v1/testing/executions` — record measured values, evidence and review states; pass/fail is evaluated against case bounds.
+- `GET /api/v1/testing/cases`, `GET /api/v1/testing/executions` — query records.
+
+### Failure Mode and Effects Analysis (FMEA)
+- `POST /api/v1/fmea` — record a failure mode linked to an asset. RPN is calculated as severity × occurrence × detectability (each 1–10); it is a prioritization aid, not a calibrated probability.
+- `GET /api/v1/fmea` and `GET /api/v1/fmea/{failure_mode_id}` — query failure modes.
+- `PATCH /api/v1/fmea/{failure_mode_id}` — update mitigation/review state with source provenance.
+
+### Inspections
+- `POST /api/v1/inspections` — record an inspection, method, findings, condition rating, evidence reference, source and next due date. Timestamps must include an explicit UTC offset.
+- `GET /api/v1/inspections` — filter by asset, condition and approval state; supports pagination.
+- `GET /api/v1/inspections/{inspection_id}` — retrieve an inspection.
+- `PATCH /api/v1/inspections/{inspection_id}` — update findings/recommendations and review states.
+
+### Maintenance work orders
+- `POST /api/v1/work-orders` — create a proposed work order linked to an existing asset. An optional origin may link to an inspection or FMEA record on the same asset.
+- `GET /api/v1/work-orders` — filter by asset, status, priority or origin and paginate. Urgent/high priority records sort first.
+- `GET /api/v1/work-orders/{work_order_id}` — retrieve a work order.
+- `PATCH /api/v1/work-orders/{work_order_id}` — transition status and update owner, schedule, labor estimate, parts/materials, completion summary and evidence.
+
+Work-order status transitions are guarded: proposed → approved → in_progress → completed → verified, with permitted hold/cancel paths. Completion requires a completion summary and after-evidence reference; verification requires `verification_status=verified` and after-evidence. The API checks that evidence references are present, not that an external file is authentic or technically adequate. These checks do not replace work permits, lockout/tagout, independent inspection, OEM procedures or the site's authorized return-to-service process.
+
+### Operational boundaries
+The static GitHub Pages dashboard is not automatically connected to this API. To use the API, run the Docker Compose service locally and consult the OpenAPI page at `http://127.0.0.1:8000/docs`. The Compose binding is loopback-only by default. Do not expose it to the internet: the optional API key is a shared secret, not role-based authentication. No live telemetry, SCADA/DCS/EMS or dispatch integration is configured, and no records in the repository should be interpreted as real inspection findings or real work orders unless independently supplied and verified by an authorized source.
