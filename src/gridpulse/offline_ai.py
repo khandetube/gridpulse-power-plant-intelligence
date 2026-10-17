@@ -3,7 +3,7 @@
 This module deliberately makes no remote API calls and uses no external model weights.
 It is a transparent statistical assistant, not a trained language model or a safety system.
 """
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 import argparse
 import json
