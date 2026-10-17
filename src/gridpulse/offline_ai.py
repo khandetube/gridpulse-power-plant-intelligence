@@ -14,7 +14,6 @@ from math import isfinite
 from statistics import median
 from typing import Any
 
-
 ENGINE_ID = "gridpulse-offline-analytics-v1"
 LIMITATIONS = [
     "Runs locally without network access, remote APIs, or model downloads.",
