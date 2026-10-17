@@ -8,7 +8,7 @@ from __future__ import annotations
 import csv
 import os
 import sqlite3
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 
@@ -74,6 +74,42 @@ class ObservationBatch(BaseModel):
         ids = [record.record_id for record in self.records]
         if len(ids) != len(set(ids)):
             raise ValueError("record_id values must be unique within a batch")
+        return self
+
+
+class MaintenanceEventInput(BaseModel):
+    """Source-labelled maintenance event; elapsed duration is not assumed downtime."""
+
+    event_id: str = Field(min_length=1, max_length=128)
+    plant: str = Field(min_length=1, max_length=200)
+    equipment: str = Field(min_length=1, max_length=200)
+    event_type: Literal[
+        "inspection", "preventive", "corrective", "overhaul", "test", "other"
+    ]
+    start_time: datetime
+    end_time: datetime
+    timezone: str = Field(min_length=1, max_length=80)
+    source_id: str = Field(min_length=1, max_length=128)
+    verification_status: Literal["unverified", "reviewed", "verified"]
+    notes: str = Field(default="", max_length=4000)
+
+    @model_validator(mode="after")
+    def validate_timestamps(self) -> MaintenanceEventInput:
+        if self.start_time.utcoffset() is None or self.end_time.utcoffset() is None:
+            raise ValueError("start_time and end_time must include an explicit UTC offset")
+        if self.end_time < self.start_time:
+            raise ValueError("end_time must be on or after start_time")
+        return self
+
+
+class MaintenanceEventBatch(BaseModel):
+    records: list[MaintenanceEventInput] = Field(min_length=1, max_length=5000)
+
+    @model_validator(mode="after")
+    def unique_event_ids(self) -> MaintenanceEventBatch:
+        ids = [record.event_id for record in self.records]
+        if len(ids) != len(set(ids)):
+            raise ValueError("event_id values must be unique within a batch")
         return self
 
 
@@ -145,6 +181,63 @@ def get_observations(
         offset=offset,
     )
     return {"total": total, "limit": limit, "offset": offset, "records": records}
+
+
+@app.post("/api/v1/maintenance/events", status_code=201)
+def create_maintenance_events(batch: MaintenanceEventBatch) -> dict[str, object]:
+    """Persist validated, offset-aware maintenance events in one transaction."""
+    records = []
+    for event in batch.records:
+        row = event.model_dump(mode="json")
+        row["start_time"] = event.start_time.astimezone(timezone.utc).isoformat()
+        row["end_time"] = event.end_time.astimezone(timezone.utc).isoformat()
+        records.append(row)
+    try:
+        count = get_observation_store().insert_maintenance_many(records)
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="At least one event_id already exists; no events from this batch were stored.",
+        ) from exc
+    return {
+        "inserted_count": count,
+        "event_ids": [record["event_id"] for record in records],
+        "storage": "sqlite",
+        "duration_semantics": "Elapsed event duration; not necessarily equipment downtime.",
+    }
+
+
+@app.get("/api/v1/maintenance/events")
+def get_maintenance_events(
+    plant: str | None = Query(default=None, min_length=1, max_length=200),
+    equipment: str | None = Query(default=None, min_length=1, max_length=200),
+    event_type: Literal["inspection", "preventive", "corrective", "overhaul", "test", "other"] | None = None,
+    status: Literal["unverified", "reviewed", "verified"] | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    limit: int = Query(default=100, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, object]:
+    """Query maintenance events with validated filters and bounded pagination."""
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
+    records, total = get_observation_store().list_maintenance_events(
+        plant=plant,
+        equipment=equipment,
+        event_type=event_type,
+        status=status,
+        start_date=start_date.isoformat() + "T00:00:00" if start_date else None,
+        end_date=(end_date + timedelta(days=1)).isoformat() + "T00:00:00" if end_date else None,
+        limit=limit,
+        offset=offset,
+    )
+    return {
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "records": records,
+        "duration_semantics": "Elapsed event duration; not necessarily equipment downtime.",
+    }
 
 
 @app.post("/api/v1/analytics/observations")
