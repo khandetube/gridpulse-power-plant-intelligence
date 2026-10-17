@@ -192,7 +192,7 @@ def main() -> int:
             with open(args.output, "w", encoding="utf-8", newline="\\n") as stream:
                 stream.write(rendered)
         else:
-            sys.stdout.write(rendered)
+            sys.stdout.write(rendered + chr(10))
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"offline analysis failed: {exc}", file=sys.stderr)
         return 2
