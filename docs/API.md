@@ -21,6 +21,7 @@ The API binds to `127.0.0.1:8000` on the host, not all host interfaces.
 - Descriptive analytics (stateless batch): `POST http://127.0.0.1:8000/api/v1/analytics/observations`
 - Persisted data-quality report: `GET http://127.0.0.1:8000/api/v1/analytics/data-quality`
 - Generation engineering calculations: `POST http://127.0.0.1:8000/api/v1/engineering/generation-performance`
+- Append-only ingestion audit: `GET http://127.0.0.1:8000/api/v1/audit/events`
 
 Stop the service with `docker compose down`.
 
@@ -85,3 +86,8 @@ Returned indicators:
 - Capacity factor (%) = net generation MWh / (net capacity MW × period hours) × 100
 
 The service flags calculated efficiency or capacity factor above 100% for review; it does not silently clamp values. Generation, capacity, thermal input, and reporting period must refer to the same plant boundary and interval. The source ID must be present in the source registry, but that alone does not verify the submitted values. Ambient conditions, startup/shutdown, fuel quality, and heating-value conventions are not corrected automatically. Do not use the indicators alone to diagnose equipment or direct plant operation.
+
+
+## Ingestion audit trail
+
+`GET /api/v1/audit/events` returns append-only application records for successful observation and maintenance-event creation. Filters: `entity_type` (`observation` or `maintenance_event`), `entity_id`, `limit` (1–1,000), and `offset`. Audit inserts occur in the same SQLite transaction as the source record, so failed duplicate batches do not leave false audit entries. The current audit records identify the entity, action, registered source ID, verification label, and recording time; they do not establish who the actor was because authentication and user identity are not yet implemented. This is an application audit log, not a tamper-proof external ledger.
