@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from gridpulse.assets import AssetStore
 
@@ -80,6 +80,8 @@ def create_asset(request: AssetInput) -> dict[str, object]:
     payload = request.model_dump(mode="json")
     try:
         return store().create(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except sqlite3.IntegrityError as exc:
         raise HTTPException(status_code=409, detail="asset_id already exists or parent_asset_id is invalid") from exc
 
@@ -120,6 +122,8 @@ def update_asset(asset_id: str, request: AssetPatch) -> dict[str, object]:
         require_source(changes["source_id"])
     try:
         record = store().update(asset_id, changes)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except sqlite3.IntegrityError as exc:
         raise HTTPException(status_code=409, detail="Invalid parent_asset_id or asset constraint") from exc
     if record is None:
