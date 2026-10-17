@@ -132,3 +132,14 @@ Work-order status transitions are guarded: proposed → approved → in_progress
 
 ### Operational boundaries
 The static GitHub Pages dashboard is not automatically connected to this API. To use the API, run the Docker Compose service locally and consult the OpenAPI page at `http://127.0.0.1:8000/docs`. The Compose binding is loopback-only by default. Do not expose it to the internet: the optional API key is a shared secret, not role-based authentication. No live telemetry, SCADA/DCS/EMS or dispatch integration is configured, and no records in the repository should be interpreted as real inspection findings or real work orders unless independently supplied and verified by an authorized source.
+
+
+### Turnaround planning
+- `POST /api/v1/turnarounds/plans` — create a plan with tasks, duration estimates, optional asset links, crew labels and task dependencies. The API rejects duplicate task IDs, unknown dependencies and dependency cycles.
+- `GET /api/v1/turnarounds/plans` — list/filter/paginate plans.
+- `GET /api/v1/turnarounds/plans/{plan_id}` — retrieve the plan, tasks, estimated total labor-hours and dependency-based critical-path hours.
+- `PATCH /api/v1/turnarounds/plans/{plan_id}` — guarded plan lifecycle transitions; a plan cannot be approved without tasks or closed while tasks are incomplete.
+- `PATCH /api/v1/turnarounds/plans/{plan_id}/tasks/{task_id}?status=ready&source_id=SRC-001` — update task status. Dependencies must be completed before dependent tasks can become ready, start or complete. Task transitions are guarded.
+- `GET /api/v1/turnarounds/plans/{plan_id}/audit` and `GET /api/v1/turnarounds/plans/{plan_id}/tasks/{task_id}/audit` — inspect plan/task status history.
+
+Critical-path and labor estimates are planning aids only. The current estimator assumes task durations and dependencies are valid and does not yet optimize shared crews, calendar constraints, equipment isolation, permit windows, material availability or uncertainty. An approved plan in this API is not an operational permit or authority to start/stop equipment.
