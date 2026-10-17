@@ -1,0 +1,5 @@
+source_id,title,publisher,url,source_type,scope,publication_date,verification_status,notes
+SRC-001,Khorasan Gas Power Plant Management Company website,Khorasan Gas Power Plant Management Company,https://khgpp.ir/,official,company-and-plant-announcements,,reviewed,"Official domain identified; specific facts must be captured from individual pages before verification."
+SRC-002,Report concerning fuel supply to Shahid Kaveh power plant,Tasnim News Agency,https://www.tasnimnews.ir/fa/news/1404/06/27/3402540/,news-report,plant-context,1404-06-27,unverified,"Research lead only. Verify article title, contents, units, and original publication before using numeric claims."
+SRC-003,Report concerning spring 1405 generation and maintenance,KhabarFarsi,https://khabarfarsi.com/u/250484980,news-aggregator,combined-plant-scope,,unverified,"Research lead only. Reported total may cover multiple plants; do not allocate to one plant without explicit evidence."
+SRC-004,EIA electricity data,EIA,https://www.eia.gov/electricity/data/detail-data.php,public-dataset,US-electricity-data,,reviewed,"Useful for reference and data-model design; not evidence of Qaen plant performance."
