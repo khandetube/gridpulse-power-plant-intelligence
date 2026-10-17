@@ -4,7 +4,7 @@
 
 GridPulse includes a deterministic, local analytics engine at `src/gridpulse/offline_ai.py`. It performs group statistics, median/MAD-based candidate outlier screening, simple linear trend estimates, and input-quality checks using Python's standard library. It does not make network requests, call hosted AI services, or download model weights.
 
-This is a useful offline decision-support component, but **it is not a trained LLM** and does not generate open-ended natural-language answers. No large model weights are bundled. A trained language model requires a compatible model file, local inference runtime, hardware sizing, license review, and separate validation; none should be implied to exist until packaged and tested.
+The deterministic engine is paired with an optional adapter for a local GGUF language model. The repository does not bundle multi-gigabyte model weights. Without a user-supplied model file and the optional `llama-cpp-python` runtime, natural-language inference remains unavailable; there is no remote fallback. The deterministic analytics engine still works without the model.
 
 ## Run directly from local files
 
@@ -19,7 +19,7 @@ If `--output` is omitted, the report is printed to standard output. Keep origina
 ## API
 
 - `GET /api/v1/ai/status`: capabilities and limits.
-- `POST /api/v1/ai/analyze`: analyze 1–5,000 caller-provided observations.
+- `POST /api/v1/ai/analyze`: analyze 1–5,000 caller-provided observations.\n- `POST /api/v1/ai/chat`: use a locally installed GGUF model to answer a question; returns HTTP 503 if no local model/runtime is available.\n- `GET /api/v1/ai/status` also reports whether the optional local model runtime and file are ready.
 
 Example request:
 
@@ -47,6 +47,36 @@ Example values are illustrative and are not real plant data. As with other API r
 ## Statistical interpretation and safety
 
 Outlier candidates require at least four points in a matching plant/metric/unit/scope group. When median absolute deviation is nonzero, a modified z-score threshold is used; constant-baseline deviations use an explicitly labelled fallback. Trend is ordinary least-squares slope per calendar day. These are review aids, not alarms, predictions, calibrated plant models, or approved engineering thresholds. The source ID and verification status remain visible. Review the original records and applicable operating procedures before drawing conclusions. This module does not control equipment.
+
+## Optional local language model
+
+Install the optional runtime from a trusted offline wheelhouse, not from the disconnected machine:
+
+```sh
+pip install --no-index --find-links /path/to/offline-wheelhouse '.[local-llm]'
+```
+
+Set `GRIDPULSE_LOCAL_MODEL_PATH` to the path of a compatible GGUF model already stored on the computer. Optional settings are `GRIDPULSE_LOCAL_MODEL_CONTEXT`, `GRIDPULSE_LOCAL_MODEL_THREADS`, and `GRIDPULSE_LOCAL_MODEL_GPU_LAYERS`. The default uses CPU inference. Confirm the model's license, provenance, RAM/VRAM requirements, and suitability before use. No model downloader or remote fallback exists.
+
+Example local request:
+
+```json
+{
+  "question": "Summarize the evidence and explain what remains uncertain.",
+  "context_records": [
+    {
+      "record_id": "EXAMPLE-1",
+      "metric": "net_generation",
+      "value": 10.0,
+      "unit": "MWh",
+      "source_id": "SRC-001",
+      "verification_status": "unverified"
+    }
+  ]
+}
+```
+
+The example is synthetic. Context records are treated as untrusted input. Model output can be wrong or hallucinated and must not be used alone for engineering decisions.
 
 ## Fully offline deployment
 
