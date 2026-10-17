@@ -65,6 +65,13 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"records":[{"record_id":"CI-OBS-1","plant":"CI fixture","metric":"net_generation","value":10,"unit":"MWh","period_start":"2026-01-01","period_end":"2026-01-01","scope":"plant","source_id":"SRC-001","verification_status":"unverified"}]}'
           curl -fsS -H 'X-API-Key: ci-test-secret' 'http://127.0.0.1:8000/api/v1/audit/events?entity_id=CI-OBS-1'
+          backup_output=$(docker compose exec -T gridpulse-api python -m gridpulse.backup backup \
+            --database /data/gridpulse.sqlite3 --output-dir /data/backups)
+          backup_file=$(printf '%s' "$backup_output" | python -c 'import json,sys; print(json.load(sys.stdin)["backup"])')
+          docker compose exec -T gridpulse-api python -m gridpulse.backup verify --backup "$backup_file"
+          docker compose exec -T gridpulse-api python -m gridpulse.backup restore \
+            --backup "$backup_file" --destination /data/restored-ci.sqlite3
+          docker compose exec -T gridpulse-api python -c "import sqlite3; db=sqlite3.connect('/data/restored-ci.sqlite3'); assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'; db.close()"
           docker compose restart gridpulse-api
           for attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:8000/health >/dev/null; then break; fi
