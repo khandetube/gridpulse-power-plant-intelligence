@@ -160,3 +160,14 @@ The static [Maintenance Operations Console](https://khandetube.github.io/gridpul
 - Turnaround tasks: `PATCH /api/v1/turnarounds/plans/{plan_id}/tasks/{task_id}?status=...&source_id=...`. The console shows each plan's tasks and allows state changes only while the plan is approved or active. The API enforces dependency completion and records audit events.
 
 The UI is a convenience layer, not a safety interlock or permit-to-work system. Source IDs must already exist in the source registry. Status updates are planning records only and do not communicate with plant control systems or authorize isolation, switching, start/stop, or return-to-service decisions. The static page does not host the API or store operational records itself.
+
+
+## Local database backup utility
+
+This utility is a local CLI, not an HTTP endpoint. Run it from the installed package or inside the API container:
+
+- `python -m gridpulse.backup backup --database /data/gridpulse.sqlite3 --output-dir /data/backups`
+- `python -m gridpulse.backup verify --backup /data/backups/<exact-backup-name>.sqlite3`
+- `python -m gridpulse.backup restore --backup /data/backups/<exact-backup-name>.sqlite3 --destination /data/gridpulse.sqlite3 --overwrite`
+
+Restore is destructive when the destination exists. Stop API writers first and review [the operations runbook](operations-runbook.md). Backup and restore check SQLite integrity; verification also compares the backup to its SHA-256 manifest. This does not encrypt or off-site replicate backups, so operational owners must manage access, retention, and a separate protected copy.
