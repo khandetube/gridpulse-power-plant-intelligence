@@ -1,0 +1,2 @@
+record_id,plant,metric,value,unit,period_start,period_end,scope,source_id,verification_status
+OBS-DEMO-001,Demo Plant,net_generation,12.5,MWh,2026-01-01,2026-01-31,plant,SRC-DEMO,unverified
