@@ -6,7 +6,8 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
-from gridpulse.local_llm import LocalModelUnavailable, generate_local_answer, local_model_status\nfrom gridpulse.offline_ai import analyze_offline
+from gridpulse.local_llm import LocalModelUnavailable, generate_local_answer, local_model_status
+from gridpulse.offline_ai import analyze_offline
 
 router = APIRouter(prefix="/api/v1/ai", tags=["offline-ai"])
 
