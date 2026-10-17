@@ -113,6 +113,27 @@ class MaintenanceEventBatch(BaseModel):
         return self
 
 
+def ensure_registered_sources(records: list[BaseModel]) -> None:
+    """Reject records whose provenance IDs are absent from the source registry."""
+    if not SOURCE_REGISTRY.exists():
+        raise HTTPException(status_code=503, detail="Source registry is unavailable")
+    try:
+        with SOURCE_REGISTRY.open("r", encoding="utf-8", newline="") as csv_file:
+            registered = {
+                row.get("source_id", "").strip()
+                for row in csv.DictReader(csv_file)
+                if row.get("source_id", "").strip()
+            }
+    except (OSError, csv.Error) as exc:
+        raise HTTPException(status_code=503, detail="Source registry cannot be read") from exc
+    unknown = sorted({str(record.source_id) for record in records} - registered)
+    if unknown:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Every record must reference a registered source_id.", "unknown_source_ids": unknown},
+        )
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     """Health check for local development and deployment probes."""
@@ -142,6 +163,7 @@ def get_observation_store() -> ObservationStore:
 @app.post("/api/v1/observations", status_code=201)
 def create_observations(batch: ObservationBatch) -> dict[str, object]:
     """Persist a validated observation batch in one SQLite transaction."""
+    ensure_registered_sources(batch.records)
     records = [record.model_dump(mode="json") for record in batch.records]
     try:
         count = get_observation_store().insert_many(records)
@@ -186,6 +208,7 @@ def get_observations(
 @app.post("/api/v1/maintenance/events", status_code=201)
 def create_maintenance_events(batch: MaintenanceEventBatch) -> dict[str, object]:
     """Persist validated, offset-aware maintenance events in one transaction."""
+    ensure_registered_sources(batch.records)
     records = []
     for event in batch.records:
         row = event.model_dump(mode="json")
@@ -260,6 +283,7 @@ def maintenance_summary(
 @app.post("/api/v1/analytics/observations")
 def analyze_observation_batch(batch: ObservationBatch) -> dict[str, object]:
     """Return grouped descriptive statistics and conservative IQR review flags."""
+    ensure_registered_sources(batch.records)
     payload = [
         {
             **record.model_dump(mode="json"),
