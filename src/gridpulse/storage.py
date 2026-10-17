@@ -259,3 +259,55 @@ class ObservationStore:
                 "Elapsed event duration only; not equipment downtime or availability."
             ),
         }
+
+
+    def observation_quality_report(self, *, plant: str | None = None) -> dict[str, Any]:
+        """Summarize dataset coverage and provenance labels without inventing thresholds."""
+        clauses = ["plant = ?"] if plant is not None else []
+        params: list[Any] = [plant] if plant is not None else []
+        where = " WHERE " + " AND ".join(clauses) if clauses else ""
+        with self._connect() as connection:
+            overview = connection.execute(
+                "SELECT COUNT(*) AS total_records, "
+                "COUNT(DISTINCT plant) AS plant_count, "
+                "COUNT(DISTINCT metric) AS metric_count, "
+                "COUNT(DISTINCT source_id) AS source_count, "
+                "MIN(period_start) AS first_period, MAX(period_end) AS last_period "
+                "FROM observations" + where,
+                params,
+            ).fetchone()
+            statuses = connection.execute(
+                "SELECT verification_status, COUNT(*) AS count FROM observations"
+                + where + " GROUP BY verification_status ORDER BY verification_status",
+                params,
+            ).fetchall()
+            scopes = connection.execute(
+                "SELECT scope, COUNT(*) AS count FROM observations"
+                + where + " GROUP BY scope ORDER BY scope",
+                params,
+            ).fetchall()
+            sources = connection.execute(
+                "SELECT source_id, COUNT(*) AS count FROM observations"
+                + where + " GROUP BY source_id ORDER BY count DESC, source_id LIMIT 20",
+                params,
+            ).fetchall()
+            metric_units = connection.execute(
+                "SELECT metric, unit, COUNT(*) AS count FROM observations"
+                + where + " GROUP BY metric, unit ORDER BY metric, unit",
+                params,
+            ).fetchall()
+        return {
+            "overview": dict(overview),
+            "verification_status_counts": {
+                row["verification_status"]: row["count"] for row in statuses
+            },
+            "scope_counts": {row["scope"]: row["count"] for row in scopes},
+            "records_by_source_top_20": [dict(row) for row in sources],
+            "metric_unit_coverage": [dict(row) for row in metric_units],
+            "integrity_notes": [
+                "Required schema fields are validated at ingestion; missing required fields are rejected.",
+                "Unique record IDs are enforced by the database primary key.",
+                "Verification labels are supplied by the data owner and are not independently certified.",
+                "Counts and coverage do not establish accuracy, completeness against the real plant, or operational fitness.",
+            ],
+        }
