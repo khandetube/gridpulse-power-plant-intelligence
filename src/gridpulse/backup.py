@@ -7,6 +7,7 @@ a copy before replacing the destination.
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import hashlib
 import json
 import os
@@ -30,7 +31,7 @@ def _integrity_check(path: Path) -> list[str]:
     if not path.is_file() or path.stat().st_size == 0:
         raise ValueError(f"Database file is missing or empty: {path}")
     try:
-        with sqlite3.connect(f"file:{path.resolve()}?mode=ro", uri=True, timeout=10) as db:
+        with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, timeout=10)) as db:
             rows = [str(row[0]) for row in db.execute("PRAGMA integrity_check")]
     except sqlite3.DatabaseError as exc:
         raise ValueError(f"Unable to read SQLite database: {exc}") from exc
@@ -56,10 +57,11 @@ def create_backup(database: Path, output_dir: Path) -> dict[str, Any]:
     temporary = Path(temporary_name)
     try:
         with (
-            sqlite3.connect(f"file:{database}?mode=ro", uri=True, timeout=10) as source,
-            sqlite3.connect(temporary, timeout=10) as target,
+            closing(sqlite3.connect(f"{database.as_uri()}?mode=ro", uri=True, timeout=10)) as source,
+            closing(sqlite3.connect(temporary, timeout=10)) as target,
         ):
             source.backup(target)
+            target.commit()
         _integrity_check(temporary)
         os.replace(temporary, backup)
         manifest = {
@@ -118,10 +120,11 @@ def restore_backup(backup: Path, destination: Path, *, overwrite: bool = False) 
     temporary = Path(temporary_name)
     try:
         with (
-            sqlite3.connect(f"file:{backup}?mode=ro", uri=True, timeout=10) as source,
-            sqlite3.connect(temporary, timeout=10) as target,
+            closing(sqlite3.connect(f"{backup.as_uri()}?mode=ro", uri=True, timeout=10)) as source,
+            closing(sqlite3.connect(temporary, timeout=10)) as target,
         ):
             source.backup(target)
+            target.commit()
         _integrity_check(temporary)
         if destination.exists() and not overwrite:
             raise FileExistsError(f"Destination exists; pass --overwrite to replace it: {destination}")
