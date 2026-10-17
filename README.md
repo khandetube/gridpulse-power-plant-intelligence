@@ -72,3 +72,8 @@ Please document the origin, license, units, time coverage, and limitations of ev
 
 - [Maintenance Operations Console](docs/maintenance-console.html) — browser client for work orders and turnaround planning. It requires the local FastAPI service to be running and is not connected to live plant systems.
 
+
+
+## Local backup and recovery
+
+The backend includes a local SQLite backup utility with online consistent snapshots, SHA-256 manifest verification, integrity checks, and opt-in restore. See [the operations runbook](docs/operations-runbook.md) for commands and the stop-before-restore procedure. Backups are not uploaded or encrypted by the utility; copy them to a separately managed protected location and retain the JSON manifest alongside each database file.
