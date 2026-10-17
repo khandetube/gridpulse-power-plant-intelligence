@@ -114,3 +114,70 @@ def test_persisted_observation_duplicate_batch_is_atomic(tmp_path, monkeypatch):
     assert response.status_code == 409
     records = client.get("/api/v1/observations").json()["records"]
     assert [record["record_id"] for record in records] == ["persist-existing"]
+
+
+
+def _maintenance_event(event_id: str, start: str = "2026-01-01T08:00:00+03:30") -> dict:
+    return {
+        "event_id": event_id,
+        "plant": "Example plant",
+        "equipment": "GT-1",
+        "event_type": "inspection",
+        "start_time": start,
+        "end_time": "2026-01-01T10:00:00+03:30",
+        "timezone": "Asia/Tehran",
+        "source_id": "SRC-TEST",
+        "verification_status": "unverified",
+        "notes": "API test event",
+    }
+
+
+def test_maintenance_event_ingest_normalizes_times_and_queries(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "maintenance.db"))
+    response = client.post(
+        "/api/v1/maintenance/events",
+        json={"records": [_maintenance_event("maint-1")]},
+    )
+    assert response.status_code == 201
+    assert response.json()["inserted_count"] == 1
+    assert "not necessarily equipment downtime" in response.json()["duration_semantics"]
+    query = client.get("/api/v1/maintenance/events?plant=Example%20plant")
+    assert query.status_code == 200
+    assert query.json()["total"] == 1
+    assert query.json()["records"][0]["start_time"].endswith("+00:00")
+
+
+def test_maintenance_api_rejects_timestamps_without_timezone(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "maintenance-invalid.db"))
+    response = client.post(
+        "/api/v1/maintenance/events",
+        json={"records": [_maintenance_event("bad-time", "2026-01-01T08:00:00")]},
+    )
+    assert response.status_code == 422
+
+
+def test_maintenance_api_rejects_reversed_times(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "maintenance-reversed.db"))
+    event = _maintenance_event("bad-order")
+    event["start_time"] = "2026-01-01T11:00:00+03:30"
+    response = client.post("/api/v1/maintenance/events", json={"records": [event]})
+    assert response.status_code == 422
+
+
+def test_maintenance_api_rejects_duplicate_ids_and_duplicate_persisted_events(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "maintenance-duplicates.db"))
+    repeated = _maintenance_event("duplicate")
+    bad_batch = client.post(
+        "/api/v1/maintenance/events",
+        json={"records": [repeated, repeated]},
+    )
+    assert bad_batch.status_code == 422
+    assert client.post(
+        "/api/v1/maintenance/events",
+        json={"records": [repeated]},
+    ).status_code == 201
+    repeated_response = client.post(
+        "/api/v1/maintenance/events",
+        json={"records": [repeated]},
+    )
+    assert repeated_response.status_code == 409
