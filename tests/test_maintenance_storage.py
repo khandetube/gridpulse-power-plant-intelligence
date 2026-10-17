@@ -1,3 +1,7 @@
+import sqlite3
+
+import pytest
+
 from gridpulse.storage import ObservationStore
 
 
@@ -39,9 +43,6 @@ def test_maintenance_date_filter_includes_overlapping_events(tmp_path):
 
 
 def test_duplicate_maintenance_event_batch_is_atomic(tmp_path):
-    import sqlite3
-    import pytest
-
     store = ObservationStore(tmp_path / "gridpulse.db")
     store.insert_maintenance_many([event("existing")])
     with pytest.raises(sqlite3.IntegrityError):
