@@ -52,7 +52,7 @@ def test_verify_detects_backup_tampering(tmp_path):
     source = tmp_path / "source.sqlite3"
     database(source)
     result = create_backup(source, tmp_path / "backups")
-    backup = tmp_path / result["backup_file_name"]
+    backup = tmp_path / "backups" / result["backup_file_name"]
     manifest_path = backup.with_suffix(backup.suffix + ".json")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["sha256"] = "0" * 64
@@ -68,6 +68,6 @@ def test_backup_rejects_missing_source_and_restore_same_path(tmp_path):
     source = tmp_path / "source.sqlite3"
     database(source)
     result = create_backup(source, tmp_path / "backups")
-    backup = tmp_path / result["backup_file_name"]
+    backup = tmp_path / "backups" / result["backup_file_name"]
     with pytest.raises(ValueError, match="different paths"):
         restore_backup(backup, backup)
