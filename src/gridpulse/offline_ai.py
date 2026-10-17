@@ -5,14 +5,15 @@ It is a transparent statistical assistant, not a trained language model or a saf
 """
 from __future__ import annotations
 
-import argparse
-import json
-import sys
 from collections import defaultdict
 from datetime import date
 from math import isfinite
 from statistics import median
 from typing import Any
+
+import argparse
+import json
+import sys
 
 
 ENGINE_ID = "gridpulse-offline-analytics-v1"
