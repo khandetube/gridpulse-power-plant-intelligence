@@ -44,7 +44,7 @@ def _observation(record_id: str, value: float = 10) -> dict:
         "period_start": "2026-01-01",
         "period_end": "2026-01-01",
         "scope": "unit",
-        "source_id": "SRC-TEST",
+        "source_id": "SRC-001",
         "verification_status": "reviewed",
     }
 
@@ -126,7 +126,7 @@ def _maintenance_event(event_id: str, start: str = "2026-01-01T08:00:00+03:30") 
         "start_time": start,
         "end_time": "2026-01-01T10:00:00+03:30",
         "timezone": "Asia/Tehran",
-        "source_id": "SRC-TEST",
+        "source_id": "SRC-001",
         "verification_status": "unverified",
         "notes": "API test event",
     }
@@ -203,3 +203,21 @@ def test_maintenance_summary_endpoint_returns_grouped_elapsed_time(tmp_path, mon
     assert payload["total_events"] == 2
     assert len(payload["by_equipment"]) == 2
     assert "not equipment downtime" in payload["duration_semantics"]
+
+
+
+def test_observation_ingest_rejects_unregistered_source_id(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "unknown-source.db"))
+    row = _observation("unknown-source")
+    row["source_id"] = "SRC-NOT-REGISTERED"
+    response = client.post("/api/v1/observations", json={"records": [row]})
+    assert response.status_code == 422
+    assert "unknown_source_ids" in str(response.json()["detail"])
+
+
+def test_maintenance_ingest_rejects_unregistered_source_id(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "unknown-maint-source.db"))
+    row = _maintenance_event("unknown-maint-source")
+    row["source_id"] = "SRC-NOT-REGISTERED"
+    response = client.post("/api/v1/maintenance/events", json={"records": [row]})
+    assert response.status_code == 422
