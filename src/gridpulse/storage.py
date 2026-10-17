@@ -197,3 +197,65 @@ class ObservationStore:
                 [*params, limit, offset],
             ).fetchall()
         return [dict(row) for row in rows], int(total)
+
+
+    def summarize_maintenance_events(
+        self,
+        *,
+        plant: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        """Aggregate maintenance event counts and elapsed hours in SQLite.
+
+        Elapsed time is intentionally not named downtime: the event record alone
+        does not establish the equipment's operating state.
+        """
+        self._initialize_maintenance()
+        clauses: list[str] = []
+        params: list[Any] = []
+        if plant is not None:
+            clauses.append("plant = ?")
+            params.append(plant)
+        if start_date is not None:
+            clauses.append("end_time >= ?")
+            params.append(start_date)
+        if end_date is not None:
+            clauses.append("start_time < ?")
+            params.append(end_date)
+        where = " WHERE " + " AND ".join(clauses) if clauses else ""
+        with self._connect() as connection:
+            total = connection.execute(
+                "SELECT COUNT(*) FROM maintenance_events" + where, params
+            ).fetchone()[0]
+            by_type = connection.execute(
+                "SELECT event_type, COUNT(*) AS event_count, "
+                "COALESCE(SUM(MAX(0, (julianday(end_time)-julianday(start_time))*24)), 0) "
+                "AS elapsed_hours FROM maintenance_events" + where
+                + " GROUP BY event_type ORDER BY event_type",
+                params,
+            ).fetchall()
+            by_equipment = connection.execute(
+                "SELECT equipment, COUNT(*) AS event_count, "
+                "COALESCE(SUM(MAX(0, (julianday(end_time)-julianday(start_time))*24)), 0) "
+                "AS elapsed_hours FROM maintenance_events" + where
+                + " GROUP BY equipment ORDER BY event_count DESC, equipment",
+                params,
+            ).fetchall()
+            statuses = connection.execute(
+                "SELECT verification_status, COUNT(*) AS event_count "
+                "FROM maintenance_events" + where
+                + " GROUP BY verification_status ORDER BY verification_status",
+                params,
+            ).fetchall()
+        return {
+            "total_events": int(total),
+            "by_event_type": [dict(row) for row in by_type],
+            "by_equipment": [dict(row) for row in by_equipment],
+            "verification_status_counts": {
+                row["verification_status"]: row["event_count"] for row in statuses
+            },
+            "duration_semantics": (
+                "Elapsed event duration only; not equipment downtime or availability."
+            ),
+        }
