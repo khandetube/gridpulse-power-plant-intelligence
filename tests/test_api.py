@@ -181,3 +181,25 @@ def test_maintenance_api_rejects_duplicate_ids_and_duplicate_persisted_events(tm
         json={"records": [repeated]},
     )
     assert repeated_response.status_code == 409
+
+
+
+def test_maintenance_summary_endpoint_returns_grouped_elapsed_time(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "maintenance-summary.db"))
+    first = _maintenance_event("summary-1")
+    second = _maintenance_event("summary-2")
+    second["event_type"] = "corrective"
+    second["equipment"] = "ST-1"
+    second["start_time"] = "2026-01-02T08:00:00+03:30"
+    second["end_time"] = "2026-01-02T11:00:00+03:30"
+    inserted = client.post(
+        "/api/v1/maintenance/events",
+        json={"records": [first, second]},
+    )
+    assert inserted.status_code == 201
+    summary = client.get("/api/v1/maintenance/summary?plant=Example%20plant")
+    assert summary.status_code == 200
+    payload = summary.json()
+    assert payload["total_events"] == 2
+    assert len(payload["by_equipment"]) == 2
+    assert "not equipment downtime" in payload["duration_semantics"]
