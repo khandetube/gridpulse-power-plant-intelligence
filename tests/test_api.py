@@ -221,3 +221,19 @@ def test_maintenance_ingest_rejects_unregistered_source_id(tmp_path, monkeypatch
     row["source_id"] = "SRC-NOT-REGISTERED"
     response = client.post("/api/v1/maintenance/events", json={"records": [row]})
     assert response.status_code == 422
+
+
+
+def test_data_quality_endpoint_reports_persisted_observation_coverage(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "quality-api.db"))
+    response = client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("quality-1"), _observation("quality-2", 20)]},
+    )
+    assert response.status_code == 201
+    report = client.get("/api/v1/analytics/data-quality")
+    assert report.status_code == 200
+    payload = report.json()
+    assert payload["overview"]["total_records"] == 2
+    assert payload["verification_status_counts"] == {"reviewed": 2}
+    assert payload["overview"]["source_count"] == 1
