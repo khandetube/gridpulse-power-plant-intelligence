@@ -58,3 +58,22 @@ def test_observation_quality_report_summarizes_provenance_and_coverage(tmp_path)
     assert report["scope_counts"] == {"unit": 2}
     assert report["overview"]["source_count"] == 1
     assert any("not independently certified" in note for note in report["integrity_notes"])
+
+
+
+def test_ingestion_audit_records_are_written_atomically(tmp_path):
+    import sqlite3
+
+    import pytest
+
+    store = ObservationStore(tmp_path / "audit.db")
+    store.insert_many([observation("obs-a")])
+    audit, total = store.list_audit_events(entity_type="observation")
+    assert total == 1
+    assert audit[0]["entity_id"] == "obs-a"
+    assert audit[0]["action"] == "created"
+    with pytest.raises(sqlite3.IntegrityError):
+        store.insert_many([observation("obs-b"), observation("obs-a")])
+    audit, total = store.list_audit_events(entity_type="observation")
+    assert total == 1
+    assert [row["entity_id"] for row in audit] == ["obs-a"]
