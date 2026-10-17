@@ -6,14 +6,17 @@ It exposes project metadata and source registry information only.
 from __future__ import annotations
 
 import csv
+import os
+import sqlite3
 from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from gridpulse.analytics import analyze_observations
+from gridpulse.storage import ObservationStore
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SOURCE_REGISTRY = ROOT_DIR / "data" / "source_registry.csv"
@@ -92,6 +95,56 @@ def project_info() -> dict[str, object]:
         "dispatch_system_connected": False,
         "data_policy": "Source-backed records only; unverified leads are labelled.",
     }
+
+
+def get_observation_store() -> ObservationStore:
+    """Resolve the database path at request time for container and test isolation."""
+    database_path = os.environ.get("GRIDPULSE_DB_PATH", "/tmp/gridpulse-observations.sqlite3")
+    return ObservationStore(database_path)
+
+
+@app.post("/api/v1/observations", status_code=201)
+def create_observations(batch: ObservationBatch) -> dict[str, object]:
+    """Persist a validated observation batch in one SQLite transaction."""
+    records = [record.model_dump(mode="json") for record in batch.records]
+    try:
+        count = get_observation_store().insert_many(records)
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="At least one record_id already exists; no records from this batch were stored.",
+        ) from exc
+    return {
+        "inserted_count": count,
+        "record_ids": [record["record_id"] for record in records],
+        "storage": "sqlite",
+        "message": "Caller-supplied observations stored; source truth is not independently verified.",
+    }
+
+
+@app.get("/api/v1/observations")
+def get_observations(
+    plant: str | None = Query(default=None, min_length=1, max_length=200),
+    metric: str | None = Query(default=None, min_length=1, max_length=160),
+    status: Literal["unverified", "reviewed", "verified"] | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    limit: int = Query(default=100, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, object]:
+    """Query stored observations with filters and bounded pagination."""
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
+    records, total = get_observation_store().list_records(
+        plant=plant,
+        metric=metric,
+        status=status,
+        start_date=start_date.isoformat() if start_date else None,
+        end_date=end_date.isoformat() if end_date else None,
+        limit=limit,
+        offset=offset,
+    )
+    return {"total": total, "limit": limit, "offset": offset, "records": records}
 
 
 @app.post("/api/v1/analytics/observations")
