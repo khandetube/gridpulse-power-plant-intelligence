@@ -71,3 +71,17 @@ def test_backup_rejects_missing_source_and_restore_same_path(tmp_path):
     backup = tmp_path / "backups" / result["backup_file_name"]
     with pytest.raises(ValueError, match="different paths"):
         restore_backup(backup, backup)
+
+
+def test_backup_handles_paths_with_spaces_and_uri_characters(tmp_path):
+    source = tmp_path / "database with spaces #1.sqlite3"
+    output = tmp_path / "backup output ?"
+    destination = tmp_path / "restored # copy.sqlite3"
+    database(source, "uri-safe")
+
+    result = create_backup(source, output)
+    backup = output / result["backup_file_name"]
+    assert verify_backup(backup)["integrity_check"] == "ok"
+    restore_backup(backup, destination)
+    with sqlite3.connect(destination) as db:
+        assert db.execute("SELECT value FROM records").fetchone()[0] == "uri-safe"
