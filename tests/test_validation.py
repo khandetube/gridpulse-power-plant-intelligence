@@ -1,4 +1,5 @@
 import pytest
+
 from gridpulse.validation import DatasetValidationError, validate_observation_rows
 
 BASE = {"record_id":"OBS-001", "plant":"Demo Plant", "metric":"net_generation", "value":"12.5", "unit":"MWh", "period_start":"2026-01-01", "period_end":"2026-01-31", "scope":"plant", "source_id":"SRC-DEMO", "verification_status":"unverified"}
