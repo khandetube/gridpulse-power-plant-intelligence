@@ -34,7 +34,7 @@ def test_restore_refuses_existing_destination_without_explicit_overwrite(tmp_pat
     source = tmp_path / "source.sqlite3"
     database(source)
     result = create_backup(source, tmp_path / "backups")
-    backup = tmp_path / result["backup_file_name"]
+    backup = tmp_path / "backups" / result["backup_file_name"]
     destination = tmp_path / "destination.sqlite3"
     database(destination, "keep-me")
 
