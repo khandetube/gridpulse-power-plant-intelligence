@@ -1,3 +1,7 @@
+import sqlite3
+
+import pytest
+
 from gridpulse.storage import ObservationStore
 
 
@@ -28,12 +32,8 @@ def test_insert_and_filter_persisted_observations(tmp_path):
 def test_duplicate_batch_rolls_back_atomically(tmp_path):
     store = ObservationStore(tmp_path / "gridpulse.db")
     store.insert_many([observation("existing")])
-    try:
+    with pytest.raises(sqlite3.IntegrityError):
         store.insert_many([observation("new"), observation("existing")])
-    except Exception:
-        pass
-    else:
-        raise AssertionError("duplicate ID should fail")
     records, total = store.list_records()
     assert total == 1
     assert [record["record_id"] for record in records] == ["existing"]
