@@ -40,27 +40,29 @@ jobs:
       - name: Check style
         run: ruff check src tests
 
-      - name: Build and smoke-test hardened API container
+      - name: Build and smoke-test hardened API container with persistent volume
         run: |
           set -euo pipefail
-          docker build -t gridpulse-api:ci .
-          docker run -d --name gridpulse-api-ci \
-            -p 127.0.0.1:8000:8000 \
-            --read-only \
-            --tmpfs /tmp:size=16m,noexec,nosuid \
-            --security-opt no-new-privileges:true \
-            --cap-drop ALL \
-            -e GRIDPULSE_DB_PATH=/tmp/gridpulse-ci.sqlite3 \
-            gridpulse-api:ci
-          trap 'docker logs gridpulse-api-ci || true; docker rm -f gridpulse-api-ci || true' EXIT
+          export GRIDPULSE_API_KEY=ci-test-secret
+          docker compose config -q
+          docker compose up -d --build
+          trap 'docker compose logs gridpulse-api || true; docker compose down -v || true' EXIT
           for attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:8000/health >/dev/null; then break; fi
             sleep 1
           done
           curl -fsS http://127.0.0.1:8000/health
-          curl -fsS http://127.0.0.1:8000/api/v1/sources
+          unauthorized=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/sources)
+          test "$unauthorized" = "401"
+          curl -fsS -H 'X-API-Key: ci-test-secret' http://127.0.0.1:8000/api/v1/sources
           curl -fsS -X POST http://127.0.0.1:8000/api/v1/observations \
+            -H 'X-API-Key: ci-test-secret' \
             -H 'Content-Type: application/json' \
             -d '{"records":[{"record_id":"CI-OBS-1","plant":"CI fixture","metric":"net_generation","value":10,"unit":"MWh","period_start":"2026-01-01","period_end":"2026-01-01","scope":"plant","source_id":"SRC-001","verification_status":"unverified"}]}'
-          curl -fsS 'http://127.0.0.1:8000/api/v1/audit/events?entity_id=CI-OBS-1'
-
+          curl -fsS -H 'X-API-Key: ci-test-secret' 'http://127.0.0.1:8000/api/v1/audit/events?entity_id=CI-OBS-1'
+          docker compose restart gridpulse-api
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/health >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS -H 'X-API-Key: ci-test-secret' 'http://127.0.0.1:8000/api/v1/observations?plant=CI%20fixture' | grep -q 'CI-OBS-1'
