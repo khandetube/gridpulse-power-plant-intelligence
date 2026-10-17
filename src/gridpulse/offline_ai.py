@@ -6,12 +6,12 @@ It is a transparent statistical assistant, not a trained language model or a saf
 from __future__ import annotations
 
 import argparse
+import json
+import sys
 from collections import defaultdict
 from datetime import date
-import json
 from math import isfinite
 from statistics import median
-import sys
 from typing import Any
 
 
