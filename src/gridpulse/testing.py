@@ -12,6 +12,9 @@ class TestStore:
     def __init__(self, database_path: str | Path) -> None:
         self.database_path = Path(database_path)
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
+        # Ensure the referenced asset table exists in isolated test databases too.
+        from gridpulse.assets import AssetStore
+        AssetStore(self.database_path)
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
