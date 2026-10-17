@@ -28,7 +28,18 @@ Every imported record should include its source, publication date (when known), 
 No credentials, private records, network addresses, control-system configurations, or confidential dispatch data belong in this repository.
 
 ## Development status
-**Initial scaffold — active development.** Public-source figures require record-by-record verification before they are treated as validated dataset entries. The repository does not yet provide live plant telemetry or a validated predictive model.
+**Prototype — active development.** The repository now includes a read-only FastAPI foundation, source-aware observation CSV validation, unit tests, and a GitHub Actions test workflow. Public-source figures still require record-by-record verification before they can be treated as validated dataset entries. No live plant telemetry, dispatch connection, or validated predictive model is available.
+
+## Quick links
+- Dashboard preview (deployment depends on GitHub Pages setup): https://khandetube.github.io/gridpulse-power-plant-intelligence/
+- Dashboard source: https://github.com/khandetube/gridpulse-power-plant-intelligence/blob/main/index.html
+- Observation data dictionary: docs/DATA_DICTIONARY.md
+- Authorized data request and handling: docs/REQUEST_FOR_DATA.md
+- Source provenance: docs/DATA_PROVENANCE.md
+- CI workflow: .github/workflows/tests.yml
+
+## Validate an observation CSV
+Install the package and development dependencies, then call `validate_observations_csv(path)` from `gridpulse.validation`. The validator rejects missing columns, empty identifiers, duplicate record IDs, non-numeric or non-finite values, invalid ISO dates, reversed reporting periods, unknown scope values, and invalid verification states. Passing validation checks structure only; it does not verify the truth of a source.
 
 ## Suggested technology stack
 - Python 3.12+
