@@ -240,6 +240,23 @@ def get_maintenance_events(
     }
 
 
+@app.get("/api/v1/maintenance/summary")
+def maintenance_summary(
+    plant: str | None = Query(default=None, min_length=1, max_length=200),
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> dict[str, object]:
+    """Return SQL-backed maintenance counts and elapsed-time summaries."""
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
+    summary = get_observation_store().summarize_maintenance_events(
+        plant=plant,
+        start_date=start_date.isoformat() + "T00:00:00" if start_date else None,
+        end_date=(end_date + timedelta(days=1)).isoformat() + "T00:00:00" if end_date else None,
+    )
+    return summary
+
+
 @app.post("/api/v1/analytics/observations")
 def analyze_observation_batch(batch: ObservationBatch) -> dict[str, object]:
     """Return grouped descriptive statistics and conservative IQR review flags."""
