@@ -10,7 +10,7 @@ import json
 import sys
 from collections import defaultdict
 from datetime import date
-from math import isfinite, sqrt
+from math import isfinite
 from statistics import median
 from typing import Any
 
@@ -185,7 +185,7 @@ def main() -> int:
         with open(args.input, encoding="utf-8") as stream:
             payload = json.load(stream)
         if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
-            raise ValueError("Input JSON must be an object containing a 'records' array.")
+            raise TypeError("Input JSON must be an object containing a 'records' array.")
         result = analyze_offline(payload["records"])
         rendered = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False)
         if args.output:
@@ -193,7 +193,7 @@ def main() -> int:
                 stream.write(rendered + chr(10))
         else:
             sys.stdout.write(rendered + chr(10))
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
         print(f"offline analysis failed: {exc}", file=sys.stderr)
         return 2
     return 0
