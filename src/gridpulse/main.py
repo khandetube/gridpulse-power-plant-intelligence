@@ -8,7 +8,7 @@ from __future__ import annotations
 import csv
 import os
 import sqlite3
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -189,7 +189,7 @@ def create_maintenance_events(batch: MaintenanceEventBatch) -> dict[str, object]
     records = []
     for event in batch.records:
         row = event.model_dump(mode="json")
-        row["start_time"] = event.start_time.astimezone(timezone.utc).isoformat()
+        row["start_time"] = event.start_time.astimezone(UTC).isoformat()
         row["end_time"] = event.end_time.astimezone(timezone.utc).isoformat()
         records.append(row)
     try:
