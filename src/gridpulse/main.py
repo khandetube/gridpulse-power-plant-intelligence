@@ -340,6 +340,23 @@ def generation_performance(
     }
 
 
+@app.get("/api/v1/audit/events")
+def get_audit_events(
+    entity_type: Literal["observation", "maintenance_event"] | None = None,
+    entity_id: str | None = Query(default=None, min_length=1, max_length=128),
+    limit: int = Query(default=100, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, object]:
+    """Return append-only ingestion audit records with bounded pagination."""
+    records, total = get_observation_store().list_audit_events(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        limit=limit,
+        offset=offset,
+    )
+    return {"total": total, "limit": limit, "offset": offset, "events": records}
+
+
 @app.post("/api/v1/analytics/observations")
 def analyze_observation_batch(batch: ObservationBatch) -> dict[str, object]:
     """Return grouped descriptive statistics and conservative IQR review flags."""
