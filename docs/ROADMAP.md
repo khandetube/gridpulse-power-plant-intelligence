@@ -33,6 +33,6 @@
 
 ## Phase 5 — delivery quality
 - [x] CI checks and automated tests
-- [ ] Docker-based local setup
-- [ ] Deployment and operational documentation
+- [x] Docker-based local setup with non-root container, read-only filesystem, loopback-only host binding, and dropped capabilities
+- [x] API runbook and deployment-boundary documentation
 - [ ] Security and safety review
