@@ -61,3 +61,19 @@ def test_offline_analysis_api_status_and_analysis():
     response = client.post("/api/v1/ai/analyze", json={"records": [row("api-1", 1, "2026-01-01")]})
     assert response.status_code == 200
     assert response.json()["mode"] == "offline_deterministic_statistics"
+
+
+def test_offline_cli_reads_local_json_and_writes_report(tmp_path, monkeypatch):
+    import json
+    import sys
+
+    from gridpulse.offline_ai import main
+
+    source = tmp_path / "input.json"
+    output = tmp_path / "report.json"
+    source.write_text(json.dumps({"records": [row("cli-1", 3, "2026-01-01")]}), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["gridpulse-offline-ai", str(source), "--output", str(output)])
+    assert main() == 0
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["mode"] == "offline_deterministic_statistics"
+    assert report["analyzed_count"] == 1
