@@ -1,6 +1,8 @@
 """Validation helpers for source-aware generation observations."""
 from __future__ import annotations
+
 import csv
+import math
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -35,7 +37,7 @@ def validate_observation_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]
             value = float(row["value"])
         except (TypeError, ValueError) as exc:
             raise DatasetValidationError(f"Row {line_number}: value must be numeric") from exc
-        if value != value or value in (float("inf"), float("-inf")):
+        if not math.isfinite(value):
             raise DatasetValidationError(f"Row {line_number}: value must be finite")
         try:
             start = date.fromisoformat(str(row["period_start"]))
