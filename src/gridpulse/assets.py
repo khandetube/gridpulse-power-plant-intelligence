@@ -69,6 +69,30 @@ class AssetStore:
                 """
             )
 
+    @staticmethod
+    def _validate_parent(connection: sqlite3.Connection, asset_id: str, parent_asset_id: str | None) -> None:
+        if parent_asset_id is None:
+            return
+        if parent_asset_id == asset_id:
+            raise ValueError("An asset cannot be its own parent")
+        parent = connection.execute(
+            "SELECT asset_id, parent_asset_id FROM assets WHERE asset_id = ?",
+            (parent_asset_id,),
+        ).fetchone()
+        if parent is None:
+            raise ValueError("parent_asset_id does not exist")
+        visited: set[str] = {asset_id}
+        current_id: str | None = parent["asset_id"]
+        while current_id is not None:
+            if current_id in visited:
+                raise ValueError("parent_asset_id would create a hierarchy cycle")
+            visited.add(current_id)
+            row = connection.execute(
+                "SELECT parent_asset_id FROM assets WHERE asset_id = ?",
+                (current_id,),
+            ).fetchone()
+            current_id = row["parent_asset_id"] if row else None
+
     def create(self, asset: dict[str, Any]) -> dict[str, Any]:
         sql = """
             INSERT INTO assets (
@@ -82,6 +106,7 @@ class AssetStore:
             )
         """
         with self._connect() as connection:
+            self._validate_parent(connection, asset["asset_id"], asset.get("parent_asset_id"))
             connection.execute(sql, asset)
             connection.execute(
                 "INSERT INTO asset_audit_events(asset_id, action, source_id, verification_status) VALUES (?, 'created', ?, ?)",
@@ -140,6 +165,11 @@ class AssetStore:
         assignments = [f"{key} = ?" for key in changes]
         values = [changes[key] for key in changes]
         with self._connect() as connection:
+            current = connection.execute("SELECT * FROM assets WHERE asset_id = ?", (asset_id,)).fetchone()
+            if current is None:
+                return None
+            if "parent_asset_id" in changes:
+                self._validate_parent(connection, asset_id, changes["parent_asset_id"])
             cursor = connection.execute(
                 "UPDATE assets SET " + ", ".join(assignments) + ", updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE asset_id = ?",
                 [*values, asset_id],
@@ -173,11 +203,13 @@ class AssetStore:
         children: dict[str | None, list[dict[str, Any]]] = {}
         for record in records:
             children.setdefault(record["parent_asset_id"], []).append(record)
+
         def build(parent: str | None) -> list[dict[str, Any]]:
-            result = []
+            result: list[dict[str, Any]] = []
             for record in children.get(parent, []):
                 item = dict(record)
                 item["children"] = build(record["asset_id"])
                 result.append(item)
             return result
+
         return build(None)
