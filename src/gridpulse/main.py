@@ -113,7 +113,7 @@ class MaintenanceEventBatch(BaseModel):
         return self
 
 
-def ensure_registered_sources(records: list[BaseModel]) -> None:
+def ensure_registered_sources(records: list[ObservationInput | MaintenanceEventInput]) -> None:
     """Reject records whose provenance IDs are absent from the source registry."""
     if not SOURCE_REGISTRY.exists():
         raise HTTPException(status_code=503, detail="Source registry is unavailable")
