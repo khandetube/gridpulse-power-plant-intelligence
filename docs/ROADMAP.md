@@ -32,6 +32,7 @@
 - [x] Persist imported maintenance events in browser local storage with a clear-data action
 - [x] Export imported maintenance events as CSV
 - [x] Add standalone Engineering Workbench for performance testing, merit-order studies, damage/loss estimation, overhaul work-package planning, acceptance-test comparison, and R&D experiment registers
+- [x] Add standalone Asset Intelligence registry with stable IDs, hierarchy, criticality and lifecycle metadata
 - [ ] Add cross-session backup/import guidance and browser-storage size handling
 
 ## Phase 4 — reliability analytics
@@ -39,13 +40,17 @@
 - [x] Add conservative IQR screening as a review-only statistical heuristic; production anomaly detection still requires operational context and evaluation
 - [ ] Evaluate models with temporal holdouts and documented metrics
 - [ ] Add predictive-maintenance experiments only when labelled data is sufficient
-- [ ] Add reliability model layer for MTBF/MTTR, availability and failure-mode analysis only after event-state definitions are approved
+- [x] Add transparent MTBF/MTTR and availability study calculator with explicit limitations; formal RAM modelling remains pending approved event definitions
 
 ## Phase 5 — engineering operations and decision support
-- [ ] Build normalized asset/equipment registry with stable IDs, hierarchy, manufacturer/model metadata, criticality and lifecycle state
+- [x] Add upgrade/retrofit scenario comparator with explicit assumptions and simple-payback study
+- [x] Add simplified reserve-aware merit-order dispatch study; network/security constraints remain future work and no commands are issued
+- [x] Add turnaround dependency planner with cycle detection
+- [x] Add recovery readiness evidence gates without return-to-service authorization
+- [ ] Build normalized asset/equipment registry into the authenticated backend API
 - [ ] Add test-plan, overhaul, turnaround and change-control entities with approval/status workflows
 - [ ] Add engineering calculation library with explicit units, formula versions, assumptions and traceable inputs
-- [ ] Add scenario engine for upgrade/retrofit comparison and before/after performance studies
+- [ ] Add full scenario engine for upgrade/retrofit comparison and before/after performance studies
 - [ ] Add loss/damage assessment with documented assumptions, uncertainty ranges and evidence attachments
 - [ ] Add dispatch-planning studies with constraints, reserve requirements, ramp limits and economic assumptions; never issue direct control commands
 - [ ] Add recovery/turnaround planning with dependencies, milestones, resource estimates and readiness gates
