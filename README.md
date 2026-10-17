@@ -77,3 +77,7 @@ Please document the origin, license, units, time coverage, and limitations of ev
 ## Local backup and recovery
 
 The backend includes a local SQLite backup utility with online consistent snapshots, SHA-256 manifest verification, integrity checks, and opt-in restore. See [the operations runbook](docs/operations-runbook.md) for commands and the stop-before-restore procedure. Backups are not uploaded or encrypted by the utility; copy them to a separately managed protected location and retain the JSON manifest alongside each database file.
+
+## Offline AI decision support
+
+A local, network-free deterministic analytics engine is available for group statistics, robust outlier candidates, trend estimates, and input-quality checks. It requires no hosted AI service or downloaded model weights. It is **not a trained language model** and its statistical flags are not alarms or failure predictions. See [the offline AI guide](docs/offline-ai.md) for endpoints, limits, and offline deployment notes.
