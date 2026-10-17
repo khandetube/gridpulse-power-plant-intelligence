@@ -7,13 +7,13 @@ a copy before replacing the destination.
 from __future__ import annotations
 
 import argparse
-from contextlib import closing
 import hashlib
 import json
 import os
 import sqlite3
 import sys
 import tempfile
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
