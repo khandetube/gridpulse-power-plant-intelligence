@@ -210,3 +210,21 @@ def update_work_order(work_order_id: str, request: WorkOrderUpdate) -> dict[str,
         db.execute("INSERT INTO work_order_audit_events(work_order_id,action,from_status,to_status,source_id) VALUES (?,?,?,?,?)",
                    (work_order_id,"updated",before["status"],new_status,source_id))
         return dict(db.execute("SELECT * FROM work_orders WHERE work_order_id=?", (work_order_id,)).fetchone())
+
+
+
+@router.get("/{work_order_id}/audit")
+def list_work_order_audit(work_order_id: str,
+                          limit: int = Query(default=100, ge=1, le=1000),
+                          offset: int = Query(default=0, ge=0)) -> dict[str, object]:
+    with connect() as db:
+        if db.execute("SELECT 1 FROM work_orders WHERE work_order_id=?", (work_order_id,)).fetchone() is None:
+            raise HTTPException(status_code=404, detail="Work order not found")
+        total = db.execute("SELECT COUNT(*) FROM work_order_audit_events WHERE work_order_id=?",
+                           (work_order_id,)).fetchone()[0]
+        rows = db.execute("""SELECT audit_id,work_order_id,action,from_status,to_status,source_id,recorded_at
+                             FROM work_order_audit_events WHERE work_order_id=?
+                             ORDER BY audit_id LIMIT ? OFFSET ?""",
+                          (work_order_id, limit, offset)).fetchall()
+    return {"total": total, "limit": limit, "offset": offset, "events": [dict(row) for row in rows],
+            "note": "Application audit trail; actor identity and tamper-proof external storage are not implemented."}
