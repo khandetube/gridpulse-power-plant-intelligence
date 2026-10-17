@@ -17,6 +17,7 @@ from gridpulse.analytics import analyze_observations
 from gridpulse.assets_api import router as assets_router
 from gridpulse.engineering import calculate_generation_performance
 from gridpulse.fmea_api import router as fmea_router
+from gridpulse.inspections_api import router as inspections_router
 from gridpulse.storage import ObservationStore
 from gridpulse.testing_api import router as testing_router
 
@@ -29,6 +30,7 @@ app = FastAPI(title="GridPulse AI API", version="0.1.0", description="Source-awa
 app.include_router(assets_router)
 app.include_router(testing_router)
 app.include_router(fmea_router)
+app.include_router(inspections_router)
 
 
 @app.middleware("http")
