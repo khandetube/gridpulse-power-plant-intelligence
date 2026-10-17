@@ -77,3 +77,32 @@ def test_offline_cli_reads_local_json_and_writes_report(tmp_path, monkeypatch):
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["mode"] == "offline_deterministic_statistics"
     assert report["analyzed_count"] == 1
+
+
+def test_local_language_model_is_disabled_without_a_model_file(monkeypatch, tmp_path):
+    from gridpulse.local_llm import LocalModelUnavailable, generate_local_answer, local_model_status
+
+    monkeypatch.setenv("GRIDPULSE_LOCAL_MODEL_PATH", str(tmp_path / "missing.gguf"))
+    status = local_model_status()
+    assert status["ready"] is False
+    assert status["network_access"] is False
+    try:
+        generate_local_answer("Summarize the observations")
+    except LocalModelUnavailable as exc:
+        assert "No local model file" in str(exc)
+    else:
+        raise AssertionError("Missing local model must not silently use a remote service")
+
+
+def test_local_language_model_rejects_oversized_context(monkeypatch, tmp_path):
+    from gridpulse.local_llm import generate_local_answer
+
+    model_file = tmp_path / "test.gguf"
+    model_file.write_bytes(b"test")
+    monkeypatch.setenv("GRIDPULSE_LOCAL_MODEL_PATH", str(model_file))
+    try:
+        generate_local_answer("Summarize", [{"x": index} for index in range(21)])
+    except ValueError as exc:
+        assert "20 context records" in str(exc)
+    else:
+        raise AssertionError("Oversized context must be rejected")
