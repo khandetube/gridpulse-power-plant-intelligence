@@ -90,7 +90,7 @@ def validate_maintenance_event_rows(rows: list[dict[str, Any]]) -> list[dict[str
             raise DatasetValidationError(f"Row {line_number}: invalid verification_status {status}")
         try:
             start = datetime.fromisoformat(str(row["start_time"]).strip())
-            end = datetime.fromisoformat(str(row["end_time"]).strip().replace("Z", "+00:00"))
+            end = datetime.fromisoformat(str(row["end_time"]).strip())
         except (TypeError, ValueError) as exc:
             raise DatasetValidationError(
                 f"Row {line_number}: timestamps must be ISO 8601 with a timezone offset"
