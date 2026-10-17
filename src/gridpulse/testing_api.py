@@ -112,7 +112,7 @@ def create_execution(request: TestExecutionInput) -> dict[str, object]:
     try:
         return store().create_execution(payload)
     except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except sqlite3.IntegrityError as exc:
         raise HTTPException(status_code=409, detail="execution_id already exists") from exc
 
