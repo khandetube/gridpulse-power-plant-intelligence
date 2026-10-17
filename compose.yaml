@@ -4,6 +4,10 @@ services:
       context: .
       dockerfile: Dockerfile
     image: gridpulse-api:local
+    environment:
+      GRIDPULSE_DB_PATH: /data/gridpulse.sqlite3
+    volumes:
+      - gridpulse-data:/data
     ports:
       - "127.0.0.1:8000:8000"
     restart: unless-stopped
@@ -20,3 +24,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+volumes:
+  gridpulse-data:
