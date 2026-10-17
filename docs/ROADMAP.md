@@ -17,6 +17,7 @@
 - [x] Add persisted dataset quality reporting for source coverage, metric/unit coverage, scope, and verification labels
 - [x] Add grouped descriptive-statistics and IQR review endpoint for source-labelled observation batches
 - [x] Add tests for numeric values, dates, duplicate IDs, and event chronology
+- [x] Add explicitly unit-labelled net efficiency, net heat rate, and capacity-factor calculations with input-boundary checks and out-of-range review warnings
 - [ ] Add unit-conversion rules only where source units and metric definitions support them
 
 ## Phase 3 — dashboard
