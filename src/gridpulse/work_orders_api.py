@@ -37,8 +37,8 @@ def connect() -> sqlite3.Connection:
     path = database_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     AssetStore(path)
-    from gridpulse.inspections import InspectionStore
     from gridpulse.fmea import FMEAStore
+    from gridpulse.inspections import InspectionStore
     InspectionStore(path)
     FMEAStore(path)
     db = sqlite3.connect(path, timeout=10)
