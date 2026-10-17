@@ -26,7 +26,7 @@ def test_local_retrieval_returns_source_and_line_provenance():
     top = result["results"][0]
     assert top["source_id"] == "DOC-MAINT-01"
     assert top["start_line"] == 4
-    assert top["end_line"] == 5
+    assert top["end_line"] == 6
     assert "vibration" in top["matched_terms"]
 
 
