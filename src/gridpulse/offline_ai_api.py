@@ -6,6 +6,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
+from gridpulse.knowledge import search_documents
 from gridpulse.local_llm import LocalModelUnavailable, generate_local_answer, local_model_status
 from gridpulse.offline_ai import analyze_offline
 
@@ -46,7 +47,7 @@ def offline_ai_status() -> dict[str, Any]:
         "external_services_required": False,
         "trained_language_model_included": False,
         "optional_local_language_model": local_model_status(),
-        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "input_quality_checks"],
+        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "input_quality_checks", "local_lexical_document_retrieval"],
         "not_capable_of": ["language_generation_without_a_configured_local_model", "failure_certification", "plant_control", "automatic_trip_or_dispatch"],
     }
 
@@ -72,3 +73,27 @@ def offline_ai_chat(request: LocalChatRequest) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except LocalModelUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+class KnowledgeDocument(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    source_id: str = Field(min_length=1, max_length=128)
+    text: str = Field(min_length=1, max_length=200000)
+
+
+class KnowledgeSearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=2000)
+    documents: list[KnowledgeDocument] = Field(min_length=1, max_length=40)
+    limit: int = Field(default=5, ge=1, le=10)
+
+
+@router.post("/knowledge/search")
+def offline_knowledge_search(request: KnowledgeSearchRequest) -> dict[str, Any]:
+    try:
+        return search_documents(
+            request.query,
+            [document.model_dump() for document in request.documents],
+            request.limit,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
