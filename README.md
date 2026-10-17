@@ -66,3 +66,9 @@ GridPulse AI is an independent portfolio/research project. It is not an official
 
 ## Contributing
 Please document the origin, license, units, time coverage, and limitations of every dataset before adding it. Never label simulated values as real operational measurements.
+
+
+## Browser operations console
+
+- [Maintenance Operations Console](docs/maintenance-console.html) — browser client for work orders and turnaround planning. It requires the local FastAPI service to be running and is not connected to live plant systems.
+
