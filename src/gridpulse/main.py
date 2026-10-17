@@ -16,6 +16,7 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from gridpulse.analytics import analyze_observations
+from gridpulse.engineering import calculate_generation_performance
 from gridpulse.storage import ObservationStore
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -80,6 +81,26 @@ class ObservationBatch(BaseModel):
         ids = [record.record_id for record in self.records]
         if len(ids) != len(set(ids)):
             raise ValueError("record_id values must be unique within a batch")
+        return self
+
+
+class GenerationPerformanceInput(BaseModel):
+    """Inputs must describe the same plant boundary and reporting interval."""
+
+    plant: str = Field(min_length=1, max_length=200)
+    period_start: date
+    period_end: date
+    net_generation_mwh: float = Field(gt=0, allow_inf_nan=False)
+    fuel_thermal_input_mwh: float = Field(gt=0, allow_inf_nan=False)
+    net_capacity_mw: float = Field(gt=0, allow_inf_nan=False)
+    period_hours: float = Field(gt=0, le=8784, allow_inf_nan=False)
+    source_id: str = Field(min_length=1, max_length=128)
+    verification_status: Literal["unverified", "reviewed", "verified"]
+
+    @model_validator(mode="after")
+    def validate_period(self) -> GenerationPerformanceInput:
+        if self.period_end < self.period_start:
+            raise ValueError("period_end must be on or after period_start")
         return self
 
 
@@ -292,6 +313,31 @@ def observation_data_quality(
 ) -> dict[str, object]:
     """Report dataset coverage and provenance distribution from persisted records."""
     return get_observation_store().observation_quality_report(plant=plant)
+
+
+@app.post("/api/v1/engineering/generation-performance")
+def generation_performance(
+    request: GenerationPerformanceInput,
+) -> dict[str, object]:
+    """Calculate net efficiency, net heat rate, and capacity factor from explicit units."""
+    ensure_registered_sources([request])
+    try:
+        result = calculate_generation_performance(
+            net_generation_mwh=request.net_generation_mwh,
+            fuel_thermal_input_mwh=request.fuel_thermal_input_mwh,
+            net_capacity_mw=request.net_capacity_mw,
+            period_hours=request.period_hours,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "plant": request.plant,
+        "period_start": request.period_start.isoformat(),
+        "period_end": request.period_end.isoformat(),
+        "source_id": request.source_id,
+        "verification_status": request.verification_status,
+        **result,
+    }
 
 
 @app.post("/api/v1/analytics/observations")
