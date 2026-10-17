@@ -47,7 +47,7 @@
 - [x] Add simplified reserve-aware merit-order dispatch study; network/security constraints remain future work and no commands are issued
 - [x] Add turnaround dependency planner with cycle detection
 - [x] Add recovery readiness evidence gates without return-to-service authorization
-- [ ] Build normalized asset/equipment registry into the authenticated backend API
+- [x] Build normalized asset/equipment registry into the authenticated backend API
 - [ ] Add test-plan, overhaul, turnaround and change-control entities with approval/status workflows
 - [ ] Add engineering calculation library with explicit units, formula versions, assumptions and traceable inputs
 - [ ] Add full scenario engine for upgrade/retrofit comparison and before/after performance studies
