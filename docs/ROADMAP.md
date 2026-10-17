@@ -52,7 +52,8 @@
 - [x] Add FMEA with traceable severity/occurrence/detectability scoring and review states
 - [x] Add inspection register with condition ratings, evidence references, source provenance and review states
 - [x] Add maintenance work orders linked to assets and optional inspection/FMEA origins, lifecycle guards, completion evidence and audit events
-- [ ] Add overhaul/turnaround and formal change-control entities with dependency/resource/approval workflows
+- [x] Add turnaround plans, task dependency DAG validation, cycle prevention, guarded task/plan status transitions, critical-path duration estimates and task/plan audit history
+- [ ] Add resource-constrained scheduling, calendar/shift rules, permits/isolation gates, parts availability and formal change-control entities
 - [ ] Add engineering calculation library with explicit units, formula versions, assumptions and traceable inputs
 - [ ] Add full scenario engine for upgrade/retrofit comparison and before/after performance studies
 - [ ] Add loss/damage assessment with documented assumptions, uncertainty ranges and evidence attachments
