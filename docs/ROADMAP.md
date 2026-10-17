@@ -31,6 +31,7 @@
 - [x] Add local maintenance-event CSV import, validation, filtering, and timeline to dashboard
 - [x] Persist imported maintenance events in browser local storage with a clear-data action
 - [x] Export imported maintenance events as CSV
+- [x] Add standalone Engineering Workbench for performance testing, merit-order studies, damage/loss estimation, overhaul work-package planning, acceptance-test comparison, and R&D experiment registers
 - [ ] Add cross-session backup/import guidance and browser-storage size handling
 
 ## Phase 4 — reliability analytics
@@ -38,11 +39,24 @@
 - [x] Add conservative IQR screening as a review-only statistical heuristic; production anomaly detection still requires operational context and evaluation
 - [ ] Evaluate models with temporal holdouts and documented metrics
 - [ ] Add predictive-maintenance experiments only when labelled data is sufficient
+- [ ] Add reliability model layer for MTBF/MTTR, availability and failure-mode analysis only after event-state definitions are approved
 
-## Phase 5 — delivery quality
+## Phase 5 — engineering operations and decision support
+- [ ] Build normalized asset/equipment registry with stable IDs, hierarchy, manufacturer/model metadata, criticality and lifecycle state
+- [ ] Add test-plan, overhaul, turnaround and change-control entities with approval/status workflows
+- [ ] Add engineering calculation library with explicit units, formula versions, assumptions and traceable inputs
+- [ ] Add scenario engine for upgrade/retrofit comparison and before/after performance studies
+- [ ] Add loss/damage assessment with documented assumptions, uncertainty ranges and evidence attachments
+- [ ] Add dispatch-planning studies with constraints, reserve requirements, ramp limits and economic assumptions; never issue direct control commands
+- [ ] Add recovery/turnaround planning with dependencies, milestones, resource estimates and readiness gates
+- [ ] Add R&D experiment tracking, reproducibility metadata and result provenance
+
+## Phase 6 — delivery quality and safety
 - [x] CI checks and automated tests
 - [x] CI Docker image build and hardened-container runtime smoke test
 - [x] Docker-based local setup with non-root container, read-only filesystem, loopback-only host binding, dropped capabilities, and persistent database volume
 - [x] Optional shared API-key guard for `/api/v1/*` routes and secret injection through Compose
 - [x] API runbook and deployment-boundary documentation
 - [ ] Security and safety review
+- [ ] Multi-user authentication, roles, rate limits and stronger audit identity
+- [ ] Authorized integration boundary for telemetry/EMS/SCADA only after security, authorization and safety review
