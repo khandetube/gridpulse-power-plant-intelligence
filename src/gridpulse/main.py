@@ -190,7 +190,7 @@ def create_maintenance_events(batch: MaintenanceEventBatch) -> dict[str, object]
     for event in batch.records:
         row = event.model_dump(mode="json")
         row["start_time"] = event.start_time.astimezone(UTC).isoformat()
-        row["end_time"] = event.end_time.astimezone(timezone.utc).isoformat()
+        row["end_time"] = event.end_time.astimezone(UTC).isoformat()
         records.append(row)
     try:
         count = get_observation_store().insert_maintenance_many(records)
