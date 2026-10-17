@@ -19,7 +19,12 @@
 <div class="row"><div><label for="apiKey">Local API key (kept only in this page's memory)</label><input id="apiKey" type="password" autocomplete="off" placeholder="Required if GRIDPULSE_API_KEY is enabled"></div><div><label>Local engine status</label><div id="status" class="status">Checking local API…</div><button class="secondary" id="refreshStatus">Refresh status</button></div></div>
 <p class="small caution">Use only on a computer where you trust the local API. Never expose port 8000 to the public internet. No plant telemetry is connected by this demo page.</p>
 </section>
-<div class="grid" style="margin-top:16px">
+<div class="grid" style="margin-top:16px">\n<section class="card full">
+<h2>Local engineering knowledge search</h2><p class="muted small">Paste the exact text of local manuals or approved procedures. The engine searches only the text you submit, returns matching excerpts with line ranges and source IDs, and makes no network calls. This first version is lexical search—not semantic search. Do not paste confidential material into a publicly hosted page; use a locally served copy for sensitive documents.</p>
+<label for="knowledgeQuery">Search question / key terms</label><input id="knowledgeQuery" value="vibration inspection limits">
+<label for="knowledgeDocs">Documents JSON array</label><textarea id="knowledgeDocs" style="min-height:180px" spellcheck="false"></textarea>
+<button id="knowledgeSearch">Search local documents</button><div id="knowledgeState" class="status">No document search yet.</div><pre id="knowledgeResult">Retrieved evidence will appear here with source and line references.</pre>
+</section>
 <section class="card">
 <h2>1 · Evidence records</h2><p class="muted small">Paste JSON with a top-level <code>records</code> array. Each record must retain source, scope, unit, dates and verification status. Sample below is synthetic, not plant data.</p>
 <label for="records">Observation JSON</label>
