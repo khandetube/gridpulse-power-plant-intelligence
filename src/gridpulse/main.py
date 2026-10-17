@@ -20,6 +20,7 @@ from gridpulse.fmea_api import router as fmea_router
 from gridpulse.inspections_api import router as inspections_router
 from gridpulse.storage import ObservationStore
 from gridpulse.testing_api import router as testing_router
+from gridpulse.work_orders_api import router as work_orders_router
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 _CONFIGURED_DATA_DIR = Path(os.environ.get("GRIDPULSE_DATA_DIR", ROOT_DIR / "data"))
@@ -31,6 +32,7 @@ app.include_router(assets_router)
 app.include_router(testing_router)
 app.include_router(fmea_router)
 app.include_router(inspections_router)
+app.include_router(work_orders_router)
 
 
 @app.middleware("http")
