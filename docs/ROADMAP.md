@@ -4,20 +4,22 @@
 - [x] Create repository and define data-integrity policy
 - [x] Document initial source leads and known limitations
 - [ ] Verify public figures against original primary/secondary reports
-- [ ] Add a machine-readable source registry and data dictionary
-- [ ] Add schema validation for generation and fuel records
+- [x] Add machine-readable source registry and observation data dictionary
+- [x] Add schema validation for generation and fuel observations
+- [x] Define and validate a source-aware maintenance-event schema
 
 ## Phase 2 — analytics backend
-- [ ] Create typed metric schemas
-- [ ] Implement CSV import and validation
+- [ ] Create typed API schemas and validation endpoint
 - [ ] Add generation/fuel summary endpoints
-- [ ] Add tests for units, periods, duplicate records, and aggregate scope
+- [x] Add tests for numeric values, dates, duplicate IDs, and event chronology
+- [ ] Add unit-conversion rules only where source units and metric definitions support them
 
 ## Phase 3 — dashboard
-- [ ] Plant overview and source confidence indicators
-- [ ] Generation and fuel charts using verified records only
-- [ ] Maintenance event timeline
-- [ ] Clear empty states when source-backed observations are unavailable
+- [x] Plant overview and source confidence indicators
+- [x] CSV import with local schema validation
+- [x] Trend chart for user-imported dated observations
+- [x] Clear empty states when source-backed observations are unavailable
+- [ ] Add maintenance-event import and timeline to dashboard
 
 ## Phase 4 — reliability analytics
 - [ ] Define data requirements with an authorized data provider
@@ -26,7 +28,7 @@
 - [ ] Add predictive-maintenance experiments only when labelled data is sufficient
 
 ## Phase 5 — delivery quality
-- [ ] CI checks and automated tests
+- [x] CI checks and automated tests
 - [ ] Docker-based local setup
 - [ ] Deployment and operational documentation
 - [ ] Security and safety review
