@@ -9,8 +9,8 @@
 - [x] Define and validate a source-aware maintenance-event schema
 
 ## Phase 2 — analytics backend
-- [ ] Create typed API schemas and validation endpoint
-- [ ] Add generation/fuel summary endpoints
+- [x] Create typed API schemas and validation endpoint
+- [x] Add grouped descriptive-statistics and IQR review endpoint for source-labelled observation batches
 - [x] Add tests for numeric values, dates, duplicate IDs, and event chronology
 - [ ] Add unit-conversion rules only where source units and metric definitions support them
 
@@ -18,6 +18,7 @@
 - [x] Plant overview and source confidence indicators
 - [x] CSV import with local schema validation
 - [x] Trend chart for user-imported dated observations
+- [x] Analytics lab with metric/status/date filters, descriptive statistics, IQR review flags, and CSV/JSON export
 - [x] Clear empty states when source-backed observations are unavailable
 - [x] Add local maintenance-event CSV import, validation, filtering, and timeline to dashboard
 - [x] Persist imported maintenance events in browser local storage with a clear-data action
@@ -26,7 +27,7 @@
 
 ## Phase 4 — reliability analytics
 - [ ] Define data requirements with an authorized data provider
-- [ ] Explore baseline statistical anomaly detection
+- [x] Add conservative IQR screening as a review-only statistical heuristic; production anomaly detection still requires operational context and evaluation
 - [ ] Evaluate models with temporal holdouts and documented metrics
 - [ ] Add predictive-maintenance experiments only when labelled data is sufficient
 
