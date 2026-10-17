@@ -126,6 +126,7 @@ The following endpoints are available in the local FastAPI service. All writes r
 - `GET /api/v1/work-orders` — filter by asset, status, priority or origin and paginate. Urgent/high priority records sort first.
 - `GET /api/v1/work-orders/{work_order_id}` — retrieve a work order.
 - `PATCH /api/v1/work-orders/{work_order_id}` — transition status and update owner, schedule, labor estimate, parts/materials, completion summary and evidence.
+- `GET /api/v1/work-orders/{work_order_id}/audit` — query paginated status-change/application audit events, including source ID and from/to status.
 
 Work-order status transitions are guarded: proposed → approved → in_progress → completed → verified, with permitted hold/cancel paths. Completion requires a completion summary and after-evidence reference; verification requires `verification_status=verified` and after-evidence. The API checks that evidence references are present, not that an external file is authentic or technically adequate. These checks do not replace work permits, lockout/tagout, independent inspection, OEM procedures or the site's authorized return-to-service process.
 
