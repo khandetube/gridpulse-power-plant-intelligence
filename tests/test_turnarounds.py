@@ -41,6 +41,12 @@ def test_turnaround_dependency_schedule_and_lifecycle(tmp_path, monkeypatch):
                            params={"status": "ready", "source_id": "SRC-001"})
     assert blocked.status_code == 409
 
+    first_ready = client.patch("/api/v1/turnarounds/plans/TURN-1/tasks/TASK-A",
+                               params={"status": "ready", "source_id": "SRC-001"})
+    assert first_ready.status_code == 200
+    first_started = client.patch("/api/v1/turnarounds/plans/TURN-1/tasks/TASK-A",
+                                 params={"status": "in_progress", "source_id": "SRC-001"})
+    assert first_started.status_code == 200
     first_done = client.patch("/api/v1/turnarounds/plans/TURN-1/tasks/TASK-A",
                               params={"status": "completed", "source_id": "SRC-001"})
     assert first_done.status_code == 200
@@ -55,7 +61,10 @@ def test_turnaround_dependency_schedule_and_lifecycle(tmp_path, monkeypatch):
 
     audit = client.get("/api/v1/turnarounds/plans/TURN-1/audit")
     assert audit.status_code == 200
-    assert audit.json()["total"] == 2
+    assert audit.json()["total"] == 3
+    task_audit = client.get("/api/v1/turnarounds/plans/TURN-1/tasks/TASK-A/audit")
+    assert task_audit.status_code == 200
+    assert task_audit.json()["total"] == 4
 
 
 def test_turnaround_rejects_cycles_unknown_dependencies_and_duplicate_ids(tmp_path, monkeypatch):
