@@ -62,6 +62,11 @@ def test_work_order_lifecycle_requires_completion_evidence(tmp_path, monkeypatch
     assert verified.status_code == 200
     assert verified.json()["status"] == "verified"
 
+    audit = client.get("/api/v1/work-orders/WO-1/audit")
+    assert audit.status_code == 200
+    assert audit.json()["total"] == 5
+    assert audit.json()["events"][-1]["to_status"] == "verified"
+
 
 def test_work_order_rejects_bad_origin_source_and_transition(tmp_path, monkeypatch):
     monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "work-orders-validation.db"))
