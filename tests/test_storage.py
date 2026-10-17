@@ -45,3 +45,16 @@ def test_pagination_reports_total(tmp_path):
     records, total = store.list_records(limit=1, offset=1)
     assert total == 3
     assert len(records) == 1
+
+
+
+def test_observation_quality_report_summarizes_provenance_and_coverage(tmp_path):
+    store = ObservationStore(tmp_path / "quality.db")
+    store.insert_many([observation("a"), observation("b", plant="Plant B")])
+    report = store.observation_quality_report()
+    assert report["overview"]["total_records"] == 2
+    assert report["overview"]["plant_count"] == 2
+    assert report["verification_status_counts"] == {"reviewed": 2}
+    assert report["scope_counts"] == {"unit": 2}
+    assert report["overview"]["source_count"] == 1
+    assert any("not independently certified" in note for note in report["integrity_notes"])
