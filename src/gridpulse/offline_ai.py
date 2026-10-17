@@ -187,10 +187,10 @@ def main() -> int:
         if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
             raise ValueError("Input JSON must be an object containing a 'records' array.")
         result = analyze_offline(payload["records"])
-        rendered = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + "\\n"
+        rendered = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False)
         if args.output:
-            with open(args.output, "w", encoding="utf-8", newline="\\n") as stream:
-                stream.write(rendered)
+            with open(args.output, "w", encoding="utf-8") as stream:
+                stream.write(rendered + chr(10))
         else:
             sys.stdout.write(rendered + chr(10))
     except (OSError, json.JSONDecodeError, ValueError) as exc:
