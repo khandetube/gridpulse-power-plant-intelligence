@@ -25,6 +25,7 @@
 - [x] CSV import with local schema validation
 - [x] Trend chart for user-imported dated observations
 - [x] Analytics lab with metric/status/date filters, descriptive statistics, IQR review flags, and CSV/JSON export
+- [x] Bilingual local engineering calculator for net efficiency, net heat rate, and capacity factor; empty by default and clearly separated from live plant data
 - [x] Clear empty states when source-backed observations are unavailable
 - [x] Add local maintenance-event CSV import, validation, filtering, and timeline to dashboard
 - [x] Persist imported maintenance events in browser local storage with a clear-data action
