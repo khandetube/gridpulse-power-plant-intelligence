@@ -14,6 +14,7 @@
 - [x] Add persistent maintenance-event API with timezone-aware validation, UTC normalization, overlap-aware date filtering, and duplicate protection
 - [x] Require registered source IDs for observation and maintenance ingestion; distinguish source catalogue presence from fact verification
 - [x] Add SQL-backed maintenance summaries grouped by event type and equipment; elapsed time is not labelled downtime
+- [x] Add persisted dataset quality reporting for source coverage, metric/unit coverage, scope, and verification labels
 - [x] Add grouped descriptive-statistics and IQR review endpoint for source-labelled observation batches
 - [x] Add tests for numeric values, dates, duplicate IDs, and event chronology
 - [ ] Add unit-conversion rules only where source units and metric definitions support them
