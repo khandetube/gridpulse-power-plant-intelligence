@@ -47,8 +47,12 @@
 - [x] Add simplified reserve-aware merit-order dispatch study; network/security constraints remain future work and no commands are issued
 - [x] Add turnaround dependency planner with cycle detection
 - [x] Add recovery readiness evidence gates without return-to-service authorization
-- [x] Build normalized asset/equipment registry into the authenticated backend API
-- [ ] Add test-plan, overhaul, turnaround and change-control entities with approval/status workflows
+- [x] Build normalized asset/equipment registry into the API (optional shared API key; not multi-user authentication)
+- [x] Add test plans, test cases, executions, acceptance bounds and evidence references
+- [x] Add FMEA with traceable severity/occurrence/detectability scoring and review states
+- [x] Add inspection register with condition ratings, evidence references, source provenance and review states
+- [x] Add maintenance work orders linked to assets and optional inspection/FMEA origins, lifecycle guards, completion evidence and audit events
+- [ ] Add overhaul/turnaround and formal change-control entities with dependency/resource/approval workflows
 - [ ] Add engineering calculation library with explicit units, formula versions, assumptions and traceable inputs
 - [ ] Add full scenario engine for upgrade/retrofit comparison and before/after performance studies
 - [ ] Add loss/damage assessment with documented assumptions, uncertainty ranges and evidence attachments
@@ -63,5 +67,5 @@
 - [x] Optional shared API-key guard for `/api/v1/*` routes and secret injection through Compose
 - [x] API runbook and deployment-boundary documentation
 - [ ] Security and safety review
-- [ ] Multi-user authentication, roles, rate limits and stronger audit identity
+- [ ] Multi-user authentication, roles, rate limits, audit actor identity and tamper-resistant audit export
 - [ ] Authorized integration boundary for telemetry/EMS/SCADA only after security, authorization and safety review
