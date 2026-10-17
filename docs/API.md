@@ -20,6 +20,7 @@ The API binds to `127.0.0.1:8000` on the host, not all host interfaces.
 - Query stored observations: `GET http://127.0.0.1:8000/api/v1/observations`
 - Descriptive analytics (stateless batch): `POST http://127.0.0.1:8000/api/v1/analytics/observations`
 - Persisted data-quality report: `GET http://127.0.0.1:8000/api/v1/analytics/data-quality`
+- Generation engineering calculations: `POST http://127.0.0.1:8000/api/v1/engineering/generation-performance`
 
 Stop the service with `docker compose down`.
 
@@ -65,3 +66,22 @@ The data-quality report summarizes record counts, plant/metric/source coverage, 
 - No authentication, multi-user access control, or tenant isolation is implemented. Keep it local/private; do not expose it to the public internet or submit confidential operational data.
 - The container runs as a non-root user, uses a read-only root filesystem, drops Linux capabilities, and binds the published port to loopback.
 - Before shared or production deployment, add authentication/authorization, rate limits, structured audit logging, durable storage, backups, retention rules, threat modelling, and an authorized data-ingestion agreement.
+
+
+## Engineering generation-performance endpoint
+
+`POST /api/v1/engineering/generation-performance` accepts a single source-labelled reporting-period record containing:
+
+- `net_generation_mwh`: net electrical generation in MWh
+- `fuel_thermal_input_mwh`: thermal fuel input in MWh, using a documented heating-value convention
+- `net_capacity_mw`: net rated capacity in MW
+- `period_hours`: actual reporting interval in hours (must be greater than zero and no more than 8,784)
+- `period_start`, `period_end`, `plant`, `source_id`, `verification_status`
+
+Returned indicators:
+
+- Net efficiency (%) = net generation MWh / fuel thermal input MWh × 100
+- Net heat rate (kJ/kWh) = fuel thermal input MWh / net generation MWh × 3,600
+- Capacity factor (%) = net generation MWh / (net capacity MW × period hours) × 100
+
+The service flags calculated efficiency or capacity factor above 100% for review; it does not silently clamp values. Generation, capacity, thermal input, and reporting period must refer to the same plant boundary and interval. The source ID must be present in the source registry, but that alone does not verify the submitted values. Ambient conditions, startup/shutdown, fuel quality, and heating-value conventions are not corrected automatically. Do not use the indicators alone to diagnose equipment or direct plant operation.
