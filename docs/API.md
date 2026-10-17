@@ -143,3 +143,9 @@ The static GitHub Pages dashboard is not automatically connected to this API. To
 - `GET /api/v1/turnarounds/plans/{plan_id}/audit` and `GET /api/v1/turnarounds/plans/{plan_id}/tasks/{task_id}/audit` — inspect plan/task status history.
 
 Critical-path and labor estimates are planning aids only. The current estimator assumes task durations and dependencies are valid and does not yet optimize shared crews, calendar constraints, equipment isolation, permit windows, material availability or uncertainty. An approved plan in this API is not an operational permit or authority to start/stop equipment.
+
+
+### Browser maintenance console
+A browser console is available at `docs/maintenance-console.html` and is linked from the main dashboard. It can create work orders and turnaround plans and display records from the connected API. The browser must be able to reach the local API at the configured URL; the API has a restricted CORS allowlist for `https://khandetube.github.io` and loopback origins. If the console cannot connect, first start `docker compose up -d --build`, then enter the configured API key in the console. The key is kept only in page memory and is not persisted by the console. Do not put a production API key into a shared/public browser or expose the loopback-bound API to the internet.
+
+The console is a thin browser client, not an authorization layer. The shared API key is not per-user identity, roles or audit actor identity. Use an approved private deployment with HTTPS, proper identity and authorization controls before multi-user or production use.
