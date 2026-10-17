@@ -286,6 +286,14 @@ def maintenance_summary(
     return summary
 
 
+@app.get("/api/v1/analytics/data-quality")
+def observation_data_quality(
+    plant: str | None = Query(default=None, min_length=1, max_length=200),
+) -> dict[str, object]:
+    """Report dataset coverage and provenance distribution from persisted records."""
+    return get_observation_store().observation_quality_report(plant=plant)
+
+
 @app.post("/api/v1/analytics/observations")
 def analyze_observation_batch(batch: ObservationBatch) -> dict[str, object]:
     """Return grouped descriptive statistics and conservative IQR review flags."""
