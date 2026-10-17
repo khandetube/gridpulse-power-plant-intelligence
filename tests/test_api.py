@@ -279,3 +279,19 @@ def test_engineering_endpoint_rejects_unknown_source_and_bad_capacity():
     assert client.post("/api/v1/engineering/generation-performance", json=bad_capacity).status_code == 422
     bad_source = {**base, "source_id": "SRC-DOES-NOT-EXIST"}
     assert client.post("/api/v1/engineering/generation-performance", json=bad_source).status_code == 422
+
+
+
+def test_audit_api_returns_observation_ingest_event(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "audit-api.db"))
+    response = client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("audited-1")]},
+    )
+    assert response.status_code == 201
+    audit = client.get("/api/v1/audit/events?entity_type=observation&entity_id=audited-1")
+    assert audit.status_code == 200
+    payload = audit.json()
+    assert payload["total"] == 1
+    assert payload["events"][0]["entity_id"] == "audited-1"
+    assert payload["events"][0]["source_id"] == "SRC-001"
