@@ -1,8 +1,4 @@
-"""Read-only API foundation for source-aware power plant analytics.
-
-This service intentionally does not connect to plant control or dispatch systems.
-It exposes project metadata and source registry information only.
-"""
+"""Source-aware API foundation for power plant engineering decision support."""
 from __future__ import annotations
 
 import csv
@@ -21,38 +17,25 @@ from gridpulse.analytics import analyze_observations
 from gridpulse.assets_api import router as assets_router
 from gridpulse.engineering import calculate_generation_performance
 from gridpulse.storage import ObservationStore
+from gridpulse.testing_api import router as testing_router
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 _CONFIGURED_DATA_DIR = Path(os.environ.get("GRIDPULSE_DATA_DIR", ROOT_DIR / "data"))
 _DATA_DIR_CANDIDATES = (_CONFIGURED_DATA_DIR, Path("/app/data"))
-SOURCE_REGISTRY = next(
-    (directory / "source_registry.csv" for directory in _DATA_DIR_CANDIDATES
-     if (directory / "source_registry.csv").is_file()),
-    _CONFIGURED_DATA_DIR / "source_registry.csv",
-)
+SOURCE_REGISTRY = next((directory / "source_registry.csv" for directory in _DATA_DIR_CANDIDATES if (directory / "source_registry.csv").is_file()), _CONFIGURED_DATA_DIR / "source_registry.csv")
 
-app = FastAPI(
-    title="GridPulse AI API",
-    version="0.1.0",
-    description=(
-        "Source-aware power plant analytics research API. "
-        "No live telemetry or dispatch connection is configured."
-    ),
-)
+app = FastAPI(title="GridPulse AI API", version="0.1.0", description="Source-aware power plant analytics and engineering decision-support API. No live telemetry or dispatch connection is configured.")
 app.include_router(assets_router)
+app.include_router(testing_router)
+
 
 @app.middleware("http")
 async def optional_api_key_guard(request: Request, call_next):
-    """Protect API routes when a deployment configures GRIDPULSE_API_KEY."""
     expected_key = os.environ.get("GRIDPULSE_API_KEY", "")
     if expected_key and request.url.path.startswith("/api/v1/"):
         supplied_key = request.headers.get("X-API-Key", "")
         if not secrets.compare_digest(supplied_key, expected_key):
-            return JSONResponse(
-                status_code=401,
-                content={"detail": "Missing or invalid API key."},
-                headers={"WWW-Authenticate": "ApiKey"},
-            )
+            return JSONResponse(status_code=401, content={"detail": "Missing or invalid API key."}, headers={"WWW-Authenticate": "ApiKey"})
     return await call_next(request)
 
 
@@ -69,8 +52,6 @@ class SourceRecord(BaseModel):
 
 
 class ObservationInput(BaseModel):
-    """One source-labelled observation supplied by an authorized data owner."""
-
     record_id: str = Field(min_length=1, max_length=128)
     plant: str = Field(min_length=1, max_length=200)
     metric: str = Field(min_length=1, max_length=160)
@@ -90,8 +71,6 @@ class ObservationInput(BaseModel):
 
 
 class ObservationBatch(BaseModel):
-    """Bounded batch request for deterministic analytics."""
-
     records: list[ObservationInput] = Field(min_length=1, max_length=10000)
 
     @model_validator(mode="after")
@@ -103,8 +82,6 @@ class ObservationBatch(BaseModel):
 
 
 class GenerationPerformanceInput(BaseModel):
-    """Inputs must describe the same plant boundary and reporting interval."""
-
     plant: str = Field(min_length=1, max_length=200)
     period_start: date
     period_end: date
@@ -123,14 +100,10 @@ class GenerationPerformanceInput(BaseModel):
 
 
 class MaintenanceEventInput(BaseModel):
-    """Source-labelled maintenance event; elapsed duration is not assumed downtime."""
-
     event_id: str = Field(min_length=1, max_length=128)
     plant: str = Field(min_length=1, max_length=200)
     equipment: str = Field(min_length=1, max_length=200)
-    event_type: Literal[
-        "inspection", "preventive", "corrective", "overhaul", "test", "other"
-    ]
+    event_type: Literal["inspection", "preventive", "corrective", "overhaul", "test", "other"]
     start_time: datetime
     end_time: datetime
     timezone: str = Field(min_length=1, max_length=80)
@@ -159,24 +132,16 @@ class MaintenanceEventBatch(BaseModel):
 
 
 def ensure_registered_sources(records: list[ObservationInput | MaintenanceEventInput]) -> None:
-    """Reject records whose provenance IDs are absent from the source registry."""
     if not SOURCE_REGISTRY.exists():
         raise HTTPException(status_code=503, detail="Source registry is unavailable")
     try:
         with SOURCE_REGISTRY.open("r", encoding="utf-8", newline="") as csv_file:
-            registered = {
-                row.get("source_id", "").strip()
-                for row in csv.DictReader(csv_file)
-                if row.get("source_id", "").strip()
-            }
+            registered = {row.get("source_id", "").strip() for row in csv.DictReader(csv_file) if row.get("source_id", "").strip()}
     except (OSError, csv.Error) as exc:
         raise HTTPException(status_code=503, detail="Source registry cannot be read") from exc
     unknown = sorted({str(record.source_id) for record in records} - registered)
     if unknown:
-        raise HTTPException(
-            status_code=422,
-            detail={"message": "Every record must reference a registered source_id.", "unknown_source_ids": unknown},
-        )
+        raise HTTPException(status_code=422, detail={"message": "Every record must reference a registered source_id.", "unknown_source_ids": unknown})
 
 
 @app.get("/health")
@@ -186,20 +151,11 @@ def health() -> dict[str, str]:
 
 @app.get("/api/v1/project")
 def project_info() -> dict[str, object]:
-    return {
-        "name": "GridPulse AI",
-        "version": "0.1.0",
-        "focus": "power generation analytics and maintenance research",
-        "case_study": "Shahid Kaveh combined-cycle power plant, Qaen, Iran",
-        "live_telemetry_connected": False,
-        "dispatch_system_connected": False,
-        "data_policy": "Source-backed records only; unverified leads are labelled.",
-    }
+    return {"name": "GridPulse AI", "version": "0.1.0", "focus": "power generation analytics and maintenance research", "case_study": "Shahid Kaveh combined-cycle power plant, Qaen, Iran", "live_telemetry_connected": False, "dispatch_system_connected": False, "data_policy": "Source-backed records only; unverified leads are labelled."}
 
 
 def get_observation_store() -> ObservationStore:
-    database_path = os.environ.get("GRIDPULSE_DB_PATH", "/tmp/gridpulse-observations.sqlite3")
-    return ObservationStore(database_path)
+    return ObservationStore(os.environ.get("GRIDPULSE_DB_PATH", "/tmp/gridpulse-observations.sqlite3"))
 
 
 @app.post("/api/v1/observations", status_code=201)
