@@ -36,6 +36,12 @@ One row represents a reported maintenance or outage event. The schema is for aut
 
 The validator computes elapsed duration from the two timestamps. Both timestamps must include explicit offsets; the separate timezone label is retained as source metadata and is not used to reinterpret timestamps. Elapsed duration is not necessarily equivalent to unit downtime unless the source defines the event and outage boundaries accordingly.
 
+## Dashboard maintenance-event workflow
+
+The dashboard accepts the maintenance-event schema as a local CSV import. It checks required headers and values, duplicate event IDs, ISO 8601 timestamps with explicit offsets, and chronological order. Valid rows are kept in this browser's local storage, can be filtered by event type and verification status, and can be exported back to CSV. The clear action deletes only this dashboard's locally stored imported events.
+
+The timeline's elapsed hours are calculated from the two timestamps. They must not be described as equipment downtime unless the source defines those boundaries. A row marked `verified` is only a user-provided status label; the dashboard does not independently authenticate source truth. Do not import confidential plant or dispatch records into a public portfolio demo.
+
 ## Rules
 
 - Never attribute a multi-plant or regional total to one plant.
