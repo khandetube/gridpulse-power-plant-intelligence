@@ -23,12 +23,12 @@ def evaluate_retrieval(cases: list[dict[str, Any]], k: int = 5) -> dict[str, Any
     invalid_cases: list[dict[str, Any]] = []
     for index, case in enumerate(cases):
         if not isinstance(case, dict):
-            raise ValueError(f"case {index} must be an object")
+            raise TypeError(f"case {index} must be an object")
         query = case.get("query")
         documents = case.get("documents")
         relevant = case.get("relevant_source_ids")
         if not isinstance(query, str) or not isinstance(documents, list) or not isinstance(relevant, list):
-            raise ValueError(f"case {index} requires query, documents, and relevant_source_ids")
+            raise TypeError(f"case {index} requires query, documents, and relevant_source_ids")
         if any(not isinstance(source, str) or not source.strip() for source in relevant):
             raise ValueError(f"case {index} relevant_source_ids must contain non-empty strings")
         try:
@@ -76,9 +76,9 @@ def main() -> int:
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))
         if not isinstance(payload, dict) or not isinstance(payload.get("cases"), list):
-            raise ValueError('Input must be an object with a "cases" array')
+            raise TypeError('Input must be an object with a "cases" array')
         report = evaluate_retrieval(payload["cases"], args.k)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
         parser.error(str(exc))
     serialized = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
     if args.output:
