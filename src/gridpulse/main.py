@@ -7,10 +7,13 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
+from datetime import date
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
+
+from gridpulse.analytics import analyze_observations
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 SOURCE_REGISTRY = ROOT_DIR / "data" / "source_registry.csv"
@@ -37,6 +40,40 @@ class SourceRecord(BaseModel):
     notes: str
 
 
+class ObservationInput(BaseModel):
+    """One source-labelled observation supplied by an authorized data owner."""
+
+    record_id: str = Field(min_length=1, max_length=128)
+    plant: str = Field(min_length=1, max_length=200)
+    metric: str = Field(min_length=1, max_length=160)
+    value: float = Field(allow_inf_nan=False)
+    unit: str = Field(min_length=1, max_length=40)
+    period_start: date
+    period_end: date
+    scope: Literal["unit", "plant", "multiple_plants", "regional", "national"]
+    source_id: str = Field(min_length=1, max_length=128)
+    verification_status: Literal["unverified", "reviewed", "verified"]
+
+    @model_validator(mode="after")
+    def validate_period(self) -> "ObservationInput":
+        if self.period_end < self.period_start:
+            raise ValueError("period_end must be on or after period_start")
+        return self
+
+
+class ObservationBatch(BaseModel):
+    """Bounded batch request for deterministic analytics."""
+
+    records: list[ObservationInput] = Field(min_length=1, max_length=10000)
+
+    @model_validator(mode="after")
+    def unique_record_ids(self) -> "ObservationBatch":
+        ids = [record.record_id for record in self.records]
+        if len(ids) != len(set(ids)):
+            raise ValueError("record_id values must be unique within a batch")
+        return self
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     """Health check for local development and deployment probes."""
@@ -55,6 +92,20 @@ def project_info() -> dict[str, object]:
         "dispatch_system_connected": False,
         "data_policy": "Source-backed records only; unverified leads are labelled.",
     }
+
+
+@app.post("/api/v1/analytics/observations")
+def analyze_observation_batch(batch: ObservationBatch) -> dict[str, object]:
+    """Return grouped descriptive statistics and conservative IQR review flags."""
+    payload = [
+        {
+            **record.model_dump(mode="json"),
+            "period_start": record.period_start.isoformat(),
+            "period_end": record.period_end.isoformat(),
+        }
+        for record in batch.records
+    ]
+    return analyze_observations(payload)
 
 
 @app.get("/api/v1/sources", response_model=list[SourceRecord])
