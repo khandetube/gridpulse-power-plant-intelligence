@@ -6,7 +6,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 RUN addgroup --system --gid 10001 gridpulse \
-    && adduser --system --uid 10001 --ingroup gridpulse --home /nonexistent gridpulse
+    && adduser --system --uid 10001 --ingroup gridpulse --home /nonexistent gridpulse \
+    && mkdir -p /data \
+    && chown 10001:10001 /data
 
 COPY pyproject.toml README.md ./
 COPY src ./src
