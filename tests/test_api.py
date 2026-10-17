@@ -81,6 +81,6 @@ def test_observation_analytics_rejects_reversed_period():
 def test_observation_analytics_rejects_non_finite_value():
     response = client.post(
         "/api/v1/analytics/observations",
-        json={"records": [_observation("a", float("nan"))]},
+        json={"records": [_observation("a", "NaN")]},
     )
     assert response.status_code == 422
