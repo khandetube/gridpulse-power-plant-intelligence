@@ -52,6 +52,23 @@ def _linear_slope(points: list[tuple[date, float]]) -> float | None:
     return sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, ys)) / denominator
 
 
+def _linear_r_squared(points: list[tuple[date, float]], slope: float | None) -> float | None:
+    """Return descriptive R-squared for a dated linear fit, not a forecast-confidence score."""
+    if slope is None or len(points) < 3:
+        return None
+    origin = min(point[0] for point in points)
+    xs = [(day - origin).days for day, _ in points]
+    ys = [value for _, value in points]
+    x_mean = sum(xs) / len(xs)
+    y_mean = sum(ys) / len(ys)
+    intercept = y_mean - slope * x_mean
+    total = sum((value - y_mean) ** 2 for value in ys)
+    if total == 0:
+        return 1.0
+    residual = sum((value - (intercept + slope * x)) ** 2 for x, value in zip(xs, ys))
+    return max(0.0, min(1.0, 1.0 - residual / total))
+
+
 def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
     """Return reproducible group summaries, robust outlier candidates, and trend estimates."""
     if not records:
@@ -138,7 +155,16 @@ def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
                 group_anomalies.append(item)
                 candidates.append(item)
         dated = sorted(points, key=lambda point: (point[0], str(point[2]["record_id"])))
-        slope = _linear_slope([(day, value) for day, value, _ in dated])
+        trend_points = [(day, value) for day, value, _ in dated]
+        slope = _linear_slope(trend_points)
+        distinct_dates = sorted({day for day, _, _ in dated})
+        span_days = (distinct_dates[-1] - distinct_dates[0]).days
+        trend_r_squared = _linear_r_squared(trend_points, slope)
+        trend_evidence_level = (
+            "insufficient" if len(distinct_dates) < 3
+            else "preliminary" if len(distinct_dates) < 5 or span_days < 7
+            else "descriptive_multi_point"
+        )
         first_value = dated[0][1]
         latest_value = dated[-1][1]
         change_pct = (
@@ -159,6 +185,10 @@ def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
             "unit": unit,
             "scope": scope,
             "count": len(points),
+            "distinct_date_count": len(distinct_dates),
+            "observation_span_days": span_days,
+            "trend_r_squared": round(trend_r_squared, 6) if trend_r_squared is not None else None,
+            "trend_evidence_level": trend_evidence_level,
             "minimum": min(values),
             "maximum": max(values),
             "mean": round(sum(values) / len(values), 6),
@@ -235,6 +265,10 @@ def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
                 "title": f"Observed {item['trend_direction']} trend: {item['metric']}",
                 "evidence": f"{item['count']} records; estimated slope {item['trend_per_day']} {item['unit']}/day; first-to-latest change {item['change_from_first_pct']}%.",
                 "recommended_review": "Check data comparability, operating regime and approved performance baselines before drawing an engineering conclusion.",
+                "trend_evidence_level": item["trend_evidence_level"],
+                "distinct_date_count": item["distinct_date_count"],
+                "observation_span_days": item["observation_span_days"],
+                "trend_r_squared": item["trend_r_squared"],
                 "evidence_record_ids": [],
             })
 
