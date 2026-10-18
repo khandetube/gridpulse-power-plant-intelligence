@@ -84,3 +84,13 @@ def test_operations_suite_has_full_and_section_excel_exports() -> None:
         assert f'["{section}"' in html or f'"{section}"' in html
     assert "synthetic demo examples" in html
     assert "Asset health score (screening only)" in html
+
+
+def test_excel_exports_include_metadata_quality_review_sheets() -> None:
+    main = read_page("index.html")
+    suite = read_page("docs/plant-intelligence-suite.html")
+    assert 'gpAddTableSheet(wb,"Quality Review"' in main
+    assert "Source provenance" in main
+    assert "These checks evaluate metadata completeness" in main
+    assert 'gpSuiteSheet(wb,"Quality Review"' in suite
+    assert "Synthetic demo data" in suite
