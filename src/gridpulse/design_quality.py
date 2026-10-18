@@ -87,7 +87,6 @@ def evaluate_design_quality(
     # Stable canonical hash enables comparisons between runs; timestamp deliberately excluded.
     canonical = json.dumps(model, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
     fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
     actions.sort(key=lambda item: (item["priority"], item["code"]))
     for action in actions:
         action["priority"] = ("critical", "high", "medium", "low")[action["priority"]]
