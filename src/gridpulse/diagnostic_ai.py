@@ -70,6 +70,9 @@ def diagnose_observations(records: list[dict[str, Any]]) -> dict[str, Any]:
         except (TypeError, ValueError):
             skipped.append({"record_id": record_id, "reason": "invalid_period_date"})
             continue
+        if end < start:
+            skipped.append({"record_id": record_id, "reason": "period_end_before_start"})
+            continue
         if value is None:
             skipped.append({"record_id": record_id, "reason": "value_not_finite_number"})
             continue
@@ -89,8 +92,8 @@ def diagnose_observations(records: list[dict[str, Any]]) -> dict[str, Any]:
         })
 
     findings: list[dict[str, Any]] = []
-    series_by_key: dict[tuple[str, str, str], dict[date, float]] = {}
-    series_meta: dict[tuple[str, str, str], dict[str, str]] = {}
+    series_by_key: dict[tuple[str, str, str, str], dict[date, float]] = {}
+    series_meta: dict[tuple[str, str, str, str], dict[str, str]] = {}
     for (plant, metric, unit, scope), points in sorted(groups.items()):
         points.sort(key=lambda p: (p["date"], p["record_id"]))
         dates = sorted({p["date"] for p in points})
@@ -98,7 +101,7 @@ def diagnose_observations(records: list[dict[str, Any]]) -> dict[str, Any]:
         daily: dict[date, float] = {}
         for day in dates:
             daily[day] = median([p["value"] for p in points if p["date"] == day])
-        identity = (plant, metric, scope)
+        identity = (plant, metric, scope, unit)
         series_by_key[identity] = daily
         series_meta[identity] = {"unit": unit}
         values = [daily[day] for day in dates]
@@ -136,7 +139,8 @@ def diagnose_observations(records: list[dict[str, Any]]) -> dict[str, Any]:
             midpoint = len(values) // 2
             earlier, later = values[:midpoint], values[midpoint:]
             early_med, late_med = median(earlier), median(later)
-            combined_mad = _mad(values)
+            # Use within-regime noise; whole-series MAD can hide a real level shift.
+            combined_mad = median([_mad(earlier), _mad(later)])
             shift = late_med - early_med
             material = abs(shift) > 0 if combined_mad == 0 else abs(shift) >= 2.5 * combined_mad
             if material:
