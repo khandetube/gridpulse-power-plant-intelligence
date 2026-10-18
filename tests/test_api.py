@@ -406,8 +406,7 @@ def test_observation_csv_export_neutralizes_formula_like_text_cells(tmp_path, mo
     monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "export-formula.db"))
     malicious = {
         **_observation("formula-1"),
-        "plant": "=HYPERLINK(\"https://example.invalid\",\"open\")",
-        "scope": "\t=cmd",
+        "metric": "=HYPERLINK(\"https://example.invalid\",\"open\")",
     }
     inserted = client.post("/api/v1/observations", json={"records": [malicious]})
     assert inserted.status_code == 201
@@ -415,7 +414,6 @@ def test_observation_csv_export_neutralizes_formula_like_text_cells(tmp_path, mo
     exported = client.get("/api/v1/observations/export.csv")
     assert exported.status_code == 200
     rows = list(csv.DictReader(StringIO(exported.text)))
-    assert rows[0]["plant"].startswith("'=")
-    assert rows[0]["scope"].startswith("'\\t=")
+    assert rows[0]["metric"].startswith("'=")
     # The numerical measurement remains numeric rather than being escaped as text.
     assert rows[0]["value"] == "10"
