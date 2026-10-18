@@ -71,7 +71,7 @@ def test_gap_and_bad_records_are_reported_without_imputation():
     result = diagnose_observations(records)
     assert result["skipped_count"] == 1
     assert any(x["kind"] == "observation_gap" for x in result["findings"])
-    assert "No missing values are imputed" in result["limitations"][2]
+    assert "not imputed" in result["limitations"][2]
 
 
 def test_diagnostic_engine_is_bounded_and_deterministic():
