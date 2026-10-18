@@ -59,7 +59,7 @@ def test_spec_rejects_asset_outside_site():
     }
     try:
         EngineeringSpec.model_validate(data)
-    except Exception as exc:
+    except ValidationError as exc:
         assert "site boundary" in str(exc).lower()
     else:
         raise AssertionError("out-of-bound geometry must be rejected")
