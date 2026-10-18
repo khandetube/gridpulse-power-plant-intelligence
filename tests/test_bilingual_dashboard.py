@@ -72,3 +72,15 @@ def test_excel_reporting_has_full_and_section_specific_workbooks() -> None:
     assert 'gridpulse-"+scope+"-report-' in html
     assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' in html
     assert 'No example events are fabricated.' in html
+
+
+def test_operations_suite_has_full_and_section_excel_exports() -> None:
+    html = read_page("docs/plant-intelligence-suite.html")
+    assert "function exportSuiteExcel(scope=\"all\")" in html
+    assert 'b.dataset.suiteXlsx="all"' in html
+    assert 'wb.xlsx.writeBuffer()' in html
+    assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' in html
+    for section in ("assets", "work", "losses", "rca", "rnd"):
+        assert f'["{section}"' in html or f'"{section}"' in html
+    assert "Synthetic demo examples" in html
+    assert "Asset health score (screening only)" in html
