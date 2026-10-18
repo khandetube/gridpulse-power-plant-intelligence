@@ -4,7 +4,7 @@
 
 GridPulse currently ships a static GitHub Pages frontend and a separately run FastAPI/SQLite backend. The documented Docker Compose deployment binds the API to `127.0.0.1:8000` and stores its database in the named `gridpulse-data` volume at `/data/gridpulse.sqlite3`. Do not expose this API directly to the public internet.
 
-Set a long random API key in a local `.env` file before starting the service:
+The container runs in production mode and fails closed: if `GRIDPULSE_API_KEY` is missing, all `/api/v1/*` requests are disabled with HTTP 503. Do not publish this API directly to the internet. The current Compose port binding is loopback-only. Set a long, unique random API key in a local `.env` file before starting the service:
 
 ```dotenv
 GRIDPULSE_API_KEY=replace-with-a-long-random-secret
@@ -36,7 +36,7 @@ curl -fsS http://127.0.0.1:8000/api/v1/system/diagnostics \\
   -H "X-API-Key: $GRIDPULSE_API_KEY"
 ```
 
-The response reports source-registry and SQLite integrity status, local record counts, and explicit capability flags. It does not return filesystem paths or credentials and does not establish live telemetry, dispatch connectivity, predictive-model validity, or real plant condition. If `GRIDPULSE_API_KEY` is not configured, this local diagnostic route is not protected by the optional key middleware; configure the key before using the API beyond isolated local development.
+The response reports source-registry and SQLite integrity status, local record counts, and explicit capability flags. It does not return filesystem paths or credentials and does not establish live telemetry, dispatch connectivity, predictive-model validity, or real plant condition. In production mode, the API refuses all versioned API access when the key is missing; when a key is configured, all versioned API routes require it. Use a long random secret and never commit it to Git. The local development mode is intentionally less restrictive and must not be exposed to untrusted networks.
 
 ## Filtered observation CSV export
 
@@ -97,3 +97,13 @@ The restore command refuses to overwrite an existing destination unless `--overw
 - Anyone with access to the Docker volume or backup files may be able to read the data. Apply filesystem and host access controls and encryption at rest as required.
 - Restore requires the application to be stopped. Do not treat the command as an automatic failover mechanism.
 - There is no live SCADA/DCS/EMS or dispatch integration. The platform is engineering decision support, not a plant control system or work-permit authority.
+
+
+## Security controls and deployment checks
+
+- The container explicitly runs with `GRIDPULSE_ENV=production`; versioned API endpoints fail closed if no API key is configured and reject missing/incorrect keys when a key is configured.
+- API responses include anti-sniffing, clickjacking, referrer and browser-permission headers. Versioned API responses are marked `no-store`.
+- Declared API write request bodies larger than 5 MiB are rejected. This is a guardrail, not a replacement for reverse-proxy request-size limits; enforce a body-size limit at any proxy too.
+- Compose binds the API to `127.0.0.1`, uses a non-root container, a read-only root filesystem, a restricted temporary filesystem, drops Linux capabilities, and enables `no-new-privileges`.
+- Keep the API key in a local ignored `.env` file or a secret manager. Never put it in the static GitHub Pages frontend, source control, browser local storage, screenshots, or issue reports.
+- Before external deployment, add TLS termination, network allow-listing, monitoring/alerting, key rotation, and a reviewed backup/restore exercise. This project has not undergone an independent penetration test.
