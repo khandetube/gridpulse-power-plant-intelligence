@@ -21,6 +21,14 @@ curl -fsS http://127.0.0.1:8000/health
 
 The health endpoint confirms process availability only; it does not certify data quality, plant readiness, or a connection to operational control systems.
 
+The readiness endpoint checks that the source registry file is present and that SQLite can open the configured database. It is an application-dependency check, not a plant/equipment readiness signal:
+
+```sh
+curl -i http://127.0.0.1:8000/ready
+```
+
+A `200` response means the local API dependencies passed these basic checks; a `503` response includes a `checks` object identifying an unavailable dependency. The endpoint intentionally does not prove that records are correct, that backups exist, or that any plant telemetry is connected. The API is still a local service; GitHub Pages hosts only the static frontend.
+
 ## Create and verify a consistent backup
 
 The backup command uses SQLite's online backup API, checks database integrity, and writes a SHA-256 manifest next to the backup. It runs locally inside the container and does not upload data.
