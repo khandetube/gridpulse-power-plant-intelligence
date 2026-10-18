@@ -1,5 +1,12 @@
+from pydantic import ValidationError
+
 from gridpulse.cad_engine import (
-    EngineeringSpec, build_spec, review_spec, to_dxf, to_openscad, to_svg,
+    EngineeringSpec,
+    build_spec,
+    review_spec,
+    to_dxf,
+    to_openscad,
+    to_svg,
 )
 from gridpulse.cad_engine_api import GenerateCadRequest, generate_cad
 
@@ -39,7 +46,7 @@ def test_spec_rejects_duplicate_tags():
     }
     try:
         EngineeringSpec.model_validate(base)
-    except Exception as exc:
+    except ValidationError as exc:
         assert "unique" in str(exc).lower()
     else:
         raise AssertionError("duplicate tags must be rejected")
