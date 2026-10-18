@@ -122,6 +122,7 @@ def export_multi_application(spec: EngineeringSpec) -> dict:
             "3ds_max": {"filename": "3dsmax_generator.ms", "type": "MaxScript", "status": "generated_script"},
             "revit": {"filename": "revit_dynamo_generator.py", "type": "Dynamo Python", "status": "generated_script"},
             "source": {"filename": "engineering_spec.json", "type": "GridPulse EngineeringSpec", "status": "generated"},
+            "excel": {"filename": "gridpulse_engineering_handoff.xlsx", "type": "XLSX", "status": "base64_encoded_in_exports"},
         },
         "exports": bundle,
         "limitations": [
