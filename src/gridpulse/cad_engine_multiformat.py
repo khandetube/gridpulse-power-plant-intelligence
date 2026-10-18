@@ -83,7 +83,6 @@ def export_3ds_max_script(spec: EngineeringSpec) -> str:
     lines.append(
         f'format "GridPulse created {len(spec.assets)} equipment envelopes and {sum(max(0, len(r.points)-1) for r in spec.routes)} route segments. Conceptual only.\\n"'
     )
-    )
     return "\n".join(lines) + "\n"
 
 
