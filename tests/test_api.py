@@ -1,3 +1,6 @@
+import csv
+from io import StringIO
+
 from fastapi.testclient import TestClient
 
 from gridpulse import main
@@ -116,9 +119,12 @@ def test_observation_csv_export_preserves_status_and_supports_filters(tmp_path, 
     assert exported.headers["content-disposition"].endswith('filename="gridpulse-observations.csv"')
     assert exported.headers["x-gridpulse-export-total"] == "1"
     assert exported.headers["x-gridpulse-export-returned"] == "1"
-    assert "record_id,plant,metric,value,unit" in exported.text
-    assert "export-1,Example plant,net_generation,12.5,MWh" in exported.text
-    assert ",reviewed" in exported.text
+    rows = list(csv.DictReader(StringIO(exported.text)))
+    assert len(rows) == 1
+    assert rows[0]["record_id"] == "export-1"
+    assert rows[0]["metric"] == "net_generation"
+    assert rows[0]["value"] == "12.5"
+    assert rows[0]["verification_status"] == "reviewed"
     assert "export-2" not in exported.text
 
 
