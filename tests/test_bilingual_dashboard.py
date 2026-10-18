@@ -3,6 +3,7 @@
 These checks are intentionally lightweight and complement (not replace) browser-level
 accessibility and interaction tests.
 """
+
 from pathlib import Path
 
 
