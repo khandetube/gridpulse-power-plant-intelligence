@@ -48,7 +48,7 @@ def cad_engine_status() -> dict:
         "geometry_backend": "parametric-spec + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
         "llm_configured": configured,
         "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser",
-        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro"],
+        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py"],
         "limitations": [
             "Conceptual envelopes and schematic routes only",
             "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment",
@@ -80,6 +80,7 @@ def generate_cad(request: GenerateCadRequest) -> dict:
             "plan.dxf": to_dxf(spec),
             "model.scad": to_openscad(spec),
             "model.FCMacro": to_freecad_macro(spec),
+            **export_multi_application_bundle(spec),
         },
         "notice": "Conceptual design only. Outputs are editable but are not construction-approved engineering.",
     }
