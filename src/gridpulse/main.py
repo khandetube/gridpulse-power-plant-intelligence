@@ -191,6 +191,67 @@ def readiness() -> JSONResponse | dict[str, object]:
     return payload if ready else JSONResponse(status_code=503, content=payload)
 
 
+@app.get("/api/v1/system/diagnostics")
+def system_diagnostics() -> dict[str, object]:
+    """Return bounded, non-secret diagnostics for the local application stack."""
+    source_count = 0
+    source_registry_status = "unavailable"
+    try:
+        with SOURCE_REGISTRY.open("r", encoding="utf-8", newline="") as source_file:
+            reader = csv.DictReader(source_file)
+            if reader.fieldnames and "source_id" in reader.fieldnames:
+                source_count = sum(1 for row in reader if (row.get("source_id") or "").strip())
+                source_registry_status = "ok"
+            else:
+                source_registry_status = "invalid_schema"
+    except (OSError, csv.Error):
+        source_registry_status = "unavailable"
+
+    database_status = "unavailable"
+    table_counts: dict[str, int] = {}
+    try:
+        store = get_observation_store()
+        with sqlite3.connect(store.database_path, timeout=3) as connection:
+            integrity = connection.execute("PRAGMA quick_check").fetchone()
+            if integrity and integrity[0] == "ok":
+                database_status = "ok"
+            existing_tables = {
+                row[0] for row in connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
+            }
+            for table in ("observations", "maintenance_events", "audit_events"):
+                if table in existing_tables:
+                    # Table names are selected from this fixed allow-list, not user input.
+                    table_counts[table] = int(
+                        connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                    )
+                else:
+                    table_counts[table] = 0
+    except (OSError, sqlite3.Error, RuntimeError):
+        database_status = "unavailable"
+
+    checks = {"source_registry": source_registry_status, "database": database_status}
+    return {
+        "service": "gridpulse-api",
+        "status": "ok" if all(value == "ok" for value in checks.values()) else "degraded",
+        "checks": checks,
+        "registered_source_count": source_count,
+        "stored_record_counts": table_counts,
+        "capabilities": {
+            "persistent_storage": database_status == "ok",
+            "source_registry": source_registry_status == "ok",
+            "live_plant_telemetry": False,
+            "dispatch_connection": False,
+            "predictive_model_validated": False,
+        },
+        "notes": [
+            "Counts are application-local and do not certify source truth or plant state.",
+            "No secrets, filesystem paths, credentials, or network configuration are returned.",
+        ],
+    }
+
+
 @app.get("/api/v1/project")
 def project_info() -> dict[str, object]:
     return {"name": "GridPulse AI", "version": "0.1.0", "focus": "power generation analytics and maintenance research", "case_study": "Shahid Kaveh combined-cycle power plant, Qaen, Iran", "live_telemetry_connected": False, "dispatch_system_connected": False, "data_policy": "Source-backed records only; unverified leads are labelled."}
