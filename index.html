@@ -465,6 +465,19 @@ async function exportGridPulseExcel(scope="all"){
   if(sections.includes("engineering"))gpAddEngineeringSheet(wb);
   if(sections.includes("maintenance"))gpAddTableSheet(wb,"Maintenance","Imported maintenance event ledger",["Event ID","Plant","Equipment","Event type","Start time","End time","Timezone","Source ID","Verification","Notes","Duration hours"],events,["event_id","plant","equipment","event_type","start_time","end_time","timezone","source_id","verification_status","notes","duration_hours"],["Elapsed event hours are not necessarily equipment downtime.","No example events are fabricated."]);
   if(sections.includes("sources"))gpAddTableSheet(wb,"Sources","Source registry",["Source ID","Title","Publisher","URL","Type","Scope","Verification","Notes"],allSources,["id","title","publisher","url","type","scope","status","notes"],["A reviewed domain does not automatically verify every fact on that site."]);
+  if(sections.includes("overview")||sections.includes("data")){
+   const quality=[];
+   allMetrics.forEach(m=>{
+    const id=m.id||m.record_id||"MISSING-ID",status=m.status||m.verification_status||"missing";
+    if(!m.id&&!m.record_id)quality.push({record_id:id,check:"Record identifier",result:"Missing",recommendation:"Assign a stable unique record ID."});
+    if(!m.unit||String(m.unit).trim()==="")quality.push({record_id:id,check:"Measurement unit",result:"Missing",recommendation:"Record the original unit before comparing or charting values."});
+    if(!(m.period_start||m.period))quality.push({record_id:id,check:"Reporting period",result:"Missing",recommendation:"Add a date or clearly described reporting period; do not infer it."});
+    if(!(m.source||m.source_id))quality.push({record_id:id,check:"Source provenance",result:"Missing",recommendation:"Attach a traceable source ID or source reference."});
+    if(status!=="verified")quality.push({record_id:id,check:"Verification status",result:status,recommendation:"Human review against primary source and reporting boundaries is required; do not treat as confirmed plant data."});
+   });
+   allSources.forEach(src=>{if(!src.url)quality.push({record_id:src.id||"SOURCE",check:"Source URL",result:"Missing",recommendation:"Add a traceable URL or documented local source location."});if(src.status!=="verified")quality.push({record_id:src.id||"SOURCE",check:"Source verification",result:src.status||"missing",recommendation:"Review the specific cited claim; an official domain alone does not verify every claim."});});
+   gpAddTableSheet(wb,"Quality Review","Automated metadata checks — review flags only",["Record ID","Check","Result","Recommended action"],quality,["record_id","check","result","recommendation"],["These checks evaluate metadata completeness and verification labels, not whether an engineering measurement is physically correct.","Missing metadata is not automatically a fault; use the record's context and approved data governance process."]);
+  }
   if(scope!=="all"&&!sections.includes("overview")&&wb.worksheets.length===0)throw new Error("No worksheet could be created.");
   const buffer=await wb.xlsx.writeBuffer(),blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="gridpulse-"+scope+"-report-"+new Date().toISOString().replace(/[:.]/g,"-").slice(0,19)+".xlsx";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast(lang?"فایل اکسل و نمودارها آماده شد.":"Excel workbook and chart images exported.");
  }catch(error){console.error("GridPulse Excel export failed",error);toast((lang?"خروجی اکسل ناموفق بود: ":"Excel export failed: ")+error.message);}
