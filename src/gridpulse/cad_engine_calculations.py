@@ -88,7 +88,7 @@ def parse_explicit_parameters(prompt: str) -> dict[str, Any]:
 
     def first(patterns: list[str]):
         for pattern in patterns:
-            m = re.search(pattern, text, re.I)
+            m = re.search(pattern, text, re.IGNORECASE)
             if m:
                 try:
                     return float(m.group(1))
