@@ -82,5 +82,5 @@ def test_operations_suite_has_full_and_section_excel_exports() -> None:
     assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' in html
     for section in ("assets", "work", "losses", "rca", "rnd"):
         assert f'["{section}"' in html or f'"{section}"' in html
-    assert "Synthetic demo examples" in html
+    assert "synthetic demo examples" in html
     assert "Asset health score (screening only)" in html
