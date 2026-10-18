@@ -7,6 +7,7 @@ without running inside Revit.
 """
 from __future__ import annotations
 
+import base64
 import json
 from io import BytesIO
 from math import dist
@@ -15,7 +16,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
-from gridpulse.cad_engine import EngineeringSpec, to_dxf
+from gridpulse.cad_engine import EngineeringSpec, review_spec, to_dxf
 
 
 def export_autocad_dxf(spec: EngineeringSpec) -> str:
@@ -165,11 +166,13 @@ OUT = {{
 def export_multi_application_bundle(spec: EngineeringSpec) -> dict[str, str]:
     """Return one synchronized set of outputs from the same validated model."""
     payload = json.dumps(spec.model_dump(mode="json"), ensure_ascii=False, indent=2)
+    workbook = export_engineering_workbook(spec, review_spec(spec))
     return {
         "autocad_model.dxf": export_autocad_dxf(spec),
         "3dsmax_generator.ms": export_3ds_max_script(spec),
         "revit_dynamo_generator.py": export_revit_dynamo_python(spec),
         "engineering_spec.json": payload,
+        "gridpulse_engineering_handoff.xlsx.base64": base64.b64encode(workbook).decode("ascii"),
     }
 
 
