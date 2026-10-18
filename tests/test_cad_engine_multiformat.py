@@ -1,10 +1,14 @@
 """Tests for multi-application CAD export adapters."""
 import ast
 import json
+from io import BytesIO
+
+from openpyxl import load_workbook
 
 from gridpulse.cad_engine import CadAsset, CadRoute, EngineeringSpec, build_spec, review_spec
 from gridpulse.cad_engine_multiformat import (
     export_3ds_max_script,
+    export_engineering_workbook,
     export_multi_application_bundle,
     export_revit_dynamo_python,
 )
@@ -72,3 +76,25 @@ def test_geometric_review_detects_route_crossing_equipment():
     assert clashes
     assert clashes[0]["items"] == ["P-1001", "P-101"]
     assert report["engineering_approval"] is False
+
+
+def test_excel_workbook_contains_traceable_multi_sheet_handoff():
+    spec, _ = build_spec(
+        "industrial power plant with piping and electrical equipment",
+        80, 55, ["Mechanical", "Piping", "Electrical", "Architecture"],
+        "power", False,
+    )
+    report = review_spec(spec)
+    payload = export_engineering_workbook(spec, report)
+    assert payload[:2] == b"PK"
+    workbook = load_workbook(BytesIO(payload), read_only=True, data_only=True)
+    assert workbook.sheetnames == [
+        "Project Summary", "Equipment", "Routes", "Route Points", "Design Checks", "Design Basis"
+    ]
+    assert workbook["Equipment"].max_row == len(spec.assets) + 1
+    assert workbook["Routes"].max_row == len(spec.routes) + 1
+    assert workbook["Route Points"].max_row == sum(len(r.points) for r in spec.routes) + 1
+    assert "NO_ENGINEERING_CALCULATIONS" in {
+        row[1] for row in workbook["Design Checks"].iter_rows(min_row=2, values_only=True)
+    }
+    workbook.close()
