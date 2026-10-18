@@ -67,6 +67,26 @@ const elec=E("g",{"data-layer-group":"electrical"},root);
 [[755,200,175,70,"E-810 HV SUBSTATION"],[555,200,150,70,"E-820 MAIN MCC / SWITCHROOM"],[755,375,175,48,"E-830 EMERGENCY GENSET"],[55,200,180,70,"C-910 CONTROL ROOM / SIS / DCS"],[260,200,175,70,"L-920 LAB / QUALITY CONTROL"],[260,545,175,55,"M-910 MAINTENANCE WORKSHOP"],[55,545,180,55,"A-930 ADMIN / FIRST AID / FIRE"]].forEach((b,i)=>{rect(elec,b[0],b[1],b[2],b[3],"#f1f7fc",i<3?"#477db0":"#778a99",.9);text(elec,b[4],b[0]+b[2]/2,b[1]+10,4.1,"#234c71","middle","bold");for(let k=0;k<Math.max(3,Math.floor(b[2]/24));k++)rect(elec,b[0]+8+k*Math.min(24,(b[2]-16)/Math.max(2,Math.floor(b[2]/24))),b[1]+20,12,Math.max(10,b[3]-28),"#fff",i<3?"#477db0":"#778a99",.45)});
 const fl=E("g",{},proc);E("circle",{cx:945,cy:100,r:48,fill:"#fff6f4",stroke:"#bd4e47","stroke-width":.9,"stroke-dasharray":"4 3"},fl);line(fl,945,100,945,35,"#bd4e47",2);circle(fl,945,35,3,"#f5b0a9","#bd4e47",.7);text(fl,"FLARE / SAFETY ZONE",890,157,4.2,"#9c3933");
 rect(proc,775,565,155,40,"#fff8e9","#b77a27",.8);text(proc,"TRUCK / RAIL LOADING",852,574,4.1,"#85551b","middle","bold");for(let k=0;k<7;k++)rect(proc,786+k*20,580,9,18,"#f7e5c4","#b77a27",.45);
+// Equipment-level detail overlay: tagged vessels, exchangers, pumps, valves, instruments and tie-ins.
+const eq=E("g",{"data-layer-group":"equipment"},root);
+function vessel(g,x,y,w,h,tag){rect(g,x,y,w,h,"#fff","#526c80",.7,2);line(g,x,y+5,x+w,y+5,"#526c80",.45);line(g,x+w/2,y-4,x+w/2,y,"#526c80",.55);text(g,tag,x+w/2,y+h+5,3.2,"#253e52")}
+function exchanger(g,x,y,tag){rect(g,x,y,17,7,"#e7f2f7","#477d91",.6,2);line(g,x+2,y+1,x+15,y+6,"#477d91",.4);line(g,x+2,y+6,x+15,y+1,"#477d91",.4);text(g,tag,x+8.5,y+12,2.9,"#253e52")}
+function pump(g,x,y,tag){circle(g,x,y,4,"#fff","#286b85",.65);E("path",{d:"M "+(x-2)+" "+(y-2)+" L "+(x+2)+" "+y+" L "+(x-2)+" "+(y+2)+" Z",fill:"#286b85"},g);text(g,tag,x,y+9,2.8,"#253e52")}
+function valve(g,x,y){E("path",{d:"M "+(x-3)+" "+(y-3)+" L "+x+" "+y+" L "+(x-3)+" "+(y+3)+" Z M "+(x+3)+" "+(y-3)+" L "+x+" "+y+" L "+(x+3)+" "+(y+3)+" Z",fill:"#fff",stroke:"#13878d","stroke-width":.55},g)}
+const trains=[
+{b:[55,55],v:[["V-101",15,42],["V-102",38,42],["V-103",61,42]],e:[["E-101",92,43],["E-102",114,43]],p:[["P-101A",23,117],["P-101B",47,117]],i:80},
+{b:[260,55],v:[["V-201",15,42],["V-202",40,42]],e:[["E-201",78,43],["E-202",100,43]],p:[["P-201A",28,117],["P-201B",52,117]],i:125},
+{b:[550,55],v:[["R-301",16,42],["V-301",42,42],["V-302",66,42]],e:[["E-301",96,43],["E-302",118,43]],p:[["P-301A",24,117],["P-301B",48,117]],i:135},
+{b:[755,55],v:[["R-401",16,42],["V-401",42,42]],e:[["E-401",82,43],["E-402",104,43]],p:[["P-401A",25,117],["P-401B",49,117]],i:137},
+{b:[55,375],v:[["V-501",15,42],["V-502",40,42]],e:[["E-501",78,43],["E-502",100,43]],p:[["P-501A",25,100],["P-501B",49,100]],i:135},
+{b:[260,375],v:[["V-601",15,42],["R-601",40,42]],e:[["E-601",78,43],["E-602",100,43]],p:[["P-601A",25,100],["P-601B",49,100]],i:135},
+{b:[550,375],v:[["V-701",15,42],["V-702",40,42]],e:[["E-701",78,43],["E-702",100,43]],p:[["P-701A",25,100],["P-701B",49,100]],i:135}
+];
+trains.forEach(t=>{const [bx,by]=t.b;t.v.forEach(([tag,x,y])=>vessel(eq,bx+x,by+y,12,25,tag));t.e.forEach(([tag,x,y])=>exchanger(eq,bx+x,by+y,tag));t.p.forEach(([tag,x,y])=>pump(eq,bx+x,by+y,tag));line(eq,bx+8,by+82,bx+145,by+82,"#13878d",.6);[bx+28,bx+65,bx+105].forEach(x=>valve(eq,x,by+82));line(eq,bx+28,by+68,bx+28,by+82,"#13878d",.45);line(eq,bx+65,by+68,bx+65,by+82,"#13878d",.45);circle(eq,bx+t.i,by+112,2.2,"#fff","#bd4e47",.6);line(eq,bx+t.i,by+114,bx+t.i,by+120,"#bd4e47",.45);text(eq,"PT/TT/FT",bx+t.i,by+124,2.5,"#9c3933")});
+const tankDetail=E("g",{"data-layer-group":"equipment"},root);
+[45,250].forEach((x,idx)=>{line(tankDetail,x+8,422,x+177,422,"#13878d",.8);line(tankDetail,x+8,420,x+8,438,"#13878d",.6);line(tankDetail,x+177,420,x+177,438,"#13878d",.6);for(let k=0;k<3;k++){valve(tankDetail,x+30+k*55,422);line(tankDetail,x+30+k*55,422,x+30+k*55,438,"#13878d",.45)}text(tankDetail,idx===0?"TRANSFER HEADER · CRUDE":"TRANSFER HEADER · PRODUCTS",x+92,416,3.2,"#08777d","middle","bold")});
+const tie=E("g",{"data-layer-group":"piping"},root);
+[[145,245,145,300],[345,245,345,300],[635,245,635,300],[840,245,840,300],[145,340,145,375],[345,340,345,375],[635,340,635,375],[840,340,840,375]].forEach(([x,y,x2,y2])=>{line(tie,x,y,x2,y2,"#13878d",1);valve(tie,x,(y+y2)/2)});
 // dimensions, north arrow and title block
 line(root,0,-24,1000,-24,"#263f54",.65);line(root,0,-30,0,-18,"#263f54",.65);line(root,1000,-30,1000,-18,"#263f54",.65);text(root,"1000 m",500,-27,5,"#263f54","middle","bold");line(root,-25,0,-25,650,"#263f54",.65);line(root,-31,0,-19,0,"#263f54",.65);line(root,-31,650,-19,650,"#263f54",.65);E("text",{x:ox-34,y:oy+325,transform:"rotate(-90 "+(ox-34)+" "+(oy+325)+")","font-family":"Arial,sans-serif","font-size":5,fill:"#263f54","text-anchor":"middle","font-weight":"bold"},svg,"650 m");
 E("g",{transform:"translate(1115 85)"},svg).innerHTML='<path d="M 0 25 L 0 -12 L -5 -2 L 0 -8 L 5 -2 Z" fill="#1d3448"/><text x="0" y="-19" text-anchor="middle" font-family="Arial" font-size="8" font-weight="bold" fill="#1d3448">N</text>';
