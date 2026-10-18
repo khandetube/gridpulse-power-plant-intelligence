@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
 from gridpulse.cad_engine import Discipline, EngineeringSpec, build_spec, review_spec, to_dxf, to_freecad_macro, to_openscad, to_svg
+from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine_agent import run_design_agent
 from gridpulse.cad_engine_calculations import run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
@@ -37,14 +38,14 @@ def cad_engine_status() -> dict:
     configured = all(os.environ.get(key, "").strip() for key in ("GRIDPULSE_LLM_BASE_URL", "GRIDPULSE_LLM_API_KEY", "GRIDPULSE_LLM_MODEL"))
     return {
         "engine": "GridPulse Parametric CAD Engine",
-        "version": "0.5.0",
+        "version": "0.6.0",
         "available": True,
-        "geometry_backend": "parametric-spec + multi-stage design agent + deterministic engineering calculations + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
-        "calculation_backend": "deterministic real equations with explicit-input gating, traceability and rule checks",
+        "geometry_backend": "parametric-spec + multi-stage design agent + deterministic engineering calculations + advanced sizing/network calculations + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
+        "calculation_backend": "first-principles deterministic equations with explicit-input gating, traceability and project-limit rule checks",
         "llm_configured": configured,
         "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser + multi-stage reasoning",
-        "agent_stages": ["requirements", "discipline coordination", "parametric geometry", "topology/clash heuristics", "engineering calculations/rules", "design critique", "multi-application handoff"],
-        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx", "engineering_intelligence.json", "design_agent_report.json", "calculation_report.json"],
+        "agent_stages": ["requirements", "discipline coordination", "parametric geometry", "topology/clash heuristics", "engineering calculations/rules", "advanced sizing/network calculations", "design critique", "multi-application handoff"],
+        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx", "engineering_intelligence.json", "design_agent_report.json", "calculation_report.json", "advanced_calculation_report.json"],
         "limitations": ["Calculations require explicit design-basis inputs and do not invent missing values", "Project/code-specific limits and manufacturer data are not inferred", "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment", "No construction/safety approval", "Not connected to plant telemetry or dispatch systems"],
     }
 
@@ -60,17 +61,19 @@ def generate_cad(request: GenerateCadRequest) -> dict:
     payload = spec.model_dump(mode="json")
     intelligence = agent["intelligence"]
     return {
-        "engine": "gridpulse-parametric-cad-v0.5.0",
+        "engine": "gridpulse-parametric-cad-v0.6.0",
         "interpretation_mode": agent["interpretation_mode"],
         "agent": agent,
         "spec": payload,
         "review": review_spec(spec),
         "engineering_intelligence": intelligence,
         "calculations": agent["calculations"],
+        "advanced_calculations": agent["advanced_calculations"],
         "exports": {
             "engineering_spec.json": json.dumps(payload, ensure_ascii=False, indent=2),
             "engineering_intelligence.json": json.dumps(intelligence, ensure_ascii=False, indent=2),
             "calculation_report.json": json.dumps(agent["calculations"], ensure_ascii=False, indent=2),
+            "advanced_calculation_report.json": json.dumps(agent["advanced_calculations"], ensure_ascii=False, indent=2),
             "design_agent_report.json": json.dumps(agent, ensure_ascii=False, indent=2),
             "plan.svg": to_svg(spec),
             "plan.dxf": to_dxf(spec),
@@ -93,8 +96,21 @@ def run_agent(request: GenerateCadRequest) -> dict:
 
 @router.post("/calculations")
 def calculate_engineering(request: CalculationRequest) -> dict:
-    """Run deterministic calculations on an existing validated model with explicit inputs."""
-    return run_engineering_calculations(request.spec, request.parameters)
+    """Run base and advanced deterministic calculations on an existing validated model."""
+    base = run_engineering_calculations(request.spec, request.parameters)
+    advanced = run_advanced_calculations(request.parameters)
+    return {
+        "engine": "GridPulse Engineering Calculation Engine v0.6.0",
+        "parameters": request.parameters,
+        "base": base,
+        "advanced": advanced,
+        "summary": {
+            "calculations": base["summary"]["total"] + advanced["summary"]["total"],
+            "calculated": base["summary"]["calculated"] + advanced["summary"]["calculated"],
+            "insufficient_input": base["summary"]["insufficient_input"] + advanced["summary"]["insufficient_input"],
+            "rules": base["summary"]["rules"] + advanced["summary"]["rules"],
+        },
+    }
 
 
 @router.post("/analyze")
