@@ -17,7 +17,7 @@ from gridpulse.cad_engine import (
     to_openscad,
     to_svg,
 )
-from gridpulse.cad_engine_multiformat import export_multi_application_bundle
+from gridpulse.cad_engine_multiformat import export_engineering_workbook, export_multi_application_bundle
 
 router = APIRouter(prefix="/api/v1/cad", tags=["parametric-cad"])
 
@@ -48,7 +48,7 @@ def cad_engine_status() -> dict:
         "geometry_backend": "parametric-spec + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
         "llm_configured": configured,
         "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser",
-        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py"],
+        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx"],
         "limitations": [
             "Conceptual envelopes and schematic routes only",
             "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment",
@@ -87,7 +87,7 @@ def generate_cad(request: GenerateCadRequest) -> dict:
 
 
 @router.post("/export/{format_name}")
-def export_cad(format_name: Literal["json", "svg", "dxf", "scad", "FCMacro"], spec: EngineeringSpec) -> Response:
+def export_cad(format_name: Literal["json", "svg", "dxf", "scad", "FCMacro", "xlsx"], spec: EngineeringSpec) -> Response:
     """Re-export a validated model using the deterministic geometry backend."""
     if format_name == "json":
         content, media, name = json.dumps(spec.model_dump(mode="json"), ensure_ascii=False, indent=2), "application/json", "engineering_spec.json"
@@ -97,6 +97,10 @@ def export_cad(format_name: Literal["json", "svg", "dxf", "scad", "FCMacro"], sp
         content, media, name = to_dxf(spec), "application/dxf", "plan.dxf"
     elif format_name == "scad":
         content, media, name = to_openscad(spec), "text/plain; charset=utf-8", "model.scad"
+    elif format_name == "xlsx":
+        content = export_engineering_workbook(spec, review_spec(spec))
+        return Response(content=content, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        headers={"Content-Disposition": "attachment; filename=gridpulse_engineering_handoff.xlsx"})
     else:
         content, media, name = to_freecad_macro(spec), "text/plain; charset=utf-8", "model.FCMacro"
     return Response(content=content, media_type=media, headers={"Content-Disposition": f'attachment; filename="{name}"'})
