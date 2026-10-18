@@ -6,6 +6,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
+from gridpulse.approved_limits import review_approved_limits
 from gridpulse.knowledge import search_documents
 from gridpulse.local_llm import LocalModelUnavailable, generate_local_answer, local_model_status
 from gridpulse.offline_ai import analyze_offline
@@ -37,6 +38,29 @@ class OfflineAnalysisRequest(BaseModel):
         return self
 
 
+class EngineeringLimit(BaseModel):
+    plant: str = Field(min_length=1, max_length=200)
+    metric: str = Field(min_length=1, max_length=160)
+    unit: str = Field(min_length=1, max_length=40)
+    scope: Literal["unit", "plant", "multiple_plants", "regional", "national"]
+    min_value: float | None = None
+    max_value: float | None = None
+    source_id: str = Field(min_length=1, max_length=128)
+    verification_status: Literal["unverified", "reviewed", "verified"]
+
+
+class EngineeringLimitReviewRequest(BaseModel):
+    records: list[OfflineObservation] = Field(min_length=1, max_length=5000)
+    approved_limits: list[EngineeringLimit] = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def unique_record_ids(self) -> EngineeringLimitReviewRequest:
+        ids = [row.record_id for row in self.records]
+        if len(ids) != len(set(ids)):
+            raise ValueError("record_id values must be unique")
+        return self
+
+
 @router.get("/status")
 def offline_ai_status() -> dict[str, Any]:
     return {
@@ -47,7 +71,7 @@ def offline_ai_status() -> dict[str, Any]:
         "external_services_required": False,
         "trained_language_model_included": False,
         "optional_local_language_model": local_model_status(),
-        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "trend_sample_sufficiency", "descriptive_linear_fit_r_squared", "rolling_mean_3", "first_to_latest_change_pct", "data_quality_report", "evidence_backed_review_insights", "input_quality_checks", "local_lexical_document_retrieval"],
+        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "trend_sample_sufficiency", "descriptive_linear_fit_r_squared", "rolling_mean_3", "first_to_latest_change_pct", "data_quality_report", "evidence_backed_review_insights", "input_quality_checks", "verified_engineering_limit_review", "local_lexical_document_retrieval"],
         "not_capable_of": ["language_generation_without_a_configured_local_model", "failure_certification", "plant_control", "automatic_trip_or_dispatch"],
     }
 
@@ -56,6 +80,17 @@ def offline_ai_status() -> dict[str, Any]:
 def offline_ai_analyze(request: OfflineAnalysisRequest) -> dict[str, Any]:
     try:
         return analyze_offline([record.model_dump(mode="json") for record in request.records])
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/limits/review")
+def engineering_limits_review(request: EngineeringLimitReviewRequest) -> dict[str, Any]:
+    try:
+        return review_approved_limits(
+            [record.model_dump(mode="json") for record in request.records],
+            [rule.model_dump(mode="json") for rule in request.approved_limits],
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
