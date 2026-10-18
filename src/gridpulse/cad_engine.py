@@ -341,11 +341,38 @@ def _xml(text: str) -> str:
     return text.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
 
 
+def _segment_intersects_rect(x1: float, y1: float, x2: float, y2: float,
+                             xmin: float, ymin: float, xmax: float, ymax: float) -> bool:
+    """Liang-Barsky segment/rectangle test used only for conservative clash screening."""
+    dx, dy = x2 - x1, y2 - y1
+    p = (-dx, dx, -dy, dy)
+    q = (x1 - xmin, xmax - x1, y1 - ymin, ymax - y1)
+    t0, t1 = 0.0, 1.0
+    for pi, qi in zip(p, q):
+        if abs(pi) < 1e-12:
+            if qi < 0:
+                return False
+            continue
+        ratio = qi / pi
+        if pi < 0:
+            t0 = max(t0, ratio)
+        else:
+            t1 = min(t1, ratio)
+        if t0 > t1:
+            return False
+    return True
+
+
 def review_spec(spec: EngineeringSpec) -> dict:
     """Geometric screening only; intentionally not a code or engineering approval."""
     findings=[]
     assets=spec.assets
+    # Fast AABB checks provide actionable coordination warnings without pretending to
+    # replace clash detection in a full geometric kernel.
     for i,a in enumerate(assets):
+        if a.z + a.height > 100:
+            findings.append({"severity":"warning","code":"ASSET_HEIGHT_LIMIT","items":[a.tag],
+                "message":"Asset envelope exceeds the engine's supported 100-unit vertical design envelope."})
         for b in assets[i+1:]:
             overlap_x=min(a.x+a.length,b.x+b.length)-max(a.x,b.x)
             overlap_y=min(a.y+a.width,b.y+b.width)-max(a.y,b.y)
@@ -353,6 +380,23 @@ def review_spec(spec: EngineeringSpec) -> dict:
             if overlap_x>0 and overlap_y>0 and overlap_z>0:
                 findings.append({"severity":"warning","code":"ASSET_ENVELOPE_OVERLAP","items":[a.tag,b.tag],
                     "message":"Bounding envelopes overlap in 3D; verify geometry, clearances and maintenance access."})
+    for route in spec.routes:
+        for start,end in zip(route.points,route.points[1:]):
+            if math.dist(start,end) < 1e-6:
+                findings.append({"severity":"warning","code":"ZERO_LENGTH_ROUTE_SEGMENT","items":[route.tag],
+                    "message":"Route contains consecutive identical points; remove the zero-length segment."})
+        # Approximate horizontal route/asset clash screening, considering route elevation.
+        for asset in assets:
+            for start,end in zip(route.points,route.points[1:]):
+                z_low,z_high=sorted((start[2],end[2]))
+                if z_high < asset.z or z_low > asset.z + asset.height:
+                    continue
+                if _segment_intersects_rect(start[0],start[1],end[0],end[1],
+                    asset.x,asset.y,asset.x+asset.length,asset.y+asset.width):
+                    findings.append({"severity":"warning","code":"ROUTE_ASSET_ENVELOPE_CLASH",
+                        "items":[route.tag,asset.tag],
+                        "message":"A schematic route segment crosses an equipment footprint at a potentially conflicting elevation; verify in a 3D coordination tool."})
+                    break
     if not spec.routes:
         findings.append({"severity":"info","code":"NO_ROUTES","items":[],"message":"No system routes were generated."})
     findings.extend([
