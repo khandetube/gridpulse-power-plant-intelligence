@@ -8,7 +8,13 @@ from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
 from gridpulse.cad_engine import (
-    Discipline, EngineeringSpec, build_spec, review_spec, to_dxf, to_openscad, to_svg,
+    Discipline,
+    EngineeringSpec,
+    build_spec,
+    review_spec,
+    to_dxf,
+    to_openscad,
+    to_svg,
 )
 
 router = APIRouter(prefix="/api/v1/cad", tags=["parametric-cad"])
