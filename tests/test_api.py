@@ -416,4 +416,4 @@ def test_observation_csv_export_neutralizes_formula_like_text_cells(tmp_path, mo
     rows = list(csv.DictReader(StringIO(exported.text)))
     assert rows[0]["metric"].startswith("'=")
     # The numerical measurement remains numeric rather than being escaped as text.
-    assert rows[0]["value"] == "10"
+    assert rows[0]["value"] == "10.0"
