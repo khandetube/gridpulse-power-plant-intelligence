@@ -252,6 +252,102 @@ for(let x=L*.11;x<L*.3;x+=L*.045)box(x,W*.875,.15,.025,.02,H*.43,"glass","Contro
 box(L*.48,W*.12,.1,L*.12,W*.09,H*.23,"equipment","Auxiliary electrical room");
 for(let i=0;i<5;i++)box(L*.49+i*L*.021,W*.115,.13,.014,W*.1,H*.2,"electrical","MCC cabinet");
 for(let i=0;i<3;i++){let x=L*.59+i*L*.075,y=W*.49;box(x,y,.1,L*.05,W*.075,H*.17,"equipment","Pump skid");cyl(x+L*.025,y+W*.037,.1+H*.17,L*.014,H*.12,"metal","Pump motor",10)}
+// HIGH-DETAIL EQUIPMENT PACKAGE: repeated manufacturable-looking subassemblies for visual review only.
+ // Turbine train: coupling discs, segmented flange bolts, bearing blocks, lube-oil lines and service platforms.
+ for(let x=hx+hl*.17;x<hx+hl*.91;x+=hl*.34){
+   const cy=hy+hw*.5, cz=.5;
+   box(x-.42,cy-.56,.18,.84,1.12,.18,"metal","Turbine baseplate");
+   for(let j=0;j<2;j++){cyl(x+hl*.1+j*.11,cy,cz+.03,.35,.08,"metal","Turbine coupling flange",24);for(let b=0;b<12;b++){let a=2*Math.PI*b/12;cyl(x+hl*.1+j*.11,cy+Math.cos(a)*.29,cz+.03+Math.sin(a)*.29,.025,.10,"metal","Coupling bolt",6)}}
+   for(let j=0;j<4;j++)box(x-.36+j*.22,cy-.52,.36,.055,1.04,.045,"metal","Bearing cap rib");
+   for(let j=0;j<3;j++){cyl(x-.25+j*.22,cy-.54,.38,.045,.06,"metal","Anchor bolt",8);cyl(x-.25+j*.22,cy+.48,.38,.045,.06,"metal","Anchor bolt",8)}
+   for(let j=0;j<4;j++)beam([x-.4,cy-.52,.42+j*.07],[x+.4,cy-.52,.42+j*.07],.018,"metal","Casing seam");
+ }
+ // Boiler/HRSG: access decks, handrails, tube bundles, headers, expansion joints, service ladders and instruments.
+ for(let z=H*.45;z<bh;z+=Math.max(.9,H*.45)){
+   for(let side of [by-.22,by+bd+.12]){
+     for(let x=bx-.12;x<bx+bw+.15;x+=.55){box(x,side,z,.035,.035,.82,"metal","Boiler handrail post");beam([x,side,z+.72],[Math.min(x+.55,bx+bw+.15),side,z+.72],.028,"metal","Boiler guardrail");beam([x,side,z+.36],[Math.min(x+.55,bx+bw+.15),side,z+.36],.02,"metal","Boiler midrail")}
+   }
+   for(let i=0;i<9;i++)box(bx+.08+i*bw*.10,by+.08,z,.025,bd-.16,.025,"metal","HRSG tube bank fin");
+   for(let i=0;i<3;i++)cyl(bx+bw*.2+i*bw*.28,by-.11,z-.08,.065,bw*.24,"pipe","HRSG header",12);
+ }
+ for(let i=0;i<7;i++){let x=bx+.12+i*bw*.12;beam([x,by-.28,.2],[x,by-.28,bh*.86],.045,"metal","Fixed access ladder rail");for(let z=.35;z<bh*.86;z+=.28)beam([x,by-.28,z],[x+.32,by-.28,z],.025,"metal","Ladder rung")}
+ for(let i=0;i<6;i++){let z=.55+i*H*.23;cyl(bx+bw+.02,by+bd*.18,z,.09,.08,"metal","Pressure gauge bezel",16);cyl(bx+bw+.105,by+bd*.18,z,.055,.012,"glass","Gauge glass",16);beam([bx+bw+.11,by+bd*.18,z],[bx+bw+.14,by+bd*.18,z+.035],.008,"metal","Gauge needle")}
+ // Pipework details: elbows approximated by short segmented cylinders, flanges, valves, supports and branch take-offs.
+ for(let run=0;run<5;run++){
+   const z=rz+run*.13, yy=ry+.12+run*.055;
+   for(let x=L*.11;x<L*.88;x+=Math.max(1.8,L/14)){
+     cyl(x,yy,z,.055+run*.004,Math.max(.12,L*.012),"pipe","Pipe flange",12);
+     for(let b=0;b<8;b++){let a=2*Math.PI*b/8;cyl(x+Math.max(.12,L*.012)*.5,yy+Math.cos(a)*(.065+run*.004),z+Math.sin(a)*(.065+run*.004),.009,.025,"metal","Flange bolt",6)}
+   }
+   for(let x=L*.18;x<L*.83;x+=Math.max(3,L/7)){
+     cyl(x,yy,z,.095,.16,"metal","Valve body",16);
+     cyl(x,yy,z+.15,.035,.12,"metal","Valve stem",8);
+     beam([x-.11,yy,z+.27],[x+.11,yy,z+.27],.025,"metal","Valve handwheel");
+     cyl(x-.11,yy,z+.27,.018,.025,"metal","Handwheel hub",8);
+     box(x-.07,yy-.07,.12,.14,.14,Math.max(.18,z-.12),"structure","Pipe shoe support");
+   }
+ }
+ // Cooling tower cells: structural rings, vertical ribs, fan decks and fan blades.
+ for(let i=0;i<3;i++){
+   const x=L*.72+i*tr*2.5,y=W*.68;
+   for(let z=.42;z<H*.86;z+=Math.max(.35,H*.12))cyl(x,y,z,tr*.84,.035,"metal","Cooling tower stiffening ring",24);
+   for(let b=0;b<16;b++){let a=2*Math.PI*b/16;beam([x+Math.cos(a)*tr*.82,y+Math.sin(a)*tr*.82,.4],[x+Math.cos(a)*tr*.65,y+Math.sin(a)*tr*.65,H*.82],.025,"metal","Cooling tower vertical rib")}
+   const fanZ=.3+H*.88;
+   cyl(x,y,fanZ,.55*tr,.12,"metal","Cooling fan hub",20);
+   for(let b=0;b<8;b++){let a=2*Math.PI*b/8;beam([x,y,fanZ+.06],[x+Math.cos(a)*tr*.72,y+Math.sin(a)*tr*.72,fanZ+.06],.055,"metal","Cooling fan blade")}
+   for(let b=0;b<12;b++){let a=2*Math.PI*b/12;cyl(x+Math.cos(a)*tr*.91,y+Math.sin(a)*tr*.91,.28,.025,H*.12,"metal","Tower anchor",8)}
+ }
+ // Power transformers: radiator banks, conservator tank, cable boxes, HV bushings and terminal connectors.
+ for(let i=0;i<3;i++){
+   const x=L*.1+i*L*.12,y=W*.79,tx=L*.075,ty=W*.09,tz=.1+H*.42;
+   box(x+tx*.12,y+ty*.18,tz,tx*.76,ty*.64,H*.07,"metal","Transformer cover");
+   box(x+tx*.2,y+ty*.82,.1+H*.29,tx*.6,ty*.1,H*.08,"tank","Transformer conservator");
+   for(let side of [-1,1])for(let j=0;j<12;j++)box(x+(side<0?-.12:tx+.02),y+j*ty*.075,.18,.12,.035,H*.31,"metal","Transformer radiator fin");
+   for(let j=0;j<3;j++){cyl(x+tx*.25+j*tx*.25,y+ty*.5,tz+H*.16,.055,.035,"metal","HV terminal connector",10);cyl(x+tx*.25+j*tx*.25,y+ty*.5,tz+H*.19,.025,.10,"electrical","Terminal insulator cap",8)}
+   for(let j=0;j<4;j++)cyl(x+tx*.15+j*tx*.22,y+ty*.12,.13,.035,.06,"metal","Transformer wheel",12);
+ }
+ // Switchgear lineups: individual cubicles, doors, mimic panels, handles, vents and indicator lamps.
+ for(let row=0;row<2;row++)for(let j=0;j<10;j++){
+   const x=L*.47+j*L*.031,y=W*(row?.22:.12),z=.12,cw=L*.027,ch=H*.25;
+   box(x,y,z,cw,.32,ch,"electrical","Switchgear cubicle");
+   box(x+cw*.12,y-.012,z+ch*.55,cw*.76,.018,ch*.32,"metal","Cubicle front door");
+   for(let k=0;k<6;k++)box(x+cw*.18+k*cw*.1,y-.024,z+ch*.25,.012,.02,.035,"metal","Vent slot");
+   for(let k=0;k<3;k++)cyl(x+cw*.28+k*cw*.22,y-.035,z+ch*.82,.018,.012,k===0?"cooling":"glass","Status indicator",8);
+   box(x+cw*.72,y-.035,z+ch*.45,.018,.025,.09,"metal","Door handle");
+ }
+ // Plant pipe bridges, structural bracing, safety rails, access stairs and service platforms.
+ for(let x=L*.08;x<L*.92;x+=Math.max(3,L/8)){
+   for(let z of [H*.45,H*.72,Math.min(tray,roof*.72)]){
+     beam([x,ry,z],[x+Math.max(2,L/9),ry+W*.08,z],.045,"structure","Pipe rack diagonal brace");
+     beam([x,ry+W*.08,z],[x+Math.max(2,L/9),ry,z],.045,"structure","Pipe rack diagonal brace");
+   }
+   box(x-.12,ry-W*.04,.1,.24,W*.16,.12,"concrete","Pipe rack pedestal");
+ }
+ for(let level=0;level<3;level++){
+   const sx=L*.44+level*L*.065,sy=W*.3+level*.06,base=.2+level*H*.22;
+   for(let n=0;n<10;n++)box(sx+n*.13,sy,base+n*.12,.12,.55,.035,"metal","Access stair tread");
+   beam([sx,sy,base],[sx+1.2,sy,base+1.08],.035,"metal","Stair stringer");
+   beam([sx,sy+.55,base],[sx+1.2,sy+.55,base+1.08],.035,"metal","Stair stringer");
+   for(let n=0;n<8;n++)beam([sx+n*.16,sy+.03,base+n*.144+.3],[sx+n*.16,sy+.03,base+n*.144+.72],.022,"metal","Stair handrail post");
+   beam([sx,sy+.03,base+.72],[sx+1.12,sy+.03,base+1.73],.025,"metal","Stair handrail");
+ }
+ // Site lights, cable ladder rungs, junction boxes and instrumentation field devices.
+ for(let x=L*.04;x<L*.96;x+=Math.max(4,L/6))for(let y of [W*.04,W*.94]){
+   box(x-.08,y-.08,.08,.16,.16,.28,"concrete","Light pole base");
+   box(x-.035,y-.035,.35,.07,.07,H*.58,"metal","Area light pole");
+   beam([x,y,.35+H*.58],[x+.32,y,.35+H*.58],.035,"metal","Light arm");
+   box(x+.22,y-.06,.31+H*.58,.18,.12,.05,"glass","LED floodlight");
+ }
+ for(let j=0;j<4;j++)for(let x=L*.12;x<L*.9;x+=Math.max(1.5,L/16)){
+   box(x,W*.17+j*.08,tray+j*.08,.08,.06,.035,"metal","Cable tray rung");
+ }
+ for(let i=0;i<24;i++){
+   const x=L*.12+(i%8)*L*.095,y=W*.6+Math.floor(i/8)*W*.07,z=.25+H*.24;
+   box(x,y,z,.16,.12,.2,"equipment","Field junction box");
+   cyl(x+.08,y-.012,z+.14,.035,.02,"metal","Instrument dial",12);
+   beam([x+.08,y-.025,z+.15],[x+.10,y-.027,z+.17],.006,"metal","Instrument needle");
+ }
+ 
 // Add independently created solids to the shared scene mesh for rendering and OBJ/DXF export.
 customObjects.filter(o=>o.visible!==false).forEach(o=>{if(o.type==="cylinder")cyl(o.x+o.dx/2,o.y+o.dy/2,o.z,Math.max(o.dx,o.dy)/2,o.dz,o.material,o.name,20);else box(o.x,o.y,o.z,o.dx,o.dy,o.dz,o.material,o.name)});
 return {verts,faces,colors,parts}}
@@ -262,7 +358,7 @@ const span=Math.max(state.d.L,state.d.W,state.d.F*state.d.H),scale=Math.min(rect
 const p=verts.map(([x,y,z])=>{x-=state.d.L/2;y-=state.d.W/2;z-=state.d.F*state.d.H*.35;const xx=x*cy-y*sy,yy=x*sy+y*cy,zz=z*cx-yy*sx,depth=z*sx+yy*cx;return {x:rect.width/2+xx*scale,y:rect.height*.57-zz*scale,depth}});
 const palette={structure:"#8ca5bd",floor:"#a9bacb",cable:"#49e1d1",pipe:"#ffbd68",duct:"#8ab4ff",elec:"#52e0d0",mech:"#ffbc68",equipment:"#7fa5cb",electrical:"#f2c36f",cooling:"#63b8e8",water:"#2e7399",stack:"#a9b6c7",tank:"#b0c5d8",control:"#587fa3",glass:"#5be0d1",concrete:"#697f95",rotating:"#ff9d6c",metal:"#d6e1ed"};
 faces.map((f,i)=>({f,i,depth:f.reduce((v,n)=>v+p[n].depth,0)/f.length})).sort((a,b)=>a.depth-b.depth).forEach(({f,i})=>{ctx.beginPath();f.forEach((n,j)=>j?ctx.lineTo(p[n].x,p[n].y):ctx.moveTo(p[n].x,p[n].y));ctx.closePath();ctx.fillStyle=palette[colors[i]]||"#7e94ad";ctx.globalAlpha=["structure","floor"].includes(colors[i])?.78:.9;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle="#06111c";ctx.lineWidth=.45;ctx.stroke()});
-ctx.fillStyle="#dce9f8";ctx.font="12px system-ui";ctx.fillText("POWER PLANT CONCEPT · "+faces.length+" faces",12,22);ctx.fillStyle="#9fb1c8";ctx.font="11px system-ui";ctx.fillText("Drag: orbit · Wheel: zoom · Concept geometry, not construction BIM",12,40)
+ctx.fillStyle="#dce9f8";ctx.font="12px system-ui";ctx.fillText("POWER PLANT HIGH-DETAIL CONCEPT · "+faces.length+" faces · "+Math.floor(verts.length/3)+" triangles approx.",12,22);ctx.fillStyle="#9fb1c8";ctx.font="11px system-ui";ctx.fillText("Drag: orbit · Wheel: zoom · Concept geometry, not construction BIM",12,40)
 }
 function objText(){const g=geo(state);let out="# GridPulse MEP Studio conceptual model\n# Not construction-ready geometry\n";g.verts.forEach(v=>out+="v "+v.map(n=>n.toFixed(4)).join(" ")+"\n");let active="",idx=0;g.faces.forEach((f,i)=>{if(g.colors[i]!==active){active=g.colors[i];out+="g "+active+"\n"}out+="f "+f.map(n=>n+1).join(" ")+"\n"});return out}
 function maxText(){const s=state;return `-- GridPulse MEP Studio - conceptual massing only
