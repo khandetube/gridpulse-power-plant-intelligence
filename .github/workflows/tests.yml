@@ -35,7 +35,7 @@ jobs:
               ("maintenance-console", Path("docs/maintenance-console.html")),
               ("offline-ai-console", Path("docs/offline-ai-console.html")),
               ("plant-intelligence-suite", Path("docs/plant-intelligence-suite.html")),
-              ("data-quality-review", Path("docs/data-quality-review.html")), ("mep-studio", Path("docs/mep-studio.html")),
+              ("data-quality-review", Path("docs/data-quality-review.html")), ("mep-studio", Path("docs/mep-studio.html")), ("design-ai-copilot", Path("docs/design-ai-copilot.html")),
           ]:
               html = source.read_text(encoding="utf-8")
               scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.DOTALL)
@@ -49,6 +49,7 @@ jobs:
           node --check /tmp/gridpulse-plant-intelligence-suite.js
           node --check /tmp/gridpulse-data-quality-review.js
           node --check /tmp/gridpulse-mep-studio.js
+          node --check /tmp/gridpulse-design-ai-copilot.js
       - name: Check plant CAD JavaScript syntax
         run: |
           python - <<'PY'
