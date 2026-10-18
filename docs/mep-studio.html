@@ -210,12 +210,55 @@ function validateRooms(){
  $("roomValidation").innerHTML=issues.length?'<p class="warning"><b>نیازمند اصلاح ('+issues.length+')</b><br>'+issues.map(escapeHtml).join("<br>")+'</p>':'<p class="ok">کنترل هندسی اولیه: فضاهای تعریف‌شده در محدوده پوسته هستند و تداخل مستطیلی شناسایی نشد. این کنترل جایگزین بررسی نقشه معماری نیست.</p>';
 }
 function drawPlan(){
- const c=$("floorPlan"),ctx=c.getContext("2d"),r=c.getBoundingClientRect(),ratio=devicePixelRatio||1;c.width=Math.max(1,Math.floor(r.width*ratio));c.height=Math.max(1,Math.floor(r.height*ratio));ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,r.width,r.height);
- let d;try{d=read()}catch{return}const pad=32,scale=Math.min((r.width-pad*2)/d.L,(r.height-pad*2)/d.W);const ox=(r.width-d.L*scale)/2,oy=(r.height-d.W*scale)/2;
- ctx.strokeStyle="#91a8c0";ctx.lineWidth=2;ctx.strokeRect(ox,oy,d.L*scale,d.W*scale);
- const colors=["#55dbc8","#82b5ff","#ffcb77","#df9cff","#ff9099","#83d39b"];
- rooms.filter(q=>q.floor===Math.min(d.F,1)).forEach((q,i)=>{ctx.fillStyle=colors[i%colors.length]+"55";ctx.fillRect(ox+q.x*scale,oy+(d.W-q.y-q.width)*scale,q.length*scale,q.width*scale);ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=1.5;ctx.strokeRect(ox+q.x*scale,oy+(d.W-q.y-q.width)*scale,q.length*scale,q.width*scale);ctx.fillStyle="#edf4ff";ctx.font="11px system-ui";ctx.fillText(q.name.slice(0,18),ox+q.x*scale+4,oy+(d.W-q.y-q.width)*scale+15);});
- ctx.fillStyle="#9fb1c8";ctx.font="11px system-ui";ctx.fillText("Floor 1 · dimensions in meters · schematic",8,17);
+ const c=$("floorPlan"),ctx=c.getContext("2d"),r=c.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
+ c.width=Math.max(1,Math.floor(r.width*ratio));c.height=Math.max(1,Math.floor(r.height*ratio));ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,r.width,r.height);
+ let d;try{d=read()}catch{ctx.fillStyle="#dce9f8";ctx.fillText("ابتدا ابعاد پروژه را وارد کنید",16,24);return}
+ const W=r.width,H=r.height,padL=58,padR=24,padT=42,padB=46,usableW=Math.max(20,W-padL-padR),usableH=Math.max(20,H-padT-padB),scale=Math.max(.01,Math.min(usableW/d.L,usableH/d.W)),pw=d.L*scale,ph=d.W*scale,ox=padL+(usableW-pw)/2,oy=padT+(usableH-ph)/2;
+ const colors={office:"#4ca6ff",meeting:"#bd8aff",residential:"#65d6a6",corridor:"#8193a8",service:"#ffbe5c",plant:"#ff7e79",retail:"#4ed6c8",other:"#9ba9ba"};
+ const px=x=>ox+x*scale,py=y=>oy+(d.W-y)*scale;
+ // drafting-paper grid
+ ctx.fillStyle="#071321";ctx.fillRect(0,0,W,H);
+ ctx.save();ctx.strokeStyle="#183047";ctx.lineWidth=1;
+ for(let x=0;x<=d.L+.001;x+=1){ctx.beginPath();ctx.moveTo(px(x),oy);ctx.lineTo(px(x),oy+ph);ctx.stroke()}
+ for(let y=0;y<=d.W+.001;y+=1){ctx.beginPath();ctx.moveTo(ox,py(y));ctx.lineTo(ox+pw,py(y));ctx.stroke()}
+ ctx.restore();
+ // subtle floor plate
+ ctx.fillStyle="#101f2e";ctx.fillRect(ox,oy,pw,ph);
+ // room zones and labels
+ const floor=Number($("planFloor")?.value||1),floorRooms=rooms.filter(q=>Number(q.floor)===floor);
+ floorRooms.forEach(q=>{const x=px(q.x),y=py(q.y+q.width),w=q.length*scale,h=q.width*scale,col=colors[q.use]||colors.other;
+ ctx.fillStyle=col+"22";ctx.fillRect(x,y,w,h);
+ ctx.fillStyle=col;ctx.fillRect(x,y,Math.max(3,Math.min(5,scale*.13)),h);
+ if(w>34&&h>25){ctx.fillStyle="#edf4ff";ctx.textAlign="center";ctx.font="600 "+Math.max(9,Math.min(12,scale*.42))+"px system-ui";ctx.fillText(q.name.length>24?q.name.slice(0,22)+"…":q.name,x+w/2,y+h/2-3,Math.max(20,w-6));ctx.fillStyle="#9fb7cc";ctx.font="10px system-ui";ctx.fillText(q.length+" × "+q.width+" m",x+w/2,y+h/2+11,Math.max(20,w-6));}
+ // furniture/equipment symbols by use (schematic, not measured furniture)
+ if(scale>9&&w>50&&h>42){ctx.strokeStyle=col+"aa";ctx.lineWidth=1;
+ if(q.use==="office"||q.use==="meeting"){const n=q.use==="meeting"?Math.min(4,Math.max(2,Math.floor(w/38))):2;for(let k=0;k<n;k++){const fx=x+w*(.25+.5*(k%2)),fy=y+h*(.67+.13*Math.floor(k/2));ctx.strokeRect(fx-7,fy-4,14,8);}}
+ if(q.use==="plant"||q.use==="service"){ctx.strokeRect(x+w*.64,y+h*.18,Math.max(10,w*.18),Math.max(10,h*.18));ctx.beginPath();ctx.arc(x+w*.73,y+h*.27,Math.min(7,w*.06,h*.06),0,Math.PI*2);ctx.stroke();}
+ }
+ });
+ // Architectural wall lines: perimeter heavy, room boundaries double-stroked for legibility
+ ctx.strokeStyle="#d8e5f3";ctx.lineWidth=Math.max(2,Math.min(4,scale*.12));ctx.strokeRect(ox,oy,pw,ph);
+ ctx.strokeStyle="#c4d5e8";ctx.lineWidth=Math.max(1.4,Math.min(2.5,scale*.075));
+ floorRooms.forEach(q=>{const x=px(q.x),y=py(q.y+q.width),w=q.length*scale,h=q.width*scale;ctx.strokeRect(x,y,w,h)});
+ // door symbols at room lower-left, with swing arcs; schematic openings
+ floorRooms.forEach(q=>{const x=px(q.x),y=py(q.y),door=Math.max(7,Math.min(18,scale*.8));if(x+door<ox+pw&&y>=oy&&y<=oy+ph){ctx.fillStyle="#101f2e";ctx.fillRect(x-1,y-door*.04,door+2,Math.max(3,scale*.12));ctx.strokeStyle="#ffcb77";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y-door);ctx.arc(x,y,door,-Math.PI/2,0);ctx.stroke();}});
+ // windows along outer upper wall
+ const windowCount=Math.max(2,Math.min(8,Math.floor(d.L/4)));ctx.strokeStyle="#55c9f5";ctx.lineWidth=3;
+ for(let i=1;i<=windowCount;i++){const x=ox+pw*i/(windowCount+1);ctx.beginPath();ctx.moveTo(x,oy-1);ctx.lineTo(x+Math.min(14,pw/(windowCount+1)*.45),oy-1);ctx.stroke()}
+ // perimeter dimension lines + ticks + labels
+ ctx.strokeStyle="#8da8c1";ctx.fillStyle="#c4d5e8";ctx.lineWidth=1;ctx.font="10px system-ui";ctx.textAlign="center";
+ const dimY=oy+ph+19;ctx.beginPath();ctx.moveTo(ox,dimY);ctx.lineTo(ox+pw,dimY);ctx.moveTo(ox,dimY-4);ctx.lineTo(ox,dimY+4);ctx.moveTo(ox+pw,dimY-4);ctx.lineTo(ox+pw,dimY+4);ctx.stroke();ctx.fillText("L = "+d.L+" m",ox+pw/2,dimY-5);
+ const dimX=ox-20;ctx.beginPath();ctx.moveTo(dimX,oy);ctx.lineTo(dimX,oy+ph);ctx.moveTo(dimX-4,oy);ctx.lineTo(dimX+4,oy);ctx.moveTo(dimX-4,oy+ph);ctx.lineTo(dimX+4,oy+ph);ctx.stroke();ctx.save();ctx.translate(dimX-7,oy+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText("W = "+d.W+" m",0,0);ctx.restore();
+ // north arrow
+ ctx.fillStyle="#e5f0fc";ctx.textAlign="center";ctx.font="bold 10px system-ui";ctx.fillText("N",W-24,20);ctx.beginPath();ctx.moveTo(W-24,26);ctx.lineTo(W-30,39);ctx.lineTo(W-18,39);ctx.closePath();ctx.fill();
+ // scale bar
+ const barM=Math.max(1,Math.floor(Math.min(5,d.L/3))),barW=barM*scale;ctx.fillStyle="#d7e5f4";ctx.fillRect(12,H-23,barW,3);ctx.fillRect(12,H-26,1,9);ctx.fillRect(12+barW,H-26,1,9);ctx.textAlign="left";ctx.font="10px system-ui";ctx.fillText(barM+" m",16+barW,H-19);
+ // title + drawing metadata
+ ctx.textAlign="left";ctx.fillStyle="#eaf3ff";ctx.font="bold 12px system-ui";ctx.fillText("FLOOR PLAN  /  LEVEL "+floor,12,18);
+ ctx.fillStyle="#91a8c0";ctx.font="10px system-ui";ctx.fillText("CONCEPTUAL · UNVERIFIED · DIMENSIONS IN METERS",12,32);
+ // compact legend
+ let lx=12,ly=H-39;Object.entries(colors).slice(0,5).forEach(([k,col])=>{ctx.fillStyle=col;ctx.fillRect(lx,ly-8,7,7);ctx.fillStyle="#a9bfd4";ctx.font="9px system-ui";ctx.fillText(({office:"Office",meeting:"Meeting",service:"Service",plant:"Plant",corridor:"Corridor"})[k]||k,lx+10,ly-1);lx+=ctx.measureText(({office:"Office",meeting:"Meeting",service:"Service",plant:"Plant",corridor:"Corridor"})[k]||k).width+24;});
+ if(!floorRooms.length){ctx.fillStyle="#ffcb77";ctx.textAlign="center";ctx.font="12px system-ui";ctx.fillText("در این طبقه فضایی تعریف نشده است",W/2,H/2);}
 }
 function roomCsv(){const keys=["name","floor","x","y","length","width","use","people","sockets","lux"];return "\ufeff"+[keys.join(","),...rooms.map(r=>keys.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(","))].join("\r\n")}
 function parseCsv(text){const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());if(lines.length<2)throw Error("CSV باید حداقل یک ردیف داده داشته باشد.");const parseLine=line=>{const out=[];let cur="",q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'&&q){cur+='"';i++}else if(ch==='"')q=!q;else if(ch===","&&!q){out.push(cur);cur=""}else cur+=ch}out.push(cur);return out};const headers=parseLine(lines[0]).map(x=>x.trim().toLowerCase());const required=["name","floor","x","y","length","width","use","people","sockets","lux"];const ix={};required.forEach(k=>{ix[k]=headers.indexOf(k);if(ix[k]<0)throw Error("ستون ضروری در CSV نیست: "+k)});return lines.slice(1).map(line=>{const a=parseLine(line),o={};required.forEach(k=>o[k]=a[ix[k]]);return {name:String(o.name),floor:Number(o.floor),x:Number(o.x),y:Number(o.y),length:Number(o.length),width:Number(o.width),use:String(o.use),people:Number(o.people),sockets:Number(o.sockets),lux:Number(o.lux)}})}
