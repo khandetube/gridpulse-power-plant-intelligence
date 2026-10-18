@@ -14,7 +14,8 @@ def test_process_prompt_generates_editable_model_and_exports():
     assert len(spec.routes) >= 3
     assert "P-101A" in {item.tag for item in spec.assets}
     assert "TK-101" in {item.tag for item in spec.assets}
-    assert "ASSET_ENVELOPE_OVERLAP" in {f["code"] for f in review_spec(spec)["geometric_findings"]}
+    assert review_spec(spec)["engineering_approval"] is False
+    assert "NO_ENGINEERING_CALCULATIONS" in {f["code"] for f in review_spec(spec)["geometric_findings"]}
     assert "<svg" in to_svg(spec)
     assert "SECTION" in to_dxf(spec)
     assert "module box_at" in to_openscad(spec)
@@ -66,3 +67,15 @@ def test_api_generates_consistent_model():
     assert response["exports"]["plan.svg"].startswith("<svg")
     assert response["exports"]["plan.dxf"].endswith("EOF\n")
     assert response["exports"]["model.scad"].startswith("// GridPulse")
+
+
+def test_review_detects_actual_3d_envelope_overlap():
+    spec = EngineeringSpec.model_validate({
+        "site_width": 20, "site_length": 20,
+        "assets": [
+            {"tag":"P-101","name":"Pump","discipline":"Mechanical","shape":"pump","x":2,"y":2,"z":0,"length":4,"width":3,"height":2},
+            {"tag":"M-101","name":"Motor","discipline":"Mechanical","shape":"motor","x":4,"y":3,"z":1,"length":3,"width":3,"height":2},
+        ],
+    })
+    findings = review_spec(spec)["geometric_findings"]
+    assert any(item["code"] == "ASSET_ENVELOPE_OVERLAP" for item in findings)
