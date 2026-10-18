@@ -109,3 +109,17 @@ The text above is illustrative. Search results only indicate lexical matches; a 
 ## Retrieval evaluation benchmark
 
 A local benchmark runner is available as `python -m gridpulse.evaluation benchmark.json --output report.json --k 5`. The input file must contain a `cases` array; each case has a `query`, a `documents` array (same shape as the search API), and `relevant_source_ids`. An empty relevance list marks a case where the correct behavior is to return no matching evidence. The report measures recall@k, mean reciprocal rank, and abstention behavior, while listing invalid cases. Build a domain-specific benchmark from approved examples and independently reviewed expected source IDs before using scores to compare retrieval changes. Scores on a small synthetic set are not proof of real-world accuracy or safety.
+
+
+## Cross-section design copilot
+
+The browser tool at `docs/design-ai-copilot.html` is now shared from the main dashboard, plant CAD, MEP studio, 2D/3D engineering editors, maintenance console, asset registry, data-quality review, and operations suite. It has four modes:
+
+- **CAD design review:** duplicate identifiers, empty names, invalid/non-positive geometry, out-of-site bounds when site bounds are present, and 2D bounding-box overlap candidates.
+- **Asset readiness:** missing tag/name/zone/manufacturer/model/criticality metadata.
+- **Engineering data quality:** duplicate IDs, missing identity/provenance fields, invalid numeric values or dates, and missing verification status.
+- **Maintenance schedule review:** missing asset links/titles, overdue dates, invalid recurrence intervals, and unknown task states.
+
+The tool reads caller-selected JSON in the browser, applies bounded local rules, and exports a JSON findings report. It does not upload the supplied file or call a hosted AI API. Use the CAD project's JSON export for design mode, observation records for data-quality mode, and task arrays for maintenance mode.
+
+This is an explainable rules-based copilot, not a trained language model or an engineering calculation solver. Its overlap check is strictly two-dimensional and can flag intentional assemblies; it cannot certify clearances, code compliance, process sizing, structural integrity, electrical coordination, fire safety, or maintainability. Review every finding against approved drawings, the project's design basis, applicable codes, and a qualified engineer's judgement.
