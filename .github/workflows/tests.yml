@@ -55,7 +55,7 @@ jobs:
           from pathlib import Path
           import re
           source = Path("docs/refinery-a0.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>", source, flags=re.DOTALL | re.IGNORECASE)
+          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", source, flags=re.DOTALL | re.IGNORECASE)
           inline_scripts = [script for script in scripts if script.strip()]
           if not inline_scripts:
               raise SystemExit("No inline JavaScript found in plant CAD")
