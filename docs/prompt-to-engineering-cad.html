@@ -31,8 +31,10 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 function has(words){const p=$("prompt").value.toLowerCase();return words.some(w=>p.includes(w.toLowerCase()));}
 function selected(){return [...document.querySelectorAll('.checks input:checked')].map(x=>x.value);}
 function createModel(){
- const w=Math.max(10,Math.min(500,Number($("width").value)||80)),h=Math.max(10,Math.min(500,Number($("height").value)||55)),tpl=$("template").value,sys=selected();
- const p=$("prompt").value.toLowerCase(),a=[],r=[],checks=[];
+ let w=Math.max(10,Math.min(500,Number($("width").value)||80)),h=Math.max(10,Math.min(500,Number($("height").value)||55));const tpl=$("template").value,sys=selected();
+ const promptText=$("prompt").value,p=promptText.toLowerCase(),a=[],r=[],checks=[];
+ const dimMatch=promptText.match(/(\\d{2,3})\\s*(?:در|x|×|by)\\s*(\\d{2,3})\\s*(?:متر|m|meters?)?/i);
+ if(dimMatch){w=Math.max(10,Math.min(500,Number(dimMatch[1])));h=Math.max(10,Math.min(500,Number(dimMatch[2])));$("width").value=w;$("height").value=h;}
  const add=(tag,name,discipline,x,y,ww,hh,z=2,extra={})=>{a.push({id:tag,tag,name,discipline,x:+x.toFixed(2),y:+y.toFixed(2),w:+ww.toFixed(2),h:+hh.toFixed(2),z,system:extra.system||discipline,status:"concept",parameters:extra.parameters||{},source:"parametric-template"});};
  const route=(tag,name,discipline,pts,level=3)=>r.push({id:tag,tag,name,discipline,pts:pts.map(q=>q.map(n=>+n.toFixed(2))),level,system:discipline});
  add("BLD-CTRL","ساختمان کنترل و DCS","Architecture",w*.66,h*.73,w*.22,h*.17,5);
@@ -54,13 +56,28 @@ function createModel(){
    add("E-101","مبدل حرارتی","Mechanical",w*.57,h*.56,w*.13,h*.07,4);
    add("R-101","راکتور / تجهیز فرایندی","Mechanical",w*.42,h*.34,w*.13,h*.13,8);
  }
+ // Prompt-keyword expansion: add explicit equipment requests beyond the selected base template.
+ const requested=[
+  {keys:["کمپرسور","compressor","کمپرسورها"],tag:"K-101",name:"کمپرسور فرایندی (مشخصات TBD)",d:"Mechanical",x:.32,y:.38,w:.09,h:.07,z:4},
+  {keys:["برج خنک کن","برج خنک‌کن","cooling tower","cooling towers"],tag:"CT-101",name:"برج خنک‌کن (ظرفیت TBD)",d:"Mechanical",x:.83,y:.17,w:.1,h:.12,z:8},
+  {keys:["دیگ بخار","boiler","steam boiler"],tag:"BLR-101",name:"دیگ بخار (پارامترها TBD)",d:"Mechanical",x:.52,y:.75,w:.12,h:.1,z:9},
+  {keys:["ترانسفورماتور","transformer","transformers"],tag:"TR-101",name:"ترانسفورماتور قدرت (توان/ولتاژ TBD)",d:"Electrical",x:.84,y:.55,w:.09,h:.08,z:5},
+  {keys:["اتاق باتری","battery room","باتری"],tag:"BAT-ROOM",name:"اتاق باتری / DC (تهویه و حفاظت TBD)",d:"Electrical",x:.83,y:.68,w:.09,h:.07,z:4},
+  {keys:["کارگاه تعمیرات","maintenance workshop","workshop"],tag:"BLD-MAINT",name:"کارگاه تعمیرات",d:"Architecture",x:.1,y:.72,w:.16,h:.1,z:4},
+  {keys:["مخزن ذخیره","storage tank","storage tanks"],tag:"TK-201",name:"مخزن ذخیره اضافی",d:"Mechanical",x:.13,y:.55,w:.08,h:.12,z:6},
+  {keys:["ژنراتور اضطراری","emergency generator","standby generator"],tag:"GEN-EM-01",name:"ژنراتور اضطراری (توان TBD)",d:"Electrical",x:.84,y:.37,w:.09,h:.07,z:4}
+ ];
+ requested.forEach(o=>{if(has(o.keys)&&!a.some(x=>x.tag===o.tag))add(o.tag,o.name,o.d,w*o.x,h*o.y,w*o.w,h*o.h,o.z,{parameters:{rating:"TBD",requiresEngineeringReview:true}});});
+ const pumpCountMatch=promptText.match(/(\\d+)\\s*(?:پمپ|pump)/i);
+ const requestedPumps=pumpCountMatch?Math.max(1,Math.min(8,Number(pumpCountMatch[1]))):((has(["سه پمپ","three pumps"])&&sys.includes("mechanical"))?3:2);
+ if(sys.includes("mechanical")&&requestedPumps>2){for(let i=3;i<=requestedPumps;i++){const tag="P-101"+String.fromCharCode(64+i);if(!a.some(x=>x.tag===tag))add(tag,"پمپ فرایندی "+i,"Mechanical",w*(.18+((i-1)%6)*.075),h*.22,w*.045,h*.045,2,{parameters:{flow:"TBD",head:"TBD",duty:"TBD"}});}}
  if(sys.includes("mechanical")&&tpl!=="power"&&tpl!=="substation"&&tpl!=="water"){
    add("P-101A","پمپ فرایندی A","Mechanical",w*.18,h*.29,w*.055,h*.055,2,{parameters:{duty:"TBD",flow:"TBD",head:"TBD"}});
    add("P-101B","پمپ فرایندی B (رزرو مفهومی)","Mechanical",w*.25,h*.29,w*.055,h*.055,2,{parameters:{duty:"TBD",flow:"TBD",head:"TBD"}});
    add("V-102","مخزن ذخیره","Mechanical",w*.1,h*.52,w*.1,h*.12,6);
    add("FAN-101","فن تهویه فرایند","Mechanical",w*.81,h*.38,w*.07,h*.07,4);
  }
- if(sys.includes("mechanical")&&tpl==="building"){
+ if(sys.includes("mechanical")&&tpl==="building"&&!a.some(x=>x.tag==="AHU-01")){
    add("AHU-01","هواساز","HVAC",w*.74,h*.42,w*.09,h*.07,3);
    add("CH-01","چیلر مفهومی","HVAC",w*.82,h*.25,w*.1,h*.08,3);
  }
