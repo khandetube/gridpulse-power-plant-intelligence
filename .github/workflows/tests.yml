@@ -35,6 +35,7 @@ jobs:
               ("maintenance-console", Path("docs/maintenance-console.html")),
               ("offline-ai-console", Path("docs/offline-ai-console.html")),
               ("plant-intelligence-suite", Path("docs/plant-intelligence-suite.html")),
+              ("data-quality-review", Path("docs/data-quality-review.html")),
           ]:
               html = source.read_text(encoding="utf-8")
               scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.DOTALL)
@@ -46,6 +47,7 @@ jobs:
           node --check /tmp/gridpulse-maintenance-console.js
           node --check /tmp/gridpulse-offline-ai-console.js
           node --check /tmp/gridpulse-plant-intelligence-suite.js
+          node --check /tmp/gridpulse-data-quality-review.js
       - name: Check style
         run: ruff check src tests
 
