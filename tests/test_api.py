@@ -417,3 +417,39 @@ def test_observation_csv_export_neutralizes_formula_like_text_cells(tmp_path, mo
     assert rows[0]["metric"].startswith("'=")
     # The numerical measurement remains numeric rather than being escaped as text.
     assert rows[0]["value"] == "10.0"
+
+
+def test_production_api_fails_closed_without_key(monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_ENV", "production")
+    monkeypatch.delenv("GRIDPULSE_API_KEY", raising=False)
+    response = client.get("/api/v1/project")
+    assert response.status_code == 503
+    assert "not configured" in response.json()["detail"]
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
+def test_api_requires_constant_time_checked_key_when_configured(monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_ENV", "production")
+    monkeypatch.setenv("GRIDPULSE_API_KEY", "test-only-long-random-key")
+    denied = client.get("/api/v1/project")
+    assert denied.status_code == 401
+    allowed = client.get(
+        "/api/v1/project", headers={"X-API-Key": "test-only-long-random-key"}
+    )
+    assert allowed.status_code == 200
+
+
+def test_api_rejects_oversized_declared_request_body(monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_ENV", "production")
+    monkeypatch.setenv("GRIDPULSE_API_KEY", "test-only-long-random-key")
+    response = client.post(
+        "/api/v1/observations",
+        content=b"{}",
+        headers={
+            "X-API-Key": "test-only-long-random-key",
+            "Content-Type": "application/json",
+            "Content-Length": str(5 * 1024 * 1024 + 1),
+        },
+    )
+    assert response.status_code == 413
