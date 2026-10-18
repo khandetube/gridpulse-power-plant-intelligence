@@ -187,8 +187,8 @@ function dxfText(){
  const s=state,g=geo(s),lines=[],layerFor={shell:"A-WALL-MASS",floor:"A-FLOOR",cable:"E-CABLE-TRAY",pipe:"M-PIPE-CONCEPT",duct:"M-DUCT-CONCEPT",elec:"E-POINT-CONCEPT",mech:"M-POINT-CONCEPT"};
  const pair=(a,b)=>lines.push(a,b);
  pair("0","SECTION");pair("2","HEADER");pair("9","$ACADVER");pair("1","AC1027");pair("9","$INSUNITS");pair("70","6");pair("9","$MEASUREMENT");pair("70","1");pair("0","ENDSEC");
- pair("0","SECTION");pair("2","TABLES");pair("0","TABLE");pair("2","LAYER");pair("70","7");
- Object.entries(layerFor).forEach(([k,name],i)=>{pair("0","LAYER");pair("2",name);pair("70","0");pair("62",i+1);pair("6","CONTINUOUS")});
+ pair("0","SECTION");pair("2","TABLES");pair("0","TABLE");pair("2","LAYER");pair("70","8");
+ Object.entries({...layerFor,room:"A-ROOM-OUTLINE"}).forEach(([k,name],i)=>{pair("0","LAYER");pair("2",name);pair("70","0");pair("62",i+1);pair("6","CONTINUOUS")});
  pair("0","ENDTAB");pair("0","ENDSEC");pair("0","SECTION");pair("2","ENTITIES");
  g.faces.forEach((face,i)=>{const layer=layerFor[g.colors[i]]||"0";const v=face.map(n=>g.verts[n]);pair("0","3DFACE");pair("8",layer);v.forEach((p,j)=>{pair(String(10+j),p[0].toFixed(4));pair(String(20+j),p[1].toFixed(4));pair(String(30+j),p[2].toFixed(4))});const p=v[2];pair("13",p[0].toFixed(4));pair("23",p[1].toFixed(4));pair("33",p[2].toFixed(4))});
  // Floor-plan room outlines are added as 2D polylines at their actual floor elevation.
@@ -197,6 +197,7 @@ function dxfText(){
 }
 function revitScriptText(){
  const payload=JSON.stringify({L:state.d.L,W:state.d.W,H:state.d.H,F:state.d.F,rooms:rooms.map(r=>({name:r.name,floor:r.floor,x:r.x,y:r.y,length:r.length,width:r.width})),tray:state.d.tray,pipe:state.d.pipe,duct:state.d.duct});
+ const payload64=btoa(unescape(encodeURIComponent(payload)));
  return `# GridPulse MEP Studio -> Revit Dynamo Python node (CPython3)
 # HOW TO USE: Revit > Manage > Dynamo > New graph > Python Script node (CPython3)
 # Paste this file's contents into the Python node and Run.
@@ -208,7 +209,7 @@ from Autodesk.Revit.DB import *
 from System.Collections.Generic import List
 from Autodesk.Revit.DB import BuiltInCategory
 
-DATA = json.loads(r''' + "'" + payload.replace(/'/g,"\\'") + "'" + `''')
+DATA = json.loads(__import__("base64").b64decode("${payload64}").decode("utf-8"))
 doc = DocumentManager.Instance.CurrentDBDocument if 'DocumentManager' in globals() else None
 # Dynamo normally exposes DocumentManager through RevitServices:
 if doc is None:
