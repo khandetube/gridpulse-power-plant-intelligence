@@ -31,7 +31,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 function has(words){const p=$("prompt").value.toLowerCase();return words.some(w=>p.includes(w.toLowerCase()));}
 function selected(){return [...document.querySelectorAll('.checks input:checked')].map(x=>x.value);}
 function createModel(){
- let w=Math.max(10,Math.min(500,Number($("width").value)||80)),h=Math.max(10,Math.min(500,Number($("height").value)||55));const tpl=$("template").value,sys=selected();
+ let w=Math.max(10,Math.min(500,Number($("width").value)||80)),h=Math.max(10,Math.min(500,Number($("height").value)||55));let tpl=$("template").value;const sys=selected();const promptForTemplate=$("prompt").value;if(tpl==="process"&&/(نیروگاه|سیکل ترکیبی|power plant|combined cycle|gas turbine)/i.test(promptForTemplate))tpl="power";else if(tpl==="process"&&/(پست برق|پست فشار قوی|substation)/i.test(promptForTemplate))tpl="substation";else if(tpl==="process"&&/(تصفیه خانه|تصفیه‌خانه|wastewater|water treatment)/i.test(promptForTemplate))tpl="water";
  const promptText=$("prompt").value,p=promptText.toLowerCase(),a=[],r=[],checks=[];
  const dimMatch=promptText.match(/(\d{2,3})\s*(?:در|x|×|by)\s*(\d{2,3})\s*(?:متر|m|meters?)?/i);
  if(dimMatch){w=Math.max(10,Math.min(500,Number(dimMatch[1])));h=Math.max(10,Math.min(500,Number(dimMatch[2])));$("width").value=w;$("height").value=h;}
@@ -99,12 +99,7 @@ function createModel(){
    if(x+width>w||y+height>h){checks.push("فضای کافی برای جانمایی خودکار "+o.name+" وجود نداشت؛ جانمایی دستی لازم است.");return;}
    add(o.tag,o.name,o.d,x,y,width,height,o.z,{parameters:{shape:o.shape,rating:"TBD",requiresEngineeringReview:true}});
  });
- // Select plant template from explicit prompt intent when the default template conflicts.
- let effectiveTemplate=tpl;
- if(tpl==="process"&&/(نیروگاه|سیکل ترکیبی|power plant|combined cycle|gas turbine)/i.test(promptText))effectiveTemplate="power";
- else if(tpl==="process"&&/(پست برق|پست فشار قوی|substation)/i.test(promptText))effectiveTemplate="substation";
- else if(tpl==="process"&&/(تصفیه خانه|تصفیه‌خانه|wastewater|water treatment)/i.test(promptText))effectiveTemplate="water";
- if(effectiveTemplate!==tpl)checks.push("قالب به‌صورت خودکار از روی متن به «"+effectiveTemplate+"» تغییر داده شد.");
+ if(tpl!==$("template").value)checks.push("قالب از روی محتوای پرامپت به‌صورت خودکار تشخیص داده شد: "+tpl+".");
 
  const pumpCountMatch=promptText.match(/(\d+)\s*(?:پمپ|pump)/i);
  const requestedPumps=pumpCountMatch?Math.max(1,Math.min(8,Number(pumpCountMatch[1]))):((has(["سه پمپ","three pumps"])&&sys.includes("mechanical"))?3:2);
