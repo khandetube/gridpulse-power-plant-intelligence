@@ -7,7 +7,6 @@ coordination assistant, not an authority for construction or safety approval.
 """
 from __future__ import annotations
 
-from collections import Counter
 from typing import Any
 
 from gridpulse.cad_engine import Discipline, EngineeringSpec, build_spec, review_spec
@@ -48,12 +47,7 @@ def extract_requirements(prompt: str, selected: list[Discipline] | None = None) 
         "inferred_plant_types": plant_types or ["process"],
         "required_disciplines": disciplines,
         "deliverables": ["validated EngineeringSpec", "editable CAD exports", "engineering intelligence report", "assumption and risk register"],
-        "unknowns": [
-            "approved design basis and applicable codes",
-            "vendor/manufacturer dimensions and connection points",
-            "survey/geotechnical information and authoritative plant interfaces",
-            "process, electrical and instrumentation design calculations",
-        ],
+        "unknowns": ["approved design basis and applicable codes", "vendor/manufacturer dimensions and connection points", "survey/geotechnical information and authoritative plant interfaces", "process, electrical and instrumentation design calculations"],
     }
 
 
@@ -78,8 +72,7 @@ def _critique(spec: EngineeringSpec, intelligence: dict[str, Any]) -> dict[str, 
         findings.append({"severity": "medium", "code": "NO_ROUTES", "message": "No schematic routes were generated; connectivity remains incomplete."})
     for action in intelligence["recommended_actions"]:
         findings.append({"severity": action.get("priority", "medium"), "code": action.get("code", "REVIEW"), "message": action.get("action", "Review required")})
-    return {"finding_count": len(findings), "findings": findings,
-            "gate": "review_required" if any(x["severity"] == "high" for x in findings) else "coordination_review"}
+    return {"finding_count": len(findings), "findings": findings, "gate": "review_required" if any(x["severity"] == "high" for x in findings) else "coordination_review"}
 
 
 def run_design_agent(prompt: str, site_width: float = 80, site_length: float = 55,
@@ -101,16 +94,6 @@ def run_design_agent(prompt: str, site_width: float = 80, site_length: float = 5
         "review": review,
         "intelligence": intelligence,
         "critique": critique,
-        "metrics": {
-            "assets": len(spec.assets),
-            "routes": len(spec.routes),
-            "disciplines": sorted(set(a.discipline for a in spec.assets) | set(r.discipline for r in spec.routes)),
-            "readiness_score": intelligence["readiness_score"],
-            "risk_count": critique["finding_count"],
-        },
-        "next_actions": [
-            "Resolve high-priority findings.",
-            "Replace conceptual assumptions with approved design-basis data.",
-            "Run discipline-specific engineering calculations and code checks before construction use.",
-        ],
+        "metrics": {"assets": len(spec.assets), "routes": len(spec.routes), "disciplines": sorted(set(a.discipline for a in spec.assets) | set(r.discipline for r in spec.routes)), "readiness_score": intelligence["readiness_score"], "risk_count": critique["finding_count"]},
+        "next_actions": ["Resolve high-priority findings.", "Replace conceptual assumptions with approved design-basis data.", "Run discipline-specific engineering calculations and code checks before construction use."],
     }
