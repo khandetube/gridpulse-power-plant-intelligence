@@ -47,7 +47,7 @@ def offline_ai_status() -> dict[str, Any]:
         "external_services_required": False,
         "trained_language_model_included": False,
         "optional_local_language_model": local_model_status(),
-        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "rolling_mean_3", "first_to_latest_change_pct", "data_quality_report", "evidence_backed_review_insights", "input_quality_checks", "local_lexical_document_retrieval"],
+        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "trend_sample_sufficiency", "descriptive_linear_fit_r_squared", "rolling_mean_3", "first_to_latest_change_pct", "data_quality_report", "evidence_backed_review_insights", "input_quality_checks", "local_lexical_document_retrieval"],
         "not_capable_of": ["language_generation_without_a_configured_local_model", "failure_certification", "plant_control", "automatic_trip_or_dispatch"],
     }
 
