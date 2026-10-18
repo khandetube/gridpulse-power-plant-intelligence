@@ -49,7 +49,7 @@
 <div id="roomValidation" class="small" role="status"></div>
 <p class="small">CSV ورودی باید ستون‌های name,floor,x,y,length,width,use,people,sockets,lux داشته باشد. X/Y از گوشه جنوب‌غربی ساختمان است. چراغ‌ها بر اساس لومن مفروض 1200 lm، ضریب بهره 0.60 و ضریب نگهداری 0.80 تخمین زده می‌شوند؛ طراحی روشنایی واقعی به محاسبه فوتومتریک و فایل/مشخصات چراغ نیاز دارد.</p>
 </section>
-<section class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h2>۴. مدل سه‌بعدی حجمی</h2><span class="pill">مدل پارامتریک · بدون هندسه اجرایی</span></div><div class="actions" style="margin:0"><button id="viewReset">نمای ایزومتریک</button><button id="downloadObj">خروجی OBJ</button><button id="downloadMax">اسکریپت 3ds Max (.ms)</button></div></div>
+<section class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h2>۴. مدل سه‌بعدی حجمی</h2><span class="pill">مدل پارامتریک · بدون هندسه اجرایی</span></div><div class="actions" style="margin:0"><button id="viewReset">نمای ایزومتریک</button><button id="downloadObj">خروجی OBJ</button><button id="downloadDxf">خروجی AutoCAD (.dxf)</button><button id="downloadRevit">اسکریپت مدل Revit (.py)</button><button id="downloadMax">خروجی 3ds Max (.ms)</button></div></div>
 <canvas id="model" class="canvas" aria-label="نمای سه‌بعدی حجمی ساختمان و مسیرهای مفهومی تاسیسات"></canvas>
 <div class="small">با کشیدن ماوس مدل را بچرخانید؛ با چرخ ماوس زوم کنید. رنگ‌ها صرفاً برای تمایز بصری‌اند: پوسته ساختمان، مسیر کابل، مسیر لوله و مسیر کانال. مدل، مدل BIM نیست.</div></section>
 <div class="metrics">
@@ -57,7 +57,7 @@
 </div>
 <section class="panel"><h2>۵. محاسبات اولیه و فرضیات</h2><div class="scroll"><table><thead><tr><th>شاخص</th><th>روش/فرض</th><th>نتیجه</th><th>وضعیت</th></tr></thead><tbody id="calcRows"></tbody></table></div></section>
 <section class="panel"><h2>۶. فهرست مقادیر اولیه (BOQ)</h2><div class="scroll"><table><thead><tr><th>سیستم</th><th>شرح</th><th>مقدار</th><th>واحد</th><th>مبنای برآورد</th></tr></thead><tbody id="boqRows"></tbody></table></div><div class="actions"><button class="primary" id="csv">دریافت BOQ به CSV</button><button id="json">دریافت بسته پروژه JSON</button></div></section>
-<section class="panel"><h2>۷. خروجی و گردش کار CAD / 3ds Max</h2><p>خروجی OBJ شامل پوسته حجمی و مسیرهای نمایشی ساده است. فایل MAX باینری تولید نمی‌شود؛ اسکریپت MAXScript برای اجرا در Autodesk 3ds Max ساخته می‌شود و هندسه مفهومی را ایجاد می‌کند. واحدها، مختصات و مقیاس را پس از واردسازی بررسی کنید.</p><div class="actions"><button id="showScript">نمایش پیش‌نمایش اسکریپت MAXScript</button></div><pre id="scriptPreview" hidden></pre><p class="small">این ابزار به Autodesk 3ds Max متصل نیست، فایل .max بومی را مستقیماً تولید نمی‌کند و از فایل‌های DWG/IFC/Revit یا نقشه معماری به‌طور خودکار اطلاعات استخراج نمی‌کند.</p></section>
+<section class="panel"><h2>۷. خروجی AutoCAD / Revit / 3ds Max</h2><p>سه خروجی مستقل تولید می‌شود: DXF برای بازکردن در AutoCAD، اسکریپت Python برای اجرا در محیط Dynamo داخل Revit و MAXScript برای ساخت مدل مفهومی در 3ds Max. DXF شامل هندسه سه‌بعدی و پلان فضاهاست؛ اسکریپت Revit هندسه حجمی مفهومی را به‌صورت DirectShape می‌سازد. این خروجی‌ها هنوز مدل اجرایی BIM با خانواده‌های واقعی MEP، اتصالات و پارامترهای ساخت نیستند. کنترل واحد، مختصات و نسخه نرم‌افزار مقصد الزامی است.</p><div class="actions"><button id="showScript">نمایش پیش‌نمایش اسکریپت MAXScript</button></div><pre id="scriptPreview" hidden></pre><p class="small">این ابزار به Autodesk 3ds Max متصل نیست، فایل .max بومی را مستقیماً تولید نمی‌کند و از فایل‌های DWG/IFC/Revit یا نقشه معماری به‌طور خودکار اطلاعات استخراج نمی‌کند.</p></section>
 <section class="panel"><h2>۸. کنترل کیفیت پیش از طراحی اجرایی</h2><div id="qualityChecks"></div></section>
 </div>
 </div>
@@ -182,11 +182,86 @@ box name:"Concept_Pipe_Main" length:${(s.d.L*.84).toFixed(3)} width:0.08 height:
 box name:"Concept_Duct_Main" length:${(s.d.L*.8).toFixed(3)} width:0.18 height:0.18 pos:[${(s.d.L*.10).toFixed(3)},${(s.d.W*.78).toFixed(3)},${s.d.duct}] wirecolor:(color 125 175 255)
 -- Approximate bounding-box model only. No connectors, sizing, schedules or BIM metadata.
 `}
+
+function dxfText(){
+ const s=state,g=geo(s),lines=[],layerFor={shell:"A-WALL-MASS",floor:"A-FLOOR",cable:"E-CABLE-TRAY",pipe:"M-PIPE-CONCEPT",duct:"M-DUCT-CONCEPT",elec:"E-POINT-CONCEPT",mech:"M-POINT-CONCEPT"};
+ const pair=(a,b)=>lines.push(a,b);
+ pair("0","SECTION");pair("2","HEADER");pair("9","$ACADVER");pair("1","AC1027");pair("9","$INSUNITS");pair("70","6");pair("9","$MEASUREMENT");pair("70","1");pair("0","ENDSEC");
+ pair("0","SECTION");pair("2","TABLES");pair("0","TABLE");pair("2","LAYER");pair("70","7");
+ Object.entries(layerFor).forEach(([k,name],i)=>{pair("0","LAYER");pair("2",name);pair("70","0");pair("62",i+1);pair("6","CONTINUOUS")});
+ pair("0","ENDTAB");pair("0","ENDSEC");pair("0","SECTION");pair("2","ENTITIES");
+ g.faces.forEach((face,i)=>{const layer=layerFor[g.colors[i]]||"0";const v=face.map(n=>g.verts[n]);pair("0","3DFACE");pair("8",layer);v.forEach((p,j)=>{pair(String(10+j),p[0].toFixed(4));pair(String(20+j),p[1].toFixed(4));pair(String(30+j),p[2].toFixed(4))});const p=v[2];pair("13",p[0].toFixed(4));pair("23",p[1].toFixed(4));pair("33",p[2].toFixed(4))});
+ // Floor-plan room outlines are added as 2D polylines at their actual floor elevation.
+ rooms.forEach(r=>{const z=(r.floor-1)*s.d.H+0.02,pts=[[r.x,r.y],[r.x+r.length,r.y],[r.x+r.length,r.y+r.width],[r.x,r.y+r.width],[r.x,r.y]];pair("0","LWPOLYLINE");pair("8","A-ROOM-OUTLINE");pair("90","5");pair("70","1");pts.slice(0,4).forEach(p=>{pair("10",p[0].toFixed(4));pair("20",p[1].toFixed(4))});});
+ pair("0","ENDSEC");pair("0","EOF");return lines.join("\r\n")+"\r\n";
+}
+function revitScriptText(){
+ const payload=JSON.stringify({L:state.d.L,W:state.d.W,H:state.d.H,F:state.d.F,rooms:rooms.map(r=>({name:r.name,floor:r.floor,x:r.x,y:r.y,length:r.length,width:r.width})),tray:state.d.tray,pipe:state.d.pipe,duct:state.d.duct});
+ return `# GridPulse MEP Studio -> Revit Dynamo Python node (CPython3)
+# HOW TO USE: Revit > Manage > Dynamo > New graph > Python Script node (CPython3)
+# Paste this file's contents into the Python node and Run.
+# Creates conceptual DirectShape massing and room/route boxes in the current document.
+# Dimensions are meters; converted to Revit internal feet. Not construction BIM.
+import json, clr
+clr.AddReference('RevitAPI')
+from Autodesk.Revit.DB import *
+from System.Collections.Generic import List
+from Autodesk.Revit.DB import BuiltInCategory
+
+DATA = json.loads(r''' + "'" + payload.replace(/'/g,"\\'") + "'" + `''')
+doc = DocumentManager.Instance.CurrentDBDocument if 'DocumentManager' in globals() else None
+# Dynamo normally exposes DocumentManager through RevitServices:
+if doc is None:
+    clr.AddReference('RevitServices')
+    from RevitServices.Persistence import DocumentManager
+    from RevitServices.Transactions import TransactionManager
+    doc = DocumentManager.Instance.CurrentDBDocument
+else:
+    clr.AddReference('RevitServices')
+    from RevitServices.Transactions import TransactionManager
+
+FT = 3.280839895013123
+def xyz(x,y,z): return XYZ(float(x)*FT,float(y)*FT,float(z)*FT)
+def solid_box(name,x,y,z,dx,dy,dz):
+    if dx <= 0 or dy <= 0 or dz <= 0: return None
+    loop = CurveLoop()
+    p0=xyz(x,y,z); p1=xyz(x+dx,y,z); p2=xyz(x+dx,y+dy,z); p3=xyz(x,y+dy,z)
+    loop.Append(Line.CreateBound(p0,p1)); loop.Append(Line.CreateBound(p1,p2))
+    loop.Append(Line.CreateBound(p2,p3)); loop.Append(Line.CreateBound(p3,p0))
+    geom = GeometryCreationUtilities.CreateExtrusionGeometry(List[CurveLoop]([loop]), XYZ.BasisZ, dz*FT)
+    ds = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_GenericModel))
+    ds.ApplicationId = "GridPulse MEP Studio"
+    ds.ApplicationDataId = name
+    ds.SetShape(List[GeometryObject]([geom]))
+    try:
+        p=ds.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        if p and not p.IsReadOnly: p.Set("Conceptual geometry generated from user-entered dimensions; verify before use.")
+    except: pass
+    return ds
+
+created=[]
+TransactionManager.Instance.EnsureInTransaction(doc)
+try:
+    created.append(solid_box("Building_Massing",0,0,0,DATA['L'],DATA['W'],DATA['F']*DATA['H']))
+    for f in range(1,DATA['F']):
+        created.append(solid_box("Floor_Slab_%02d"%f,0,0,f*DATA['H'],DATA['L'],DATA['W'],0.12))
+    # Main routes are visual envelopes only, not native Revit cable tray/duct/pipe system elements.
+    created.append(solid_box("Concept_CableTray",0,DATA['W']*0.16,DATA['tray'],DATA['L'],DATA['W']*0.025,0.08))
+    created.append(solid_box("Concept_Pipe",DATA['L']*0.08,DATA['W']*0.50,DATA['pipe'],DATA['L']*0.84,0.08,0.08))
+    created.append(solid_box("Concept_Duct",DATA['L']*0.10,DATA['W']*0.78,DATA['duct'],DATA['L']*0.80,0.18,0.18))
+    for r in DATA['rooms']:
+        created.append(solid_box("Room_"+r['name'],r['x'],r['y'],(r['floor']-1)*DATA['H'],r['length'],r['width'],DATA['H']))
+finally:
+    TransactionManager.Instance.TransactionTaskDone()
+OUT = {"created_elements":len([x for x in created if x is not None]), "units":"meters input / Revit feet internal", "note":"Conceptual DirectShape geometry only; not native MEP families or construction-ready BIM."}
+`;
+}
+
 function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function packageData(){return {product:"GridPulse MEP Studio",schema_version:"0.2.0",generated_at:new Date().toISOString(),classification:"conceptual_estimate_not_for_construction",project:state.d,room_schedule:rooms.map(roomCalc),results:{gross_area_m2:state.gross,estimated_net_area_m2:state.net,connected_load_estimate_kw:state.connected,coincident_load_estimate_kw:state.demand,cooling_load_estimate_kw:state.cooling,fresh_air_estimate_m3h:state.air},quantity_estimate:state.boq,calculation_notes:state.rows,limitations:["Not a construction-ready design","No cable sizing, voltage-drop, fault-current, protection coordination or earthing calculation","No detailed heating/cooling load, duct/pipe sizing or pressure-drop calculation","No verified architectural drawing or BIM geometry","Review all inputs, local codes and quantities with licensed engineers"],source_data_status:"User-entered concept inputs; no external plant/building data used"}}
 function update(){try{state=build(read());renderTables(state);draw();$("scriptPreview").hidden=true}catch(e){alert(e.message)}}
 $("calculate").onclick=update;$("reset").onclick=()=>{location.reload()};$("viewReset").onclick=()=>{rotation={x:-.48,y:.65};zoom=1;draw()};
-$("downloadObj").onclick=()=>download("gridpulse-mep-concept.obj",objText(),"text/plain");
+$("downloadObj").onclick=()=>download("gridpulse-mep-concept.obj",objText(),"text/plain");\n$("downloadDxf").onclick=()=>download("gridpulse-mep-concept.dxf",dxfText(),"application/dxf");\n$("downloadRevit").onclick=()=>download("gridpulse-revit-dynamo-concept.py",revitScriptText(),"text/x-python");
 $("downloadMax").onclick=()=>download("gridpulse-mep-concept.ms",maxText(),"text/plain");
 $("showScript").onclick=()=>{$("scriptPreview").hidden=!$("scriptPreview").hidden;$("scriptPreview").textContent=maxText()};
 $("csv").onclick=()=>{const rows=[["System","Description","Quantity","Unit","Basis"],...state.boq];const csv="\ufeff"+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");download("gridpulse-mep-boq.csv",csv,"text/csv;charset=utf-8")};
