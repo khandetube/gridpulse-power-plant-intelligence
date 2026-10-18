@@ -35,7 +35,7 @@ def test_revit_script_is_valid_python_syntax_and_discloses_limits():
     spec, _ = build_spec("substation", 80, 55, ["Electrical", "Architecture"], "substation", False)
     script = export_revit_dynamo_python(spec)
     ast.parse(script)
-    assert "not native family library" in script
+    assert "not a native family library" in script
     assert "not auto-converted to MEP systems" in script
 
 
