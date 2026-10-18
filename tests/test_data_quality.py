@@ -1,0 +1,70 @@
+from gridpulse.data_quality import assess_data_quality
+
+
+def row(record_id, value, start, end=None, *, unit="MW", scope="unit", source="SRC-1", status="verified"):
+    return {
+        "record_id": record_id,
+        "plant": "Plant-A",
+        "metric": "load",
+        "value": value,
+        "unit": unit,
+        "period_start": start,
+        "period_end": end or start,
+        "scope": scope,
+        "source_id": source,
+        "verification_status": status,
+    }
+
+
+def test_data_quality_detects_duplicate_conflict_and_missing_provenance():
+    records = [
+        row("r1", 10, "2026-01-01"),
+        row("r1", 12, "2026-01-01"),
+        row("r2", 11, "2026-01-02", source=""),
+    ]
+    result = assess_data_quality(records)
+    assert result["engine"] == "gridpulse-data-quality-v1"
+    assert result["evidence_coverage_score"] < 100
+    kinds = {item["kind"] for item in result["issues"]}
+    assert "duplicate_record_id_conflict" in kinds
+    assert "missing_source_id" in kinds
+
+
+def test_data_quality_detects_unit_scope_mismatch_without_converting():
+    records = [row("r1", 10, "2026-01-01"), row("r2", 11, "2026-01-02", unit="kW", scope="feeder")]
+    result = assess_data_quality(records)
+    kinds = {item["kind"] for item in result["issues"]}
+    assert "unit_mismatch" in kinds
+    assert "scope_mismatch" in kinds
+
+
+def test_data_quality_detects_overlap_gap_and_irregular_sampling():
+    records = [
+        row("r1", 10, "2026-01-01", "2026-01-03"),
+        row("r2", 11, "2026-01-03", "2026-01-04"),
+        row("r3", 12, "2026-01-07"),
+        row("r4", 13, "2026-01-08"),
+        row("r5", 14, "2026-01-10"),
+    ]
+    result = assess_data_quality(records)
+    kinds = {item["kind"] for item in result["issues"]}
+    assert "overlapping_reporting_period" in kinds
+    assert "temporal_gap" in kinds
+    assert "irregular_sampling" in kinds
+
+
+def test_data_quality_is_deterministic_and_scores_full_clean_evidence():
+    records = [row("a", 1, "2026-01-01"), row("b", 2, "2026-01-02")]
+    first = assess_data_quality(records)
+    second = assess_data_quality(records)
+    assert first == second
+    assert first["data_quality_score"] == 100
+    assert first["evidence_coverage_score"] == 100
+    assert first["issue_count"] == 0
+
+
+def test_data_quality_handles_empty_input_explicitly():
+    result = assess_data_quality([])
+    assert result["input_record_count"] == 0
+    assert result["data_quality_score"] == 0
+    assert result["evidence_coverage_score"] == 0
