@@ -55,7 +55,7 @@ def test_voltage_drop_uses_three_phase_impedance_equation():
 
 def test_project_limit_creates_real_rule_result():
     report = run_advanced_calculations({
-        "cable_count": 20,
+        "cable_count": 12,
         "cable_outer_diameter_mm": 20,
         "tray_width_mm": 400,
         "max_tray_fill_pct": 80,
