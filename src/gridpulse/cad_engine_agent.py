@@ -16,6 +16,7 @@ from gridpulse.cad_engine_calculations import (
 )
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
 from gridpulse.cad_engine_parameter_parser import parse_advanced_parameters
+from gridpulse.design_quality import evaluate_design_quality
 
 DISCIPLINE_KEYWORDS: dict[str, tuple[str, ...]] = {
     "Mechanical": ("pump", "turbine", "generator", "compressor", "vessel", "tank", "mechanical", "پمپ", "توربین", "ژنراتور", "مخزن"),
@@ -103,8 +104,9 @@ def run_design_agent(prompt: str, site_width: float = 80, site_length: float = 5
     advanced = run_advanced_calculations(requirements["explicit_parameters"])
     intelligence = analyze_design_intelligence(spec, calculations)
     critique = _critique(spec, intelligence, calculations, advanced)
+    quality = evaluate_design_quality(spec.model_dump(mode="json"), calculations, advanced, intelligence, requirements)
     return {
-        "agent": "GridPulse Engineering Design Agent v0.3",
+        "agent": "GridPulse Engineering Design Agent v0.4",
         "interpretation_mode": interpretation,
         "requirements": requirements,
         "plan": plan,
@@ -114,6 +116,7 @@ def run_design_agent(prompt: str, site_width: float = 80, site_length: float = 5
         "advanced_calculations": advanced,
         "intelligence": intelligence,
         "critique": critique,
+        "quality_gate": quality,
         "metrics": {"assets": len(spec.assets), "routes": len(spec.routes), "disciplines": sorted({a.discipline for a in spec.assets} | {r.discipline for r in spec.routes}), "readiness_score": intelligence["readiness_score"], "risk_count": critique["finding_count"], "calculations_total": calculations["summary"]["total"] + advanced["summary"]["total"], "calculations_complete": calculations["summary"]["calculated"] + advanced["summary"]["calculated"]},
         "next_actions": ["Resolve high-priority findings.", "Provide approved design-basis/code/vendor inputs for calculations marked insufficient_input.", "Run project-specific discipline calculations and code checks before construction use."],
     }
