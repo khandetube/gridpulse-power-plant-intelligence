@@ -442,7 +442,7 @@ for item in spec["assets"]:
     elif shape_type == "panel":
         shapes.append(Part.makeBox(max(length,1), max(width,1), max(height,1), base))
     elif shape_type == "fan":
-        shapes.append(Part.makeCylinder(max(min(length,width)*scale*0.45,1), max(height,1), Vector(x+length*scale/2,y+width*scale/2,z), Vector(0,0,1)))
+        shapes.append(Part.makeCylinder(max(min(length,width)*scale*0.45,1), max(height,1), Vector(x+length/2,y+width/2,z), Vector(0,0,1)))
     else:
         shapes.append(Part.makeBox(max(length,1), max(width,1), max(height,1), base))
     compound = Part.makeCompound(shapes)
