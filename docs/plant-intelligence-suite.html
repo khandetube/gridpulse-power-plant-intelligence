@@ -262,5 +262,5 @@ gpSuiteInstallExcelButtons();
 $("lang").addEventListener("change",()=>{setTimeout(()=>{document.querySelectorAll("[data-suite-xlsx]").forEach(b=>{const scope=b.dataset.suiteXlsx,fa=currentLanguage==="fa";if(scope==="all")b.textContent=fa?"گزارش کامل اکسل + نمودار":"Full Excel + charts";else{const labels={assets:["Assets","دارایی‌ها"],work:["Work orders","دستورکارها"],losses:["Losses","تلفات"],rca:["RCA","تحلیل ریشه‌ای"],rnd:["R&D","تحقیق‌وتوسعه"]};b.textContent=(fa?labels[scope][1]:labels[scope][0])+" · Excel + charts";}});},0);});
 
 </script>
-</body>
+<a id="gpDesignCopilotLink" href="design-ai-copilot.html" title="بازبینی هوشمند طراحی، تجهیزات و کیفیت داده" style="position:fixed;z-index:99999;left:14px;bottom:14px;display:inline-block;padding:10px 13px;border:1px solid #53d8c5;border-radius:10px;background:#0b2232;color:#53d8c5;font:700 13px/1.4 system-ui,Tahoma,sans-serif;text-decoration:none;box-shadow:0 6px 24px #0006">✦ AI Design Copilot</a></body>
 </html>
