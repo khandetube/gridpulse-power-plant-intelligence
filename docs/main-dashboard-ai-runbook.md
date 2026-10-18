@@ -47,6 +47,7 @@ The retrieval engine normalizes common Persian/Arabic letter variants and zero-w
 When the local API analyzes eligible dashboard observations, the result includes:
 - a data-quality summary with analysis coverage, skipped-record reasons, verification-status counts and distinct source count;
 - per-metric first/latest values, first-to-latest percentage change (undefined when the first value is zero), a rolling mean over up to the latest three dated records, and a linear trend estimate;
+- trend evidence diagnostics: distinct observation dates, date span, descriptive linear-fit R-squared (when calculable), and a conservative evidence-level label. R-squared describes fit to the supplied points; it is not a probability, confidence interval, or future-performance guarantee;
 - evidence-linked review prompts for invalid records, unverified source records, statistical outlier candidates and observed trends;
 - downloadable full JSON and trend-summary CSV reports from the rendered dashboard result.
 
