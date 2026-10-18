@@ -328,3 +328,23 @@ def test_readiness_endpoint_returns_503_when_source_registry_is_missing(tmp_path
     assert payload["status"] == "not_ready"
     assert payload["checks"]["source_registry"] == "unavailable"
     assert payload["checks"]["database"] == "ok"
+
+
+def test_system_diagnostics_reports_safe_dependency_and_record_counts(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "diagnostics.sqlite3"))
+    response = client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("diag-1"), _observation("diag-2", 20)]},
+    )
+    assert response.status_code == 201
+
+    diagnostics = client.get("/api/v1/system/diagnostics")
+    assert diagnostics.status_code == 200
+    payload = diagnostics.json()
+    assert payload["status"] == "ok"
+    assert payload["checks"] == {"source_registry": "ok", "database": "ok"}
+    assert payload["stored_record_counts"]["observations"] == 2
+    assert payload["stored_record_counts"]["audit_events"] == 2
+    assert payload["registered_source_count"] >= 1
+    assert payload["capabilities"]["live_plant_telemetry"] is False
+    assert "database_path" not in payload
