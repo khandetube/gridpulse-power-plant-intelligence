@@ -49,6 +49,22 @@ jobs:
           node --check /tmp/gridpulse-plant-intelligence-suite.js
           node --check /tmp/gridpulse-data-quality-review.js
           node --check /tmp/gridpulse-mep-studio.js
+      - name: Check plant CAD JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          source = Path("docs/refinery-a0.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>", source, flags=re.DOTALL | re.IGNORECASE)
+          inline_scripts = [script for script in scripts if script.strip()]
+          if not inline_scripts:
+              raise SystemExit("No inline JavaScript found in plant CAD")
+          for index, script in enumerate(inline_scripts, start=1):
+              Path(f"/tmp/gridpulse-plant-cad-{index}.js").write_text(script, encoding="utf-8")
+          print(f"Found {len(inline_scripts)} inline CAD script(s)")
+          PY
+          for script in /tmp/gridpulse-plant-cad-*.js; do node --check "$script"; done
+
       - name: Check style
         run: ruff check src tests
 
