@@ -93,4 +93,4 @@ def test_ground_rod_resistance_is_labeled_approximate():
     calc = get(report, "GROUND-ROD-R-001")
     assert calc["status"] == "calculated"
     assert calc["value"] > 0
-    assert "Not a grounding compliance result" in calc["warnings"][0]
+    assert "Not a grounding compliance result" in calc["assumptions"][0]
