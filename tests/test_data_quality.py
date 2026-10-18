@@ -87,3 +87,13 @@ def test_data_quality_api_endpoint_returns_scores_and_issues():
     assert payload["engine"] == "gridpulse-data-quality-v1"
     assert payload["data_quality_score"] == 100
     assert payload["evidence_coverage_score"] == 100
+
+
+def test_data_quality_handles_non_object_records_and_flags_invalid_numeric_values():
+    records = [row("bad-number", "not-a-number", "2026-01-01"), None]
+    result = assess_data_quality(records)
+    kinds = {item["kind"] for item in result["issues"]}
+    assert "invalid_numeric_value" in kinds
+    assert "invalid_record" in kinds
+    assert result["input_record_count"] == 2
+    assert result["coverage_components"]["finite_numeric_value"] == 0
