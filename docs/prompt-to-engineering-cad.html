@@ -15,7 +15,7 @@
 <div class="row"><button id="generate" class="primary">✦ تولید نقشه مهندسی</button><button id="sample">بارگذاری پرامپت نمونه</button></div><div id="status" class="status" aria-live="polite">برای تولید، پرامپت را تنظیم کنید و دکمه را بزنید.</div>
 <div class="notice">تولید از پرامپت، ابعاد و انتخاب لایه‌ها استفاده می‌کند. اصطلاحات در نسخه فعلی با قواعد قابل توضیح نگاشت می‌شوند؛ هر خواسته‌ای که نگاشت نشود لزوماً وارد مدل نخواهد شد.</div>
 </div></section>
-<section class="card"><h2>۲ · نقشه زنده و قابل خروجی</h2><div class="toolbar"><button data-view="plan" class="active">پلان ۲D</button><button data-view="iso">مدل ایزومتریک ۳D</button><button data-view="layers">لایه‌ها</button><button id="fit">نمای کامل</button><button id="exportSvg">خروجی SVG</button><button id="exportDxf">خروجی DXF</button><button id="exportJson">خروجی JSON</button></div><div class="stats"><div class="stat"><span class="muted">تجهیزات</span><b id="nAssets">0</b></div><div class="stat"><span class="muted">مسیرها</span><b id="nRoutes">0</b></div><div class="stat"><span class="muted">لایه‌ها</span><b id="nLayers">0</b></div><div class="stat"><span class="muted">نکات بررسی</span><b id="nChecks">0</b></div></div><div id="viewport" class="viewport"><div style="padding:30px;color:#334">پس از تولید، نقشه و مدل نمایش داده می‌شود.</div></div><div class="legend" id="legend"></div></section>
+<section class="card"><h2>۲ · نقشه زنده و قابل خروجی</h2><div class="toolbar"><button data-view="plan" class="active">پلان ۲D</button><button data-view="iso">مدل ایزومتریک ۳D</button><button data-view="layers">لایه‌ها</button><button id="fit">نمای کامل</button><button id="exportSvg">خروجی SVG</button><button id="exportDxf">خروجی DXF</button><button id="exportJson">خروجی JSON</button><button id="exportFreeCAD">خروجی FreeCAD / STEP</button></div><div class="stats"><div class="stat"><span class="muted">تجهیزات</span><b id="nAssets">0</b></div><div class="stat"><span class="muted">مسیرها</span><b id="nRoutes">0</b></div><div class="stat"><span class="muted">لایه‌ها</span><b id="nLayers">0</b></div><div class="stat"><span class="muted">نکات بررسی</span><b id="nChecks">0</b></div></div><div id="viewport" class="viewport"><div style="padding:30px;color:#334">پس از تولید، نقشه و مدل نمایش داده می‌شود.</div></div><div class="legend" id="legend"></div></section>
 <section class="card"><h2>۳ · فهرست تجهیزات و مسیرها</h2><div class="row"><input id="assetSearch" placeholder="جستجو بر اساس تگ، نام یا سیستم"><select id="disciplineFilter"><option value="">همه رشته‌ها</option><option>Mechanical</option><option>Piping</option><option>Electrical</option><option>Instrumentation</option><option>Fire</option><option>HVAC</option><option>Grounding</option><option>Lighting</option><option>Drainage</option><option>Architecture</option></select></div><div class="asset-table-wrap"><table class="asset-table"><thead><tr><th>Tag</th><th>تجهیز/عنصر</th><th>رشته</th><th>ابعاد/پارامتر</th></tr></thead><tbody id="assetRows"><tr><td colspan="4">هنوز مدلی تولید نشده است.</td></tr></tbody></table></div></section>
 <section class="card"><h2>۴ · گزارش کنترل و فرضیات</h2><div id="checks" class="status">پس از تولید، فرضیات، عناصر نامطمئن و کنترل‌های لازم در این بخش درج می‌شوند.</div></section>
 </div>
@@ -167,6 +167,64 @@ function render(){
 }
 function renderRows(){const q=$("assetSearch").value.toLowerCase(),d=$("disciplineFilter").value,rows=model.assets.filter(x=>(!q||(x.tag+" "+x.name+" "+x.discipline).toLowerCase().includes(q))&&(!d||x.discipline===d));$("assetRows").innerHTML=rows.map(x=>'<tr><td><b>'+esc(x.tag)+'</b></td><td>'+esc(x.name)+'</td><td><span class="pill">'+esc(x.discipline)+'</span></td><td>'+x.w+' × '+x.h+' × '+x.z+' m</td></tr>').join("")||'<tr><td colspan="4">نتیجه‌ای یافت نشد.</td></tr>';}
 function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function freecadMacro(m){
+ const spec={project_name:m.meta.name||"GridPulse concept",site_width:m.site.w,site_length:m.site.h,units:m.meta.units==="ft"?"ft":"m",
+ assets:m.assets.map(o=>({tag:o.tag,name:o.name,discipline:o.discipline,shape:o.tag.startsWith("P-")?"pump":o.tag.startsWith("V-")||o.tag.startsWith("TK-")?"vessel":o.tag.startsWith("E-")?"heat_exchanger":o.tag.startsWith("TR-")?"transformer":o.tag.startsWith("FAN")?"fan":o.tag.startsWith("BLD")||o.tag.startsWith("ROAD")?"building":o.tag.startsWith("SWGR")||o.tag.startsWith("MCC")||o.tag.startsWith("UPS")?"panel":"box",x:o.x,y:o.y,z:0,length:Math.max(.1,o.w),width:Math.max(.1,o.h),height:Math.max(.5,Number(o.z)||2),diameter:null})),
+ routes:m.routes.map(r=>({tag:r.tag,name:r.name,kind:r.discipline==="Piping"||r.discipline==="Drainage"?"pipe":r.discipline==="Fire"?"fire":r.discipline==="HVAC"?"duct":r.discipline==="Grounding"?"grounding":"cable_tray",points:r.pts.map(p=>[p[0],p[1],Number(r.level)||1]),width:r.discipline==="Piping"?.15:.08}))};
+ const payload=JSON.stringify(JSON.stringify(spec));
+ return `# GridPulse FreeCAD macro: conceptual geometry only; not for construction.
+import json, os
+import FreeCAD as App
+import Part
+from FreeCAD import Vector
+spec=json.loads(${payload})
+out_dir=os.path.abspath("gridpulse_freecad_output")
+os.makedirs(out_dir,exist_ok=True)
+scale=1000.0 if spec.get("units","m")=="m" else 304.8
+doc=App.newDocument("GridPulse_Concept")
+export_objects=[]
+site=doc.addObject("PartDesign::Feature","SiteReference")
+site.Label="SITE REFERENCE — NOT FOR CONSTRUCTION"
+site.Shape=Part.makeBox(spec["site_width"]*scale,spec["site_length"]*scale,100)
+site.ViewObject.Transparency=85
+def add_feature(label,shape,color):
+ obj=doc.addObject("PartDesign::Feature","GP_"+str(len(export_objects)+1))
+ obj.Label=label[:120]; obj.Shape=shape; obj.ViewObject.ShapeColor=color
+ export_objects.append(obj)
+colors={"Mechanical":(0.86,0.39,0.16),"Piping":(0.10,0.42,0.76),"Electrical":(0.55,0.30,0.68),"Instrumentation":(0,0.56,0.50),"Fire":(0.86,0.18,0.16),"HVAC":(0.16,0.54,0.70),"Grounding":(0.48,0.39,0.20),"Lighting":(0.78,0.60,0.05),"Drainage":(0.27,0.50,0.30),"Architecture":(0.38,0.45,0.52)}
+for a in spec["assets"]:
+ x,y,z=[float(a.get(k,0))*scale for k in ("x","y","z")]
+ l,w,h=[max(float(a.get(k,2))*scale,1) for k in ("length","width","height")]
+ kind=a.get("shape","box"); parts=[]
+ if kind in ("cylinder","tank","vessel"):
+  d=float(a.get("diameter") or min(float(a["length"]),float(a["width"])))*scale
+  parts.append(Part.makeCylinder(max(d/2,1),h,Vector(x+l/2,y+w/2,z)))
+ elif kind=="pump":
+  parts.append(Part.makeBox(l*.62,w,h*.65,Vector(x,y,z)))
+  parts.append(Part.makeCylinder(max(min(w,h)*.28,1),max(l*.38,1),Vector(x+l*.62,y+w/2,z+h*.35),Vector(1,0,0)))
+ elif kind=="heat_exchanger":
+  parts.append(Part.makeCylinder(max(min(w,h)*.42,1),l,Vector(x,y+w/2,z+h/2),Vector(1,0,0)))
+  parts.append(Part.makeBox(l,max(w*.12,1),max(h*.12,1),Vector(x,y+w*.44,z+h*.44)))
+ elif kind=="transformer":
+  parts.append(Part.makeBox(l,w,h,Vector(x,y,z)))
+  for i in range(3): parts.append(Part.makeBox(max(l*.12,1),max(w*.55,1),max(h*.2,1),Vector(x+l*(.18+i*.25),y+w*.2,z+h)))
+ elif kind=="fan": parts.append(Part.makeCylinder(max(min(l,w)*.45,1),h,Vector(x+l/2,y+w/2,z)))
+ else: parts.append(Part.makeBox(l,w,h,Vector(x,y,z)))
+ add_feature(a.get("tag","ASSET")+" | "+a.get("name","Equipment"),Part.makeCompound(parts),colors.get(a.get("discipline"),(.35,.45,.55)))
+route_colors={"pipe":(0.08,0.40,0.78),"cable_tray":(0.62,0.25,0.72),"duct":(0.16,0.58,0.70),"fire":(0.88,0.16,0.13),"grounding":(0.50,0.40,0.18)}
+for r in spec.get("routes",[]):
+ pts=r.get("points",[]); radius=max(float(r.get("width",.15))*scale/2,2); segments=[]
+ for start,end in zip(pts,pts[1:]):
+  p1=Vector(start[0]*scale,start[1]*scale,start[2]*scale); p2=Vector(end[0]*scale,end[1]*scale,end[2]*scale); delta=p2.sub(p1)
+  if delta.Length>0.001: segments.append(Part.makeCylinder(radius,delta.Length,p1,delta))
+ if segments: add_feature(r.get("tag","ROUTE")+" | "+r.get("name","Route"),Part.makeCompound(segments),route_colors.get(r.get("kind"),(.2,.5,.7)))
+doc.recompute()
+fcstd=os.path.join(out_dir,"gridpulse_concept.FCStd"); step=os.path.join(out_dir,"gridpulse_concept.step")
+doc.saveAs(fcstd)
+if export_objects: Part.export(export_objects,step)
+print("GridPulse exports:",fcstd,step)
+`;
+}
 function dxf(m){let lines=["0","SECTION","2","HEADER","9","$INSUNITS","70",m.meta.units==="ft"?"2":"6","0","ENDSEC","0","SECTION","2","ENTITIES"];const conv=(x,y)=>[x, y];for(const o of m.assets){const [x,y]=conv(o.x,o.y),[x2,y2]=conv(o.x+o.w,o.y+o.h);lines.push("0","LWPOLYLINE","8",o.discipline,"90","4","70","1","10",String(x),"20",String(y),"10",String(x2),"20",String(y),"10",String(x2),"20",String(y2),"10",String(x),"20",String(y2),"0","TEXT","8",o.discipline,"10",String(x),"20",String(y2+Math.max(.3,o.h*.08)),"40",String(Math.max(.2,Math.min(1,o.w*.08))),"1",o.tag);}for(const r of m.routes){lines.push("0","LWPOLYLINE","8",r.discipline,"90",String(r.pts.length),"70","0");r.pts.forEach(p=>lines.push("10",String(p[0]),"20",String(p[1])));}lines.push("0","ENDSEC","0","EOF");return lines.join("\n");}
 $("generate").addEventListener("click",()=>{try{if(!$("prompt").value.trim())throw Error("پرامپت خالی است؛ خواسته و سامانه‌ها را توضیح دهید.");model=createModel();render();$("status").textContent="مدل مفهومی تولید شد: "+model.assets.length+" عنصر تجهیزاتی و "+model.routes.length+" مسیر. خروجی را بازبینی کنید؛ پارامترهای مهندسی TBD هستند.";}catch(e){$("status").textContent="خطا: "+e.message;}});
 $("sample").addEventListener("click",()=>{$("prompt").value=defaultPrompt;$("template").value="process";$("width").value=80;$("height").value=55;document.querySelectorAll('.checks input').forEach(x=>x.checked=true);$("status").textContent="نمونه پرامپت بارگذاری شد."});
@@ -175,5 +233,6 @@ $("fit").addEventListener("click",()=>{$("viewport").scrollTo({top:0,left:0,beha
 $("exportSvg").addEventListener("click",()=>{if(!model.assets.length)return alert("ابتدا مدل را تولید کنید.");download("gridpulse-concept-"+view+".svg",view==="iso"?svgIso(model):svgPlan(model),"image/svg+xml;charset=utf-8");});
 $("exportJson").addEventListener("click",()=>{if(!model.assets.length)return alert("ابتدا مدل را تولید کنید.");download("gridpulse-engineering-model.json",JSON.stringify(model,null,2),"application/json;charset=utf-8");});
 $("exportDxf").addEventListener("click",()=>{if(!model.assets.length)return alert("ابتدا مدل را تولید کنید.");download("gridpulse-concept-plan.dxf",dxf(model),"application/dxf;charset=utf-8");});
+$("exportFreeCAD").addEventListener("click",()=>{if(!model.assets.length)return alert("ابتدا مدل را تولید کنید.");download("gridpulse-concept.FCMacro",freecadMacro(model),"text/plain;charset=utf-8");alert("ماکرو FreeCAD دانلود شد. آن را در FreeCAD اجرا کنید تا فایل‌های FCStd و STEP ساخته شوند. خروجی صرفاً مفهومی است.");});
 $("assetSearch").addEventListener("input",renderRows);$("disciplineFilter").addEventListener("change",renderRows);
 </script></body></html>
