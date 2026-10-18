@@ -29,6 +29,15 @@ curl -i http://127.0.0.1:8000/ready
 
 A `200` response means the local API dependencies passed these basic checks; a `503` response includes a `checks` object identifying an unavailable dependency. The endpoint intentionally does not prove that records are correct, that backups exist, or that any plant telemetry is connected. The API is still a local service; GitHub Pages hosts only the static frontend.
 
+For a safe application inventory, query the authenticated versioned API diagnostics route:
+
+```sh
+curl -fsS http://127.0.0.1:8000/api/v1/system/diagnostics \\
+  -H "X-API-Key: $GRIDPULSE_API_KEY"
+```
+
+The response reports source-registry and SQLite integrity status, local record counts, and explicit capability flags. It does not return filesystem paths or credentials and does not establish live telemetry, dispatch connectivity, predictive-model validity, or real plant condition. If `GRIDPULSE_API_KEY` is not configured, this local diagnostic route is not protected by the optional key middleware; configure the key before using the API beyond isolated local development.
+
 ## Create and verify a consistent backup
 
 The backup command uses SQLite's online backup API, checks database integrity, and writes a SHA-256 manifest next to the backup. It runs locally inside the container and does not upload data.
