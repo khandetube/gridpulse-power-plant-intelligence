@@ -83,3 +83,19 @@ def test_diagnostic_engine_is_bounded_and_deterministic():
         assert "5000" in str(exc)
     else:
         raise AssertionError("Oversized request should be rejected")
+
+
+def test_diagnostic_api_endpoint_returns_evidence_report():
+    from fastapi.testclient import TestClient
+
+    from gridpulse.main import app
+
+    client = TestClient(app)
+    records = [row(f"api-{i}", "temperature", 10 if i < 6 else 40,
+                   f"2026-07-{i:02d}") for i in range(1, 8)]
+    response = client.post("/api/v1/ai/diagnose", json={"records": records})
+    assert response.status_code == 200
+    report = response.json()
+    assert report["engine"] == "gridpulse-evidence-diagnostics-v1"
+    assert report["network_access"] is False
+    assert any(item["kind"] == "recent_baseline_shift_candidate" for item in report["findings"])
