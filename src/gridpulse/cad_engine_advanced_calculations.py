@@ -204,3 +204,52 @@ def run_advanced_calculations(parameters: dict[str, Any]) -> dict[str, Any]:
         },
         "methodology": "Traceable first-principles equations with explicit-input gating; no automatic code-limit selection.",
     }
+
+
+def _pipe_minor_loss(p: dict[str, Any]) -> list[Calculation]:
+    q, d, rho, k_total = (_positive(p, key) for key in ("flow_m3_h", "diameter_mm", "fluid_density_kg_m3", "minor_loss_coefficient"))
+    if not (q and d and rho and k_total):
+        return [_missing("PIP-MINOR-DP-001", "Piping", "Fitting and valve minor pressure loss", "DeltaP=K_total*rho*v^2/2",
+                         ("flow_m3_h", "diameter_mm", "fluid_density_kg_m3", "minor_loss_coefficient"), p)]
+    velocity = (q / 3600.0) / (math.pi * (d / 1000.0) ** 2 / 4.0)
+    dp_pa = k_total * rho * velocity ** 2 / 2.0
+    return [Calculation("PIP-MINOR-DP-001", "Piping", "Fitting and valve minor pressure loss", "calculated", dp_pa / 1e5, "bar",
+        "DeltaP=K_total*rho*v^2/2", {"flow_m3_h": q, "diameter_mm": d, "density_kg_m3": rho, "total_loss_coefficient": k_total, "velocity_m_s": velocity},
+        ["K_total must represent the actual fittings and valves. Straight-pipe friction and static head are separate."], "explicit_user_input")]
+
+
+def _hvac_thermal(p: dict[str, Any]) -> list[Calculation]:
+    flow, rho, cp, delta_t = (_positive(p, key) for key in ("airflow_m3_h", "air_density_kg_m3", "air_specific_heat_j_kg_k", "temperature_difference_k"))
+    keys = ("airflow_m3_h", "air_density_kg_m3", "air_specific_heat_j_kg_k", "temperature_difference_k")
+    if not (flow and rho and cp and delta_t):
+        return [_missing("HVAC-LOAD-001", "HVAC", "Sensible air-side thermal load", "Qdot=rho*Vdot*cp*DeltaT", keys, p)]
+    kw = rho * flow / 3600.0 * cp * delta_t / 1000.0
+    return [Calculation("HVAC-LOAD-001", "HVAC", "Sensible air-side thermal load", "calculated", kw, "kW",
+        "Qdot=rho*Vdot*cp*DeltaT", {"airflow_m3_h": flow, "air_density_kg_m3": rho, "air_specific_heat_j_kg_k": cp, "temperature_difference_k": delta_t},
+        ["Sensible load only; latent load, envelope transmission, infiltration and fan heat are excluded."], "explicit_user_input")]
+
+
+def _lighting(p: dict[str, Any]) -> list[Calculation]:
+    keys = ("target_illuminance_lux", "area_m2", "fixture_lumens", "utilization_factor", "maintenance_factor")
+    lux, area, lumens, uf, mf = (_positive(p, key) for key in keys)
+    if not (lux and area and lumens and uf and mf and uf <= 1 and mf <= 1):
+        return [_missing("LIGHT-FIX-001", "Lighting", "Preliminary luminaire quantity", "N=ceil(E*A/(lumens*UF*MF))", keys, p)]
+    count = math.ceil(lux * area / (lumens * uf * mf))
+    return [Calculation("LIGHT-FIX-001", "Lighting", "Preliminary luminaire quantity", "calculated", float(count), "fixtures",
+        "N=ceil(E*A/(lumens*UF*MF))", {"target_illuminance_lux": lux, "area_m2": area, "fixture_lumens": lumens, "utilization_factor": uf, "maintenance_factor": mf},
+        ["Lumen-method estimate only; photometric layout, uniformity, glare and emergency lighting are not checked."], "explicit_user_input")]
+
+
+def _grounding_rod(p: dict[str, Any]) -> list[Calculation]:
+    keys = ("soil_resistivity_ohm_m", "ground_rod_length_m", "ground_rod_diameter_m")
+    rho, length, diameter = (_positive(p, key) for key in keys)
+    if not (rho and length and diameter):
+        return [_missing("GROUND-ROD-R-001", "Grounding", "Single vertical rod resistance estimate", "R=rho/(2*pi*L)*(ln(4L/d)-1)", keys, p)]
+    if 4.0 * length / diameter <= 1.0:
+        return [Calculation("GROUND-ROD-R-001", "Grounding", "Single vertical rod resistance estimate", "invalid_input", None, "ohm",
+            "R=rho/(2*pi*L)*(ln(4L/d)-1)", {"soil_resistivity_ohm_m": rho, "ground_rod_length_m": length, "ground_rod_diameter_m": diameter},
+            ["Geometry is outside the valid domain of this approximate expression."], "explicit_user_input")]
+    resistance = rho / (2.0 * math.pi * length) * (math.log(4.0 * length / diameter) - 1.0)
+    return [Calculation("GROUND-ROD-R-001", "Grounding", "Single vertical rod resistance estimate", "calculated", resistance, "ohm",
+        "R=rho/(2*pi*L)*(ln(4L/d)-1)", {"soil_resistivity_ohm_m": rho, "ground_rod_length_m": length, "ground_rod_diameter_m": diameter},
+        ["Approximate homogeneous-soil single rod model only; no touch/step voltage, grid interaction or safety-code check. Not a grounding compliance result."], "explicit_user_input")]
