@@ -27,7 +27,7 @@ def parse_advanced_parameters(prompt: str) -> dict[str, float]:
     }
     result: dict[str, float] = {}
     for key, pattern in patterns.items():
-        match = re.search(pattern, text, re.I)
+        match = re.search(pattern, text, re.IGNORECASE)
         if not match:
             continue
         try:
@@ -49,7 +49,7 @@ def parse_advanced_parameters(prompt: str) -> dict[str, float]:
         "ground_rod_diameter_m": r"ground rod diameter\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*m\b",
     }
     for key, pattern in extras.items():
-        match = re.search(pattern, text, re.I)
+        match = re.search(pattern, text, re.IGNORECASE)
         if match:
             result[key] = float(match.group(1))
     return result
