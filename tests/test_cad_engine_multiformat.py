@@ -1,5 +1,6 @@
 """Tests for multi-application CAD export adapters."""
 import ast
+import base64
 import json
 from io import BytesIO
 
@@ -28,11 +29,17 @@ def test_multi_application_bundle_uses_one_validated_spec():
         "3dsmax_generator.ms",
         "revit_dynamo_generator.py",
         "engineering_spec.json",
+        "gridpulse_engineering_handoff.xlsx.base64",
     }
     assert bundle["autocad_model.dxf"].startswith("0\nSECTION")
     assert "GridPulse 3ds Max generator" in bundle["3dsmax_generator.ms"]
     assert "DirectShape.CreateElement" in bundle["revit_dynamo_generator.py"]
     assert json.loads(bundle["engineering_spec.json"])["assets"]
+    embedded_xlsx = base64.b64decode(bundle["gridpulse_engineering_handoff.xlsx.base64"])
+    assert embedded_xlsx[:2] == b"PK"
+    excel = load_workbook(BytesIO(embedded_xlsx), read_only=True, data_only=True)
+    assert "Equipment" in excel.sheetnames and "Design Checks" in excel.sheetnames
+    excel.close()
 
 
 def test_revit_script_is_valid_python_syntax_and_discloses_limits():
