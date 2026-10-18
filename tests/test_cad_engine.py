@@ -91,3 +91,27 @@ def test_review_detects_actual_3d_envelope_overlap():
     })
     findings = review_spec(spec)["geometric_findings"]
     assert any(item["code"] == "ASSET_ENVELOPE_OVERLAP" for item in findings)
+
+def test_freecad_macro_is_valid_python_for_all_supported_templates():
+    import ast
+
+    for template, prompt in [
+        ("process", "industrial process plant with pumps and pipes"),
+        ("power", "power generation plant"),
+        ("substation", "electrical substation with transformer and switchgear"),
+        ("building", "industrial building"),
+        ("water", "water treatment plant"),
+    ]:
+        spec, _ = build_spec(
+            prompt, 80, 55,
+            ["Mechanical", "Piping", "Electrical", "Instrumentation", "Architecture"],
+            template, False,
+        )
+        macro = to_freecad_macro(spec)
+        # Parse the generated macro without importing or executing FreeCAD.
+        ast.parse(macro, filename=f"{template}.FCMacro")
+        assert "saveAs(fcstd_path)" in macro
+        assert "step_path" in macro
+        assert "Part.export(export_objects, step_path)" in macro
+        assert "engineering approval" in macro.lower() or "not for construction" in macro.lower()
+
