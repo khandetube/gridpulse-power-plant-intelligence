@@ -42,3 +42,16 @@ def test_both_dashboards_include_persian_translations() -> None:
     assert "داشبورد" in main
     assert "در حال انجام" in suite
     assert "گریدپالس" in main
+
+
+def test_main_dashboard_has_one_click_excel_exports_and_embedded_charts() -> None:
+    html = read_page("index.html")
+    assert "function exportGridPulseExcel(scope=\"all\")" in html
+    assert "ExcelJS" in html
+    assert "wb.xlsx.writeBuffer()" in html
+    assert 'extension:"png"' in html
+    assert 'data-xlsx-scope' in html
+    for scope in ("overview", "data", "analytics", "engineering", "maintenance", "sources"):
+        assert f'"{scope}"' in html
+    assert "source_id" in html
+    assert "verification_status" in html
