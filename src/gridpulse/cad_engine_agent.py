@@ -3,20 +3,19 @@ from __future__ import annotations
 
 from typing import Any
 
+from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine import (
     Discipline,
     EngineeringSpec,
     build_spec,
     review_spec,
 )
-from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine_calculations import (
     parse_explicit_parameters,
     run_engineering_calculations,
 )
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
 from gridpulse.cad_engine_parameter_parser import parse_advanced_parameters
-
 
 DISCIPLINE_KEYWORDS: dict[str, tuple[str, ...]] = {
     "Mechanical": ("pump", "turbine", "generator", "compressor", "vessel", "tank", "mechanical", "پمپ", "توربین", "ژنراتور", "مخزن"),
