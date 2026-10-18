@@ -38,6 +38,23 @@ curl -fsS http://127.0.0.1:8000/api/v1/system/diagnostics \\
 
 The response reports source-registry and SQLite integrity status, local record counts, and explicit capability flags. It does not return filesystem paths or credentials and does not establish live telemetry, dispatch connectivity, predictive-model validity, or real plant condition. If `GRIDPULSE_API_KEY` is not configured, this local diagnostic route is not protected by the optional key middleware; configure the key before using the API beyond isolated local development.
 
+## Filtered observation CSV export
+
+The API provides a bounded CSV export for authorized local analysis. Example (the API key is required when `GRIDPULSE_API_KEY` is configured):
+
+```sh
+curl -fsS -G 'http://127.0.0.1:8000/api/v1/observations/export.csv' \
+  --data-urlencode 'plant=Example plant' \
+  --data-urlencode 'metric=net_generation' \
+  --data-urlencode 'start_date=2026-01-01' \
+  --data-urlencode 'end_date=2026-01-31' \
+  --data-urlencode 'limit=1000' \
+  -H "X-API-Key: $GRIDPULSE_API_KEY" \
+  -o gridpulse-observations.csv
+```
+
+The endpoint returns at most 10,000 rows per request; use `offset` for subsequent pages. It preserves verification-status labels, reports total/returned counts in response headers, and prefixes risky untrusted text cells to reduce spreadsheet-formula injection risk. A successful export does not independently verify the source or measurement. Protect exported files according to their contents.
+
 ## Create and verify a consistent backup
 
 The backup command uses SQLite's online backup API, checks database integrity, and writes a SHA-256 manifest next to the backup. It runs locally inside the container and does not upload data.
