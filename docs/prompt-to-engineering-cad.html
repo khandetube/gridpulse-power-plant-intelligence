@@ -184,6 +184,85 @@ function createModel(){
    route("DR-01","مسیر زهکشی مفهومی","Drainage",[[w*.1,h*.82],[w*.3,h*.82],[w*.3,h*.86],[w*.7,h*.86],[w*.9,h*.82]],0);
    add("SUMP-01","حوضچه جمع‌آوری","Drainage",w*.86,h*.79,w*.045,h*.04,1);
  }
+ // Enforce selected disciplines. The earlier generator added catalog assets even when their discipline was unchecked.
+ const enabledForAsset=d=>{
+   if(d==="Architecture")return true;
+   if(d==="Mechanical")return sys.includes("mechanical");
+   if(d==="Piping")return sys.includes("piping");
+   if(d==="Electrical")return sys.includes("electrical");
+   if(d==="Instrumentation")return sys.includes("instrument")||sys.includes("cable");
+   if(d==="Fire")return sys.includes("fire");
+   if(d==="HVAC")return sys.includes("hvac");
+   if(d==="Grounding")return sys.includes("grounding");
+   if(d==="Lighting")return sys.includes("lighting");
+   if(d==="Drainage")return sys.includes("drainage");
+   return true;
+ };
+ const beforeFilterAssets=a.length,beforeFilterRoutes=r.length;
+ for(let i=a.length-1;i>=0;i--)if(!enabledForAsset(a[i].discipline))a.splice(i,1);
+ for(let i=r.length-1;i>=0;i--){
+   const routeItem=r[i],tag=routeItem.tag||"";
+   const enabled=tag.startsWith("CT-")?sys.includes("cable")||sys.includes("electrical"):
+     tag.startsWith("SIG-")?sys.includes("instrument"):
+     enabledForAsset(routeItem.discipline);
+   if(!enabled)r.splice(i,1);
+ }
+ if(a.length!==beforeFilterAssets||r.length!==beforeFilterRoutes)checks.push("لایه‌های خاموش واقعاً از مدل حذف شدند؛ تجهیزات: "+(beforeFilterAssets-a.length)+"، مسیرها: "+(beforeFilterRoutes-r.length)+".");
+
+ // Remove duplicate tags deterministically; duplicates made equipment tables and exports ambiguous.
+ const seenTags=new Set();
+ for(let i=a.length-1;i>=0;i--){
+   if(seenTags.has(a[i].tag)){checks.push("تگ تکراری حذف شد: "+a[i].tag);a.splice(i,1);}
+   else seenTags.add(a[i].tag);
+ }
+
+ // Collision-aware placement for major footprints. Keep requested positions unless footprints overlap;
+ // allow a small item wholly inside a building (e.g. switchgear inside the electrical room).
+ const isAuxiliary=o=>/^(ROAD-|FHC-|ER-|LT-|PT-|TT-|FT-|PLC-|JB-|SUMP-|P-?GND)/i.test(o.tag)
+   ||o.w<1.2&&o.h<1.2
+   ||["Instrumentation","Grounding","Lighting","Fire","Drainage","Piping"].includes(o.discipline);
+ const isRoom=o=>o.discipline==="Architecture"||/^BLD-/.test(o.tag)||/^ROAD-/.test(o.tag);
+ const overlaps=(u,v,x,y)=>{
+   const eps=.08;
+   return x<v.x+v.w-eps&&x+u.w>v.x+eps&&y<v.y+v.h-eps&&y+u.h>v.y+eps;
+ };
+ const contained=(u,v,x,y)=>x>=v.x-.02&&y>=v.y-.02&&x+u.w<=v.x+v.w+.02&&y+u.h<=v.y+v.h+.02;
+ const placed=[],fixed=a.filter(isRoom);
+ placed.push(...fixed);
+ const movable=a.filter(o=>!isRoom(o)&&!isAuxiliary(o));
+ let movedCount=0,unresolved=[];
+ movable.forEach(o=>{
+   const original={x:o.x,y:o.y};
+   const collides=(x,y)=>placed.some(v=>{
+     if(!overlaps(o,v,x,y))return false;
+     if(isRoom(v)&&contained(o,v,x,y))return false;
+     return true;
+   });
+   if(!collides(o.x,o.y)){placed.push(o);return;}
+   let found=null;
+   // Search nearby in expanding square rings on a 1 m grid; keep the smallest displacement.
+   for(let radius=1;radius<=Math.ceil(Math.max(w,h));radius++){
+     const candidates=[];
+     for(let dx=-radius;dx<=radius;dx++){
+       const dyAbs=radius-Math.abs(dx);
+       candidates.push([original.x+dx,original.y+dyAbs],[original.x+dx,original.y-dyAbs]);
+     }
+     candidates.sort((p1,p2)=>(Math.abs(p1[0]-original.x)+Math.abs(p1[1]-original.y))-(Math.abs(p2[0]-original.x)+Math.abs(p2[1]-original.y)));
+     for(const [x,y] of candidates){
+       if(x<0||y<0||x+o.w>w||y+o.h>h)continue;
+       if(!collides(x,y)){found={x,y};break;}
+     }
+     if(found)break;
+   }
+   if(found){o.x=+found.x.toFixed(2);o.y=+found.y.toFixed(2);movedCount++;}
+   else unresolved.push(o.tag);
+   placed.push(o);
+ });
+ if(movedCount)checks.push("کنترل تداخل پلان: جانمایی خودکار "+movedCount+" تجهیز برای رفع هم‌پوشانی جابه‌جا شد؛ مختصات را در فهرست بررسی کنید.");
+ if(unresolved.length)checks.push("تداخل جانمایی حل‌نشده برای این تجهیزات وجود دارد: "+unresolved.join("، ")+".");
+ const finalTagSet=new Set();
+ a.forEach(o=>{if(finalTagSet.has(o.tag))checks.push("تگ تکراری باقی‌مانده: "+o.tag);finalTagSet.add(o.tag);});
+
  // Add context zones, boundaries, dimensions and north marker to drawing.
  checks.push("تمام تجهیزات و مسیرها از قالب پارامتریک تولید شده‌اند؛ هیچ دیتاشیت یا استاندارد پروژه‌ای بارگذاری نشده است.");
  checks.push("پارامترهای مهندسی حیاتی مانند توان، ولتاژ، جریان اتصال کوتاه، دبی، فشار طراحی، قطر لوله و کلاس کابل عمداً TBD هستند.");
