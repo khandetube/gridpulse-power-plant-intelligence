@@ -337,7 +337,7 @@ def to_dxf(spec: EngineeringSpec) -> str:
             line(p1[0], p1[1], p2[0], p2[1], layer)
         text(route.points[0][0], route.points[0][1], route.tag)
     out.extend(["0", "ENDSEC", "0", "EOF"])
-    return "\\n".join(out) + "\\n"
+    return "\n".join(out) + "\n"
 
 
 def to_svg(spec: EngineeringSpec) -> str:
