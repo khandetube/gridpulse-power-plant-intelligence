@@ -51,7 +51,7 @@ def _record_signature(row: dict[str, Any]) -> tuple[Any, ...]:
 def _severity_for_issue(kind: str) -> str:
     if kind in {"duplicate_record_id_conflict", "overlapping_reporting_period", "unit_mismatch", "scope_mismatch"}:
         return "high"
-    if kind in {"missing_source_id", "invalid_period", "missing_required_field", "temporal_gap", "irregular_sampling"}:
+    if kind in {"missing_source_id", "invalid_period", "invalid_numeric_value", "missing_required_field", "temporal_gap", "irregular_sampling"}:
         return "medium"
     return "review"
 
@@ -96,6 +96,8 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
             issues.append({"issue_id": f"row:{index}:invalid_period", "kind": "invalid_period", "severity": "medium", "record_id": rid, "index": index, "action": "Correct period_start/period_end using the source reporting period."})
         if _number(row.get("value")) is not None:
             valid_values += 1
+        else:
+            issues.append({"issue_id": f"row:{index}:invalid_numeric_value", "kind": "invalid_numeric_value", "severity": "medium", "record_id": rid, "index": index, "action": "Provide a finite numeric value from the authoritative source; do not infer or impute it."})
         if not missing and period and period[1] >= period[0]:
             groups[_key(row)].append((index, row, period))
 
@@ -139,6 +141,8 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
     metric_units: dict[tuple[str, str], set[str]] = defaultdict(set)
     metric_scopes: dict[tuple[str, str], set[str]] = defaultdict(set)
     for row in records:
+        if not isinstance(row, dict):
+            continue
         plant, metric, unit, scope = _key(row)
         if plant and metric:
             metric_units[(plant, metric)].add(unit)
@@ -154,7 +158,7 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
 
     total = len(records)
     coverage_components = {
-        "record_identity": sum(1 for r in records if _text(r.get("record_id"))) / total if total else 0,
+        "record_identity": sum(1 for r in records if isinstance(r, dict) and _text(r.get("record_id"))) / total if total else 0,
         "source_provenance": source_present / total if total else 0,
         "valid_period": valid_periods / total if total else 0,
         "finite_numeric_value": valid_values / total if total else 0,
