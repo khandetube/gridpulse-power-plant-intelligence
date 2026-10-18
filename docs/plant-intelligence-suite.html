@@ -128,10 +128,10 @@ function setLanguage(lang){
  document.documentElement.lang=currentLanguage;
  document.documentElement.dir=currentLanguage==="fa"?"rtl":"ltr";
  document.body.classList.toggle("rtl",currentLanguage==="fa");
+ translateSuiteText(currentLanguage);
  const t=translations[currentLanguage]||{};
  for(const [id,val] of Object.entries(t)){if($(id))$(id).textContent=val;}
  if(currentLanguage==="en"){for(const [id,val] of Object.entries(original)){if($(id)&&!["openCount","riskCount","rdCount","evidencePct","lossEvents","lossMwh","lossUnclassified"].includes(id))$(id).textContent=val;}}
- translateSuiteText(currentLanguage);
  try{localStorage.setItem("gridpulse-oem-language",currentLanguage);}catch(e){}
 }
 $("lang").addEventListener("change",e=>setLanguage(e.target.value));
