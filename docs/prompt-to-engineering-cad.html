@@ -268,6 +268,29 @@ function createModel(){
  checks.push("پارامترهای مهندسی حیاتی مانند توان، ولتاژ، جریان اتصال کوتاه، دبی، فشار طراحی، قطر لوله و کلاس کابل عمداً TBD هستند.");
  checks.push("بررسی فاصله ایمن، مسیر فرار، مناطق انفجاری، حریم تعمیرات، تداخل سه‌بعدی و انطباق با کدها انجام نشده است.");
  if(a.length>180)checks.push("مدل بزرگ است؛ فهرست و خروجی را کنترل کنید و برای اجرای روان، عناصر غیرضروری را خاموش کنید.");
+ 
+ // Geometry screening: axis-aligned asset overlaps and route segments entering equipment footprints.
+ const structuralTags=new Set(["SITE","ROAD","BLD","FENCE","YARD","AREA"]);
+ const boxes=a.filter(o=>!structuralTags.has(String(o.tag).split("-")[0])).map(o=>({o,x:Number(o.x),y:Number(o.y),w:Number(o.w),h:Number(o.h)}));
+ let overlapCount=0;
+ for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
+  const A=boxes[i],B=boxes[j];
+  const ix=Math.min(A.x+A.w,B.x+B.w)-Math.max(A.x,B.x),iy=Math.min(A.y+A.h,B.y+B.h)-Math.max(A.y,B.y);
+  if(ix>0.05&&iy>0.05){overlapCount++;if(overlapCount<=30)checks.push("برخورد هندسی احتمالی تجهیزات: "+A.o.tag+" با "+B.o.tag+"؛ هم‌پوشانی "+ix.toFixed(2)+" × "+iy.toFixed(2)+" "+$("units").value+".");}
+ }
+ if(overlapCount>30)checks.push("موارد هم‌پوشانی تجهیزات: "+overlapCount+"؛ فقط ۳۰ مورد نخست فهرست شده است.");
+ let routeHitCount=0;
+ for(const route of r){const pts=Array.isArray(route.pts)?route.pts:[];for(let k=0;k<pts.length-1;k++){
+  const p=pts[k],q=pts[k+1];if(!p||!q)continue;
+  for(const B of boxes){if(route.from===B.o.tag||route.to===B.o.tag)continue;
+   const minX=Math.min(p[0],q[0]),maxX=Math.max(p[0],q[0]),minY=Math.min(p[1],q[1]),maxY=Math.max(p[1],q[1]);
+   const crosses=(Math.abs(p[0]-q[0])<0.001&&p[0]>B.x&&p[0]<B.x+B.w&&maxY>B.y&&minY<B.y+B.h)||(Math.abs(p[1]-q[1])<0.001&&p[1]>B.y&&p[1]<B.y+B.h&&maxX>B.x&&minX<B.x+B.w);
+   if(crosses){routeHitCount++;if(routeHitCount<=40)checks.push("مسیر "+route.tag+" از محدوده تجهیز "+B.o.tag+" عبور می‌کند؛ نیازمند بازبینی مسیرگذاری.");}
+  }
+ }}
+ if(routeHitCount>40)checks.push("تعداد برخوردهای احتمالی مسیر و تجهیز: "+routeHitCount+"؛ فقط ۴۰ مورد نخست فهرست شده است.");
+ if(!overlapCount&&!routeHitCount)checks.push("غربالگری هندسی ساده: برخورد مستطیلی یا عبور مسیر مستقیم از تجهیز تشخیص داده نشد؛ این نتیجه تأیید مهندسی نیست.");
+
  const ids=new Set();a.forEach(o=>{if(ids.has(o.tag))checks.push("تگ تکراری در قالب: "+o.tag);ids.add(o.tag);});
  checks.push("واحد مختصات: "+$("units").value+"؛ ابعاد سایت: "+w+" × "+h+".");
  if(!sys.includes("electrical"))checks.push("لایه برق قدرت خاموش است؛ فقط مواردی که در لایه‌های فعال قرار دارند تولید شده‌اند.");
