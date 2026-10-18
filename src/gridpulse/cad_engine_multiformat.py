@@ -74,16 +74,15 @@ def export_3ds_max_script(spec: EngineeringSpec) -> str:
                 f"local gpA = [{x1:.4f},{y1:.4f},{z1:.4f}]",
                 f"local gpB = [{x2:.4f},{y2:.4f},{z2:.4f}]",
                 "local gpDelta = gpB - gpA",
-                f"if (length gpDelta) > 0.001 do (local gpRoute = cylinder radius:{radius:.4f} "
-                "height:(length gpDelta) sides:12",
+                f"if (length gpDelta) > 0.001 do (local gpRoute = cylinder radius:{radius:.4f} height:(length gpDelta) sides:12",
                 "gpRoute.pos = gpA",
                 "gpRoute.rotation = (rotationTo [0,0,1] (normalize gpDelta))",
                 f'gpRoute.name = "{label}"',
                 f"gpRoute.wirecolor = {color})",
             ])
     lines.append(
-        f'format "GridPulse created {len(spec.assets)} equipment envelopes and '
-        f'{sum(max(0, len(r.points)-1) for r in spec.routes)} route segments. Conceptual only.\\n"'
+        f'format "GridPulse created {len(spec.assets)} equipment envelopes and {sum(max(0, len(r.points)-1) for r in spec.routes)} route segments. Conceptual only.\\n"'
+    )
     )
     return "\n".join(lines) + "\n"
 
