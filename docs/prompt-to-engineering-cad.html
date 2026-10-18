@@ -273,8 +273,8 @@ function createModel(){
  if(!sys.includes("electrical"))checks.push("لایه برق قدرت خاموش است؛ فقط مواردی که در لایه‌های فعال قرار دارند تولید شده‌اند.");
  return {meta:{name:"Prompt-generated conceptual engineering model",template:tpl,units:$("units").value,width:w,height:h,prompt:$("prompt").value,createdAt:new Date().toISOString(),status:"concept-only"},site:{x:0,y:0,w,h},assets:a,routes:r,checks,layers:[...new Set([...a.map(x=>x.discipline),...r.map(x=>x.discipline)])]};
 }
-function labelX(cx,y,ww,hh,tag){return cx;}function labelY(cx,y,ww,hh,tag){const i=model.assets.findIndex(a=>a.tag===tag);return y-5-((i%3)*11);}
-function svgPlan(m){
+let planLabelBoxes=[],planLabelCache={};function resetPlanLabels(){planLabelBoxes=[];planLabelCache={};}function labelX(cx,y,ww,hh,tag){if(planLabelCache[tag])return planLabelCache[tag].x;const tw=Math.max(28,String(tag).length*6.2),th=12,candidates=[{x:cx,y:y-5},{x:cx,y:y+hh+13},{x:cx+ww/2+tw/2+5,y:y+hh/2+4},{x:cx-ww/2-tw/2-5,y:y+hh/2+4}];let best=candidates[0],bestScore=Infinity;for(const p of candidates){const box={x:p.x-tw/2,y:p.y-th+3,w:tw,h:th};let score=0;for(const b of planLabelBoxes){const ox=Math.max(0,Math.min(box.x+box.w,b.x+b.w)-Math.max(box.x,b.x));const oy=Math.max(0,Math.min(box.y+box.h,b.y+b.h)-Math.max(box.y,b.y));if(ox&&oy)score+=ox*oy+1000;}if(box.x<5||box.x+box.w>1195||box.y<5||box.y+box.h>845)score+=500;if(score<bestScore){bestScore=score;best=p;}}planLabelBoxes.push({x:best.x-tw/2,y:best.y-th+3,w:tw,h:th});planLabelCache[tag]=best;return best.x;}function labelY(cx,y,ww,hh,tag){if(!planLabelCache[tag])labelX(cx,y,ww,hh,tag);return planLabelCache[tag].y;}
+function svgPlan(m){resetPlanLabels();
  const W=1200,H=850,pad=65,s=Math.min((W-2*pad)/m.site.w,(H-2*pad)/m.site.h),ox=(W-m.site.w*s)/2,oy=(H-m.site.h*s)/2;
  const X=x=>ox+x*s,Y=y=>H-(oy+y*s);
  let z='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Conceptual engineering 2D plan"><rect width="100%" height="100%" fill="#fff"/>';
