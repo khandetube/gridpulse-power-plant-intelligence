@@ -381,3 +381,41 @@ def test_system_diagnostics_reports_safe_dependency_and_record_counts(tmp_path, 
     assert payload["registered_source_count"] >= 1
     assert payload["capabilities"]["live_plant_telemetry"] is False
     assert "database_path" not in payload
+
+
+def test_observation_csv_export_paginates_and_reports_total(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "export-pages.db"))
+    inserted = client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("page-1", 1), _observation("page-2", 2), _observation("page-3", 3)]},
+    )
+    assert inserted.status_code == 201
+
+    first = client.get("/api/v1/observations/export.csv?limit=2&offset=0")
+    second = client.get("/api/v1/observations/export.csv?limit=2&offset=2")
+    assert first.status_code == second.status_code == 200
+    assert first.headers["x-gridpulse-export-total"] == "3"
+    assert first.headers["x-gridpulse-export-returned"] == "2"
+    assert second.headers["x-gridpulse-export-total"] == "3"
+    assert second.headers["x-gridpulse-export-returned"] == "1"
+    assert [row["record_id"] for row in csv.DictReader(StringIO(first.text))] == ["page-1", "page-2"]
+    assert [row["record_id"] for row in csv.DictReader(StringIO(second.text))] == ["page-3"]
+
+
+def test_observation_csv_export_neutralizes_formula_like_text_cells(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "export-formula.db"))
+    malicious = {
+        **_observation("formula-1"),
+        "plant": "=HYPERLINK(\"https://example.invalid\",\"open\")",
+        "scope": "\t=cmd",
+    }
+    inserted = client.post("/api/v1/observations", json={"records": [malicious]})
+    assert inserted.status_code == 201
+
+    exported = client.get("/api/v1/observations/export.csv")
+    assert exported.status_code == 200
+    rows = list(csv.DictReader(StringIO(exported.text)))
+    assert rows[0]["plant"].startswith("'=")
+    assert rows[0]["scope"].startswith("'\\t=")
+    # The numerical measurement remains numeric rather than being escaped as text.
+    assert rows[0]["value"] == "10"
