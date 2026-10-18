@@ -38,7 +38,7 @@ def test_multi_application_bundle_uses_one_validated_spec():
     embedded_xlsx = base64.b64decode(bundle["gridpulse_engineering_handoff.xlsx.base64"])
     assert embedded_xlsx[:2] == b"PK"
     excel = load_workbook(BytesIO(embedded_xlsx), read_only=True, data_only=True)
-    assert "Equipment" in excel.sheetnames and "Design Checks" in excel.sheetnames
+    assert "Equipment" in excel.sheetnames and "Design Checks" in excel.sheetnames\n    assert "Calculations" in excel.sheetnames and "Rule Checks" in excel.sheetnames
     excel.close()
 
 
@@ -97,7 +97,7 @@ def test_excel_workbook_contains_traceable_multi_sheet_handoff():
     assert payload[:2] == b"PK"
     workbook = load_workbook(BytesIO(payload), read_only=True, data_only=True)
     assert workbook.sheetnames == [
-        "Project Summary", "Equipment", "Routes", "Route Points", "Design Checks", "Design Basis"
+        "Project Summary", "Equipment", "Routes", "Route Points", "Design Checks", "Design Basis", "Calculations", "Rule Checks"
     ]
     assert workbook["Equipment"].max_row == len(spec.assets) + 1
     assert workbook["Routes"].max_row == len(spec.routes) + 1
