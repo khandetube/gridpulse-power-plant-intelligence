@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from gridpulse.cad_engine import Discipline, EngineeringSpec, build_spec, review_spec, to_dxf, to_freecad_macro, to_openscad, to_svg
 from gridpulse.cad_engine_agent import run_design_agent
+from gridpulse.cad_engine_calculations import run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
 from gridpulse.cad_engine_multiformat import export_engineering_workbook, export_multi_application_bundle
 
@@ -24,6 +25,11 @@ class GenerateCadRequest(BaseModel):
     use_llm: bool = True
 
 
+class CalculationRequest(BaseModel):
+    spec: EngineeringSpec
+    parameters: dict[str, float | int | str | None] = Field(default_factory=dict, max_length=100)
+
+
 @router.get("/status")
 def cad_engine_status() -> dict:
     """Report actual runtime capabilities and whether the optional model is configured."""
@@ -31,20 +37,21 @@ def cad_engine_status() -> dict:
     configured = all(os.environ.get(key, "").strip() for key in ("GRIDPULSE_LLM_BASE_URL", "GRIDPULSE_LLM_API_KEY", "GRIDPULSE_LLM_MODEL"))
     return {
         "engine": "GridPulse Parametric CAD Engine",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "available": True,
-        "geometry_backend": "parametric-spec + multi-stage design agent + engineering-intelligence + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
+        "geometry_backend": "parametric-spec + multi-stage design agent + deterministic engineering calculations + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
+        "calculation_backend": "deterministic real equations with explicit-input gating, traceability and rule checks",
         "llm_configured": configured,
         "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser + multi-stage reasoning",
-        "agent_stages": ["requirements", "discipline coordination", "parametric geometry", "topology/clash heuristics", "design critique", "multi-application handoff"],
-        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx", "engineering_intelligence.json", "design_agent_report.json"],
-        "limitations": ["Conceptual envelopes and schematic routes only", "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment", "No engineering code calculations or safety approval", "Not connected to plant telemetry or dispatch systems"],
+        "agent_stages": ["requirements", "discipline coordination", "parametric geometry", "topology/clash heuristics", "engineering calculations/rules", "design critique", "multi-application handoff"],
+        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx", "engineering_intelligence.json", "design_agent_report.json", "calculation_report.json"],
+        "limitations": ["Calculations require explicit design-basis inputs and do not invent missing values", "Project/code-specific limits and manufacturer data are not inferred", "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment", "No construction/safety approval", "Not connected to plant telemetry or dispatch systems"],
     }
 
 
 @router.post("/generate")
 def generate_cad(request: GenerateCadRequest) -> dict:
-    """Generate one bounded, editable geometry model plus multi-stage reasoning and exports."""
+    """Generate one bounded, editable geometry model plus reasoning, calculations and exports."""
     try:
         agent = run_design_agent(request.prompt, request.site_width, request.site_length, request.disciplines, request.template, request.use_llm)
         spec = EngineeringSpec.model_validate(agent["model"])
@@ -53,15 +60,17 @@ def generate_cad(request: GenerateCadRequest) -> dict:
     payload = spec.model_dump(mode="json")
     intelligence = agent["intelligence"]
     return {
-        "engine": "gridpulse-parametric-cad-v0.4.0",
+        "engine": "gridpulse-parametric-cad-v0.5.0",
         "interpretation_mode": agent["interpretation_mode"],
         "agent": agent,
         "spec": payload,
         "review": review_spec(spec),
         "engineering_intelligence": intelligence,
+        "calculations": agent["calculations"],
         "exports": {
             "engineering_spec.json": json.dumps(payload, ensure_ascii=False, indent=2),
             "engineering_intelligence.json": json.dumps(intelligence, ensure_ascii=False, indent=2),
+            "calculation_report.json": json.dumps(agent["calculations"], ensure_ascii=False, indent=2),
             "design_agent_report.json": json.dumps(agent, ensure_ascii=False, indent=2),
             "plan.svg": to_svg(spec),
             "plan.dxf": to_dxf(spec),
@@ -69,7 +78,7 @@ def generate_cad(request: GenerateCadRequest) -> dict:
             "model.FCMacro": to_freecad_macro(spec),
             **export_multi_application_bundle(spec),
         },
-        "notice": "Conceptual design only. Outputs are editable but are not construction-approved engineering.",
+        "notice": "Conceptual engineering assistance only. Numeric calculations are traceable deterministic calculations, but project-specific codes, design basis, manufacturer data and qualified engineering review remain mandatory.",
     }
 
 
@@ -80,6 +89,12 @@ def run_agent(request: GenerateCadRequest) -> dict:
         return run_design_agent(request.prompt, request.site_width, request.site_length, request.disciplines, request.template, request.use_llm)
     except (ValueError, ValidationError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/calculations")
+def calculate_engineering(request: CalculationRequest) -> dict:
+    """Run deterministic calculations on an existing validated model with explicit inputs."""
+    return run_engineering_calculations(request.spec, request.parameters)
 
 
 @router.post("/analyze")
