@@ -33,6 +33,8 @@
 <script>
 const NS="http://www.w3.org/2000/svg",svg=document.createElementNS(NS,"svg");
 svg.setAttribute("xmlns",NS);svg.setAttribute("viewBox","0 0 1189 841");svg.setAttribute("width","1189mm");svg.setAttribute("height","841mm");
+// Mount the SVG before drawing: a later runtime error must never leave the entire sheet blank.
+document.getElementById("sheet").appendChild(svg);
 function E(tag,a={},parent=svg,text){const e=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;(parent||svg).appendChild(e);return e}
 function group(id){return E("g",{"data-layer-group":id})}
 function rect(g,x,y,w,h,fill="none",stroke="#334b5f",sw=.8,rx=0){return E("rect",{x,y,width:w,height:h,fill,stroke,"stroke-width":sw,rx},g)}
@@ -128,7 +130,6 @@ E("g",{transform:"translate(1115 85)"},svg).innerHTML='<path d="M 0 25 L 0 -12 L
 E("g",{},svg).innerHTML='<line x1="95" y1="755" x2="295" y2="755" stroke="#1d3448" stroke-width="1"/><line x1="95" y1="751" x2="95" y2="759" stroke="#1d3448"/><line x1="195" y1="751" x2="195" y2="759" stroke="#1d3448"/><line x1="295" y1="751" x2="295" y2="759" stroke="#1d3448"/><g font-family="Arial,sans-serif" font-size="4" fill="#1d3448"><text x="95" y="766">0</text><text x="195" y="766" text-anchor="middle">100 m</text><text x="295" y="766" text-anchor="end">200 m</text><text x="315" y="757" font-weight="bold">SCALE 1:1000 · PRINT AT 100%</text></g>';
 rect(svg,410,744,739,72,"#fff","#1d3448",1);line(svg,410,770,1149,770,"#1d3448",.6);line(svg,410,793,1149,793,"#1d3448",.6);line(svg,850,744,850,816,"#1d3448",.6);line(svg,1000,770,1000,816,"#1d3448",.6);
 text(svg,"DRAWING TITLE",420,756,5,"#1d3448","start","bold");text(svg,"CONCEPT REFINERY GENERAL ARRANGEMENT",420,766,6,"#1d3448","start");text(svg,"DRAWING NO. GP-REF-GA-001",420,782,4.5,"#1d3448","start");text(svg,"UNITS: METRES · ORIGIN: SOUTH-WEST CORNER",420,789,4.5,"#1d3448","start");text(svg,"REVISION",860,756,5,"#1d3448","start","bold");text(svg,"A / CONCEPT",860,766,6,"#1d3448","start");text(svg,"STATUS: NOT FOR CONSTRUCTION",860,782,4.2,"#1d3448","start");text(svg,"SHEET 01 / 01 · A0 LANDSCAPE",1010,789,4.2,"#1d3448","start");text(svg,"WARNING: illustrative layout only; no verified survey, process safety, spacing or code review.",420,805,4.4,"#1d3448","start","bold");text(svg,"GridPulse MEP Studio · Vector SVG · Conceptual data only",35,831,4,"#526b80","start");
-document.getElementById("sheet").appendChild(svg);
 const viewport=document.createElement("div");viewport.className="tools view-tools";viewport.style.cssText="position:sticky;top:0;z-index:5;padding:8px;background:#102238;border-bottom:1px solid #2a4058";
 viewport.innerHTML='<button type="button" id="zoomOut">−</button><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">بازنشانی نما</button><span class="muted" id="zoomReadout">بزرگ‌نمایی 100%</span>';
 document.querySelector(".sheet").before(viewport);
@@ -149,6 +150,7 @@ document.getElementById("print").addEventListener("click",()=>{
  style.textContent='@media print{@page{size:'+paper+' landscape;margin:0}html,body{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;margin:0!important;padding:0!important}.wrap{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;max-width:none!important;margin:0!important;padding:0!important}.sheet{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;overflow:hidden!important}.sheet svg{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;min-width:0!important;max-width:none!important}}';
  window.print();
 });
+window.addEventListener("error",event=>{const box=document.getElementById("mapRuntimeError");if(box){box.hidden=false;box.textContent="خطای ترسیم نقشه: "+(event.message||"خطای نامشخص")+" — بخش ترسیم‌شده تا این نقطه حفظ شده است."}});
 window.addEventListener("message",event=>{if(event.data&&event.data.type==="gridpulse-print"){const select=document.getElementById("paperSize");if(select&&paperDims[event.data.paperSize])select.value=event.data.paperSize;document.getElementById("print").click();}});
 </script>
 </body></html>
