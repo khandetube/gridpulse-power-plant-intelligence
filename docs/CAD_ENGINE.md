@@ -1,0 +1,62 @@
+# GridPulse Parametric CAD Engine
+
+This engine is a server-side addition to the existing GridPulse FastAPI service. It generates a bounded, editable engineering object model from a text prompt, then derives several files from that same model:
+
+- **EngineeringSpec JSON** — equipment tags, disciplines, coordinates, dimensions, materials, route points, nominal placeholders, design-basis notes.
+- **SVG plan** — scalable 2D layout with discipline layers and tags.
+- **DXF R12** — 2D equipment envelopes, route centerlines and tags for CAD-compatible tools.
+- **OpenSCAD (.scad)** — editable primitive solids and route geometry that can be opened and rendered by OpenSCAD.
+- **Geometric screening** — site-boundary checks, duplicate-tag checks, 3D envelope overlap checks, and explicit engineering limitations.
+
+## API
+
+The endpoints are part of the FastAPI backend; GitHub Pages is static hosting and cannot execute this Python engine by itself.
+
+- `GET /api/v1/cad/status`
+- `POST /api/v1/cad/generate`
+- `POST /api/v1/cad/export/json`
+- `POST /api/v1/cad/export/svg`
+- `POST /api/v1/cad/export/dxf`
+- `POST /api/v1/cad/export/scad`
+
+Example request:
+
+```json
+{
+  "prompt": "An industrial process area with two parallel pumps, a process vessel, heat exchanger, electrical room, process piping and cable trays",
+  "site_width": 80,
+  "site_length": 55,
+  "template": "process",
+  "disciplines": ["Mechanical", "Piping", "Electrical", "Instrumentation", "Architecture"],
+  "use_llm": false
+}
+```
+
+Use the same API authentication policy as the rest of GridPulse. When `GRIDPULSE_API_KEY` is set, send it in the `X-API-Key` header. Production API mode fails closed if authentication is not configured.
+
+## Optional natural-language model adapter
+
+The engine can use any **trusted OpenAI-compatible chat-completions endpoint** to propose a structured geometry model. Configure these server-side environment variables:
+
+- `GRIDPULSE_LLM_BASE_URL` — provider base URL, without `/chat/completions`
+- `GRIDPULSE_LLM_API_KEY` — secret API key; never commit it to Git
+- `GRIDPULSE_LLM_MODEL` — provider model identifier
+
+The server calls `/chat/completions` with a JSON-object response request. The returned model is validated by Pydantic bounds and uniqueness rules before geometry/export. Provider failure, malformed JSON or invalid geometry falls back to deterministic templates. The LLM is not used when any required variable is missing or `use_llm=false`. Keep secrets in the backend host's environment/secret store, never in browser JavaScript or GitHub Pages.
+
+## Current limitations — do not treat as engineering approval
+
+This is a useful **parametric concept engine**, not yet a full industrial CAD/BIM suite. Geometry is currently primitive envelopes and schematic route centerlines. DXF is 2D. OpenSCAD export is a source script, not STEP/FCStd. The engine does not yet provide a native B-rep solid kernel, full fittings/nozzles, P&ID connectivity, cable/piping sizing, stress analysis, short-circuit/protection studies, grounding resistance, structural design, HVAC loads, fire engineering, code compliance or a verified clash/clearance engine. The included overlap check compares simple asset bounding boxes only.
+
+No real power-plant measurements, vendor data, confidential network data or dispatch/SCADA connections are used. Every generated model is conceptual until the project is supplied with approved inputs and independently checked by qualified engineers.
+
+## Next engine stages
+
+1. Add a real solid geometry backend (FreeCAD/OpenCASCADE) for native editable solids and STEP export.
+2. Add schema-backed equipment catalogues, parametric nozzles/fittings, pipe elbows/reducers/flanges, cable tray fittings and support geometry.
+3. Add connectivity graphs linking equipment nozzles, P&IDs, instruments, electrical single-lines, cable schedules and physical routes.
+4. Add geometric clearance/clash rules with configurable project standards and regression fixtures.
+5. Add persistent project revisions, provenance, approval gates and export manifests.
+6. Connect the in-dashboard CAD panel to a deployed, authenticated backend. Do not embed provider secrets in the static dashboard.
+
+The Python test suite includes prompt generation, schema bounds, duplicate tags, overlap detection and export smoke tests.
