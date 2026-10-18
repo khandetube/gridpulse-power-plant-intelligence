@@ -132,6 +132,10 @@ def test_offline_analysis_adds_quality_metrics_and_actionable_evidence_insights(
     assert group["change_from_first_pct"] == 30
     assert group["latest_rolling_mean_3"] == 12
     assert group["trend_direction"] == "increasing"
+    assert group["distinct_date_count"] == 4
+    assert group["observation_span_days"] == 3
+    assert group["trend_r_squared"] == 1.0
+    assert group["trend_evidence_level"] == "preliminary"
     assert any(item["id"] == "source_verification_review" for item in result["insights"])
     assert any(item["id"].startswith("trend:") for item in result["insights"])
 
@@ -153,3 +157,18 @@ def test_offline_analysis_data_quality_tracks_invalid_records():
     assert result["data_quality"]["analysis_coverage_pct"] == 50
     assert result["data_quality"]["invalid_reason_counts"] == {"invalid_period_date": 1}
     assert result["insights"][0]["id"] == "data_quality_review"
+
+
+
+def test_trend_evidence_is_insufficient_when_records_share_a_date():
+    records = [
+        row("same-a", 10, "2026-01-01"),
+        row("same-b", 11, "2026-01-01"),
+        row("same-c", 12, "2026-01-01"),
+    ]
+    group = analyze_offline(records)["groups"][0]
+    assert group["distinct_date_count"] == 1
+    assert group["observation_span_days"] == 0
+    assert group["trend_per_day"] is None
+    assert group["trend_r_squared"] is None
+    assert group["trend_evidence_level"] == "insufficient"
