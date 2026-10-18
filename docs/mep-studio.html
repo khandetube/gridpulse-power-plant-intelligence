@@ -32,7 +32,7 @@
 <label>ارتفاع مسیر کابل/سینی (متر)<input id="tray" type="number" min=".1" max="20" step=".1" value="2.8"></label>
 <label>طول مسیر لوله اصلی در هر طبقه (متر)<input id="pipe" type="number" min="0" max="1000" step=".5" value="35"></label>
 <label>طول مسیر کانال اصلی در هر طبقه (متر)<input id="duct" type="number" min="0" max="1000" step=".5" value="28"></label>
-</div><div class="actions"><button class="primary" id="calculate">محاسبه و بازسازی مدل</button><button id="reset">بازنشانی نمونه</button></div><p class="small">اعداد اولیه صرفاً داده نمونه برای آزمون رابط هستند؛ مشخصات ساختمان واقعی نیستند.</p></section>
+</div><div class="actions"><button class="primary" id="calculate">محاسبه و بازسازی مدل</button><button id="saveProject">ذخیره پروژه در این مرورگر</button><button id="loadProject">بازیابی ذخیره محلی</button><button id="exportProjectFile">دریافت فایل پروژه JSON</button><button id="importProjectFile">بارگذاری فایل پروژه</button><input id="projectFile" type="file" accept=".json,application/json" hidden><button id="reset">بازنشانی نمونه</button></div><p class="small" id="projectSaveStatus" role="status">ذخیره خودکار محلی آماده‌سازی می‌شود؛ داده‌ها به سرور ارسال نمی‌شوند.</p><p class="small">اعداد اولیه صرفاً داده نمونه برای آزمون رابط هستند؛ مشخصات ساختمان واقعی نیستند. ذخیره محلی فقط روی همین مرورگر/دستگاه در دسترس است.</p></section>
 <section class="panel"><h2>۲. فرضیات و دامنه</h2><div class="fields">
 <label>نوع پروژه<select id="building"><option>ساختمان اداری</option><option>مسکونی</option><option>تجاری</option><option>کارگاهی</option><option>نیروگاه/صنعتی</option></select></label>
 <label>سطح اطمینان ورودی<select id="confidence"><option value="concept">مفهومی / برآورد</option><option value="survey">اندازه‌برداری شده</option><option value="approved">تأیید مهندسی مستند</option></select></label>
@@ -48,6 +48,14 @@
 <h3>نقشه دوبعدی جانمایی فضاها</h3><canvas id="floorPlan" class="canvas" style="height:330px" aria-label="نقشه دوبعدی مفهومی فضاها"></canvas>
 <div id="roomValidation" class="small" role="status"></div>
 <p class="small">CSV ورودی باید ستون‌های name,floor,x,y,length,width,use,people,sockets,lux داشته باشد. X/Y از گوشه جنوب‌غربی ساختمان است. چراغ‌ها بر اساس لومن مفروض 1200 lm، ضریب بهره 0.60 و ضریب نگهداری 0.80 تخمین زده می‌شوند؛ طراحی روشنایی واقعی به محاسبه فوتومتریک و فایل/مشخصات چراغ نیاز دارد.</p>
+</section>
+<section class="panel" id="equipmentRegister">
+ <h2>فهرست تجهیزات و بارهای واقعی/مفترَض</h2>
+ <p>برای تجهیزات نیروگاهی یا ساختمانی، شناسه، سیستم، توان نامی، تعداد و توضیحات را ثبت کن. این رجیستر جدا از تخمین W/m² نگه داشته می‌شود تا بارها ناخواسته دوبار شمرده نشوند.</p>
+ <div class="actions"><button class="primary" id="addEquipment">+ افزودن تجهیز</button><button id="exportEquipment">خروجی تجهیزات CSV</button></div>
+ <div class="metrics"><div class="metric"><b id="equipmentCount">0</b><span>تعداد ردیف تجهیزات</span></div><div class="metric"><b id="equipmentTotalPower">0</b><span>توان نامی ثبت‌شده (kW)</span></div><div class="metric"><b id="equipmentTotalUnits">0</b><span>تعداد واحدها</span></div><div class="metric"><b id="equipmentSystemCount">0</b><span>تعداد سیستم‌ها</span></div></div>
+ <div class="scroll"><table><thead><tr><th>Tag / شناسه</th><th>نام تجهیز</th><th>سیستم</th><th>تعداد</th><th>توان هر واحد (kW)</th><th>توان کل (kW)</th><th>وضعیت داده</th><th>توضیحات</th><th>عملیات</th></tr></thead><tbody id="equipmentRows"></tbody></table></div>
+ <p class="small">این فهرست برای ثبت و کنترل داده است؛ به‌تنهایی ظرفیت کابل، کلید حفاظتی، راه‌اندازی موتور، اتصال کوتاه یا هماهنگی حفاظتی را محاسبه نمی‌کند.</p>
 </section>
 <section class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h2>۴. مدل سه‌بعدی حجمی</h2><span class="pill">مدل پارامتریک · بدون هندسه اجرایی</span></div><div class="actions" style="margin:0"><button id="viewReset">نمای ایزومتریک</button><button id="viewTop">نمای بالا</button><button id="viewSide">نمای جانبی</button><button id="viewFront">نمای روبه‌رو</button><button id="downloadObj">خروجی OBJ</button><button id="downloadDxf">خروجی AutoCAD (.dxf)</button><button id="downloadRevit">اسکریپت مدل Revit (.py)</button><button id="downloadMax">خروجی 3ds Max (.ms)</button></div></div>
 <canvas id="model" class="canvas" aria-label="نمای سه‌بعدی حجمی ساختمان و مسیرهای مفهومی تاسیسات"></canvas>
@@ -114,6 +122,38 @@ let rooms=[
 {name:"Service 01",floor:1,x:14,y:0,length:6,width:6,use:"service",people:2,sockets:4,lux:300},
 {name:"Office 02",floor:2,x:0,y:0,length:8,width:6,use:"office",people:6,sockets:8,lux:500}
 ];
+let equipment=[
+ {tag:"M-001",name:"Main pump",system:"Mechanical",qty:1,power_kw:7.5,status:"assumed",notes:"Replace with nameplate data"},
+ {tag:"E-001",name:"Auxiliary panel",system:"Electrical",qty:1,power_kw:0,status:"unknown",notes:"Load breakdown not entered"}
+];
+function renderEquipment(){
+ const body=$("equipmentRows");
+ body.innerHTML=equipment.map((e,i)=>'<tr>'+
+ '<td><input data-eq="'+i+'" data-k="tag" value="'+escapeHtml(e.tag)+'" style="min-width:90px"></td>'+
+ '<td><input data-eq="'+i+'" data-k="name" value="'+escapeHtml(e.name)+'" style="min-width:130px"></td>'+
+ '<td><select data-eq="'+i+'" data-k="system">'+["Electrical","Mechanical","HVAC","Process","Instrumentation","Civil","Other"].map(s=>'<option '+(s===e.system?'selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
+ '<td><input data-eq="'+i+'" data-k="qty" type="number" min="0" step="1" value="'+Number(e.qty)+'" style="width:75px"></td>'+
+ '<td><input data-eq="'+i+'" data-k="power_kw" type="number" min="0" step="any" value="'+Number(e.power_kw)+'" style="width:100px"></td>'+
+ '<td>'+fmt(Math.max(0,Number(e.qty)||0)*Math.max(0,Number(e.power_kw)||0))+'</td>'+
+ '<td><select data-eq="'+i+'" data-k="status">'+[["unknown","نامشخص"],["assumed","فرضی"],["datasheet","دیتاشیت"],["nameplate","پلاک‌خوانی"],["verified","تأییدشده"]].map(([v,t])=>'<option value="'+v+'" '+(v===e.status?'selected':'')+'>'+t+'</option>').join('')+'</select></td>'+
+ '<td><input data-eq="'+i+'" data-k="notes" value="'+escapeHtml(e.notes||"")+'" style="min-width:170px"></td>'+
+ '<td><button data-eq-remove="'+i+'">حذف</button></td></tr>').join('');
+ const total=equipment.reduce((a,e)=>a+Math.max(0,Number(e.qty)||0)*Math.max(0,Number(e.power_kw)||0),0);
+ $("equipmentCount").textContent=equipment.length;$("equipmentTotalPower").textContent=fmt(total);$("equipmentTotalUnits").textContent=fmt(equipment.reduce((a,e)=>a+Math.max(0,Number(e.qty)||0),0));$("equipmentSystemCount").textContent=new Set(equipment.map(e=>e.system)).size;
+ body.querySelectorAll("[data-eq]").forEach(el=>el.addEventListener("change",()=>{const e=equipment[Number(el.dataset.eq)],k=el.dataset.k;e[k]=["tag","name","system","status","notes"].includes(k)?el.value:Number(el.value);renderEquipment();autoSaveProject();}));
+ body.querySelectorAll("[data-eq-remove]").forEach(el=>el.addEventListener("click",()=>{equipment.splice(Number(el.dataset.eqRemove),1);renderEquipment();autoSaveProject();}));
+}
+function projectSnapshot(){return {schema_version:"0.3.0",saved_at:new Date().toISOString(),fields:Object.fromEntries(inputIds.map(id=>[id,$(id).value])),rooms:rooms,equipment:equipment};}
+function autoSaveProject(){try{localStorage.setItem("gridpulse-mep-project-v03",JSON.stringify(projectSnapshot()));const s=$("projectSaveStatus");if(s)s.textContent="ذخیره خودکار محلی: "+new Date().toLocaleTimeString()+" · فقط روی همین مرورگر";}catch(e){const s=$("projectSaveStatus");if(s)s.textContent="ذخیره خودکار در دسترس نیست؛ از خروجی JSON استفاده کن.";}}
+function applyProjectSnapshot(data){
+ if(!data||typeof data!=="object")throw Error("فایل پروژه معتبر نیست.");
+ const fields=data.fields||data.project;
+ if(fields&&typeof fields==="object")inputIds.forEach(id=>{if(fields[id]!==undefined&&$(id))$(id).value=String(fields[id]);else if(id==="length"&&fields.L!==undefined)$(id).value=String(fields.L);else if(id==="width"&&fields.W!==undefined)$(id).value=String(fields.W);else if(id==="height"&&fields.H!==undefined)$(id).value=String(fields.H);else if(id==="floors"&&fields.F!==undefined)$(id).value=String(fields.F);});
+ if(Array.isArray(data.rooms||data.room_schedule)){const incoming=data.rooms||data.room_schedule;rooms=incoming.map(r=>({name:String(r.name||"Unnamed room").slice(0,120),floor:Number(r.floor)||1,x:Number(r.x)||0,y:Number(r.y)||0,length:Number(r.length)||1,width:Number(r.width)||1,use:roomUses.some(u=>u[0]===r.use)?r.use:"other",people:Math.max(0,Number(r.people)||0),sockets:Math.max(0,Number(r.sockets)||0),lux:Math.max(0,Number(r.lux)||0)}));}
+ if(Array.isArray(data.equipment_register||data.equipment)){equipment=(data.equipment||data.equipment_register).map((e,i)=>({tag:String(e.tag||("EQ-"+(i+1))).slice(0,60),name:String(e.name||"Unnamed equipment").slice(0,120),system:String(e.system||"Other").slice(0,60),qty:Math.max(0,Number(e.qty)||0),power_kw:Math.max(0,Number(e.power_kw)||0),status:["unknown","assumed","datasheet","nameplate","verified"].includes(e.status)?e.status:"unknown",notes:String(e.notes||"").slice(0,500)}));}
+ update();renderRooms();renderEquipment();autoSaveProject();
+}
+
 const roomUses=[["office","اداری"],["meeting","جلسه"],["residential","مسکونی"],["corridor","راهرو"],["service","خدماتی"],["plant","تجهیزات/موتورخانه"],["retail","تجاری"],["other","سایر"]];
 const roomNum=(v,field)=>{const n=Number(v);if(!Number.isFinite(n))throw Error("مقدار نامعتبر برای "+field);return n};
 function roomCalc(r){const area=r.length*r.width;const airPerPerson=roomUses.find(x=>x[0]===r.use)?.[0]==="plant"?0:10;const air=Math.max(0,r.people)*airPerPerson;const lights=Math.ceil(area*Math.max(0,r.lux)/(1200*.60*.80));return {...r,area,air,lights};}
@@ -292,9 +332,17 @@ OUT = {"created_elements":len([x for x in created if x is not None]), "units":"m
 }
 
 function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-function packageData(){return {product:"GridPulse MEP Studio",schema_version:"0.2.0",generated_at:new Date().toISOString(),classification:"conceptual_estimate_not_for_construction",project:state.d,room_schedule:rooms.map(roomCalc),results:{gross_area_m2:state.gross,estimated_net_area_m2:state.net,connected_load_estimate_kw:state.connected,coincident_load_estimate_kw:state.demand,cooling_load_estimate_kw:state.cooling,fresh_air_estimate_m3h:state.air},quantity_estimate:state.boq,calculation_notes:state.rows,limitations:["Not a construction-ready design","No cable sizing, voltage-drop, fault-current, protection coordination or earthing calculation","No detailed heating/cooling load, duct/pipe sizing or pressure-drop calculation","No verified architectural drawing or BIM geometry","Review all inputs, local codes and quantities with licensed engineers"],source_data_status:"User-entered concept inputs; no external plant/building data used"}}
+function packageData(){return {product:"GridPulse MEP Studio",schema_version:"0.3.0",generated_at:new Date().toISOString(),classification:"conceptual_estimate_not_for_construction",project:state.d,room_schedule:rooms.map(roomCalc),equipment_register:equipment.map(e=>({...e,total_kw:Number(e.qty)*Number(e.power_kw)})),results:{gross_area_m2:state.gross,estimated_net_area_m2:state.net,connected_load_estimate_kw:state.connected,coincident_load_estimate_kw:state.demand,cooling_load_estimate_kw:state.cooling,fresh_air_estimate_m3h:state.air},quantity_estimate:state.boq,calculation_notes:state.rows,limitations:["Not a construction-ready design","No cable sizing, voltage-drop, fault-current, protection coordination or earthing calculation","No detailed heating/cooling load, duct/pipe sizing or pressure-drop calculation","No verified architectural drawing or BIM geometry","Review all inputs, local codes and quantities with licensed engineers"],source_data_status:"User-entered concept inputs; no external plant/building data used"}}
 function update(){try{state=build(read());renderTables(state);draw();$("scriptPreview").hidden=true}catch(e){alert(e.message)}}
-$("calculate").onclick=update;$("reset").onclick=()=>{location.reload()};$("viewReset").onclick=()=>{rotation={x:-.48,y:.65};zoom=1;draw()};$("viewTop").onclick=()=>{rotation={x:-1.52,y:0};draw()};$("viewSide").onclick=()=>{rotation={x:-.05,y:1.57};draw()};$("viewFront").onclick=()=>{rotation={x:-.12,y:0};draw()};
+$("calculate").onclick=()=>{update();renderRooms();renderEquipment();autoSaveProject();};
+$("saveProject").onclick=()=>{autoSaveProject();const s=$("projectSaveStatus");if(s)s.textContent="پروژه ذخیره شد: "+new Date().toLocaleString();};
+$("loadProject").onclick=()=>{try{const raw=localStorage.getItem("gridpulse-mep-project-v03");if(!raw)throw Error("ذخیره‌ای در این مرورگر پیدا نشد.");applyProjectSnapshot(JSON.parse(raw));$("projectSaveStatus").textContent="پروژه از ذخیره محلی بازیابی شد."}catch(e){alert(e.message)}};
+$("exportProjectFile").onclick=()=>download("gridpulse-mep-project.json",JSON.stringify({...packageData(),workspace:projectSnapshot()},null,2),"application/json");
+$("importProjectFile").onclick=()=>$("projectFile").click();
+$("projectFile").onchange=async e=>{try{const f=e.target.files&&e.target.files[0];if(!f)return;if(f.size>5*1024*1024)throw Error("حداکثر اندازه فایل ۵ مگابایت است.");const data=JSON.parse(await f.text());applyProjectSnapshot(data.workspace||data);$("projectSaveStatus").textContent="فایل پروژه بارگذاری شد؛ ورودی‌ها را بررسی کن."}catch(err){alert("بارگذاری پروژه ناموفق بود: "+err.message)}e.target.value="";};
+$("addEquipment").onclick=()=>{equipment.push({tag:"EQ-"+String(equipment.length+1).padStart(3,"0"),name:"New equipment",system:"Other",qty:1,power_kw:0,status:"unknown",notes:""});renderEquipment();autoSaveProject();};
+$("exportEquipment").onclick=()=>{const rows=[["tag","name","system","quantity","power_kw_each","total_kw","data_status","notes"],...equipment.map(e=>[e.tag,e.name,e.system,e.qty,e.power_kw,Number(e.qty)*Number(e.power_kw),e.status,e.notes])];const csv="\\ufeff"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\\r\\n");download("gridpulse-equipment-register.csv",csv,"text/csv;charset=utf-8");};
+$("reset").onclick=()=>{if(confirm("تنظیمات و جدول‌های فعلی با نمونه اولیه جایگزین شوند؟"))location.reload()};$("viewReset").onclick=()=>{rotation={x:-.48,y:.65};zoom=1;draw()};$("viewTop").onclick=()=>{rotation={x:-1.52,y:0};draw()};$("viewSide").onclick=()=>{rotation={x:-.05,y:1.57};draw()};$("viewFront").onclick=()=>{rotation={x:-.12,y:0};draw()};
 $("downloadObj").onclick=()=>download("gridpulse-mep-concept.obj",objText(),"text/plain");
 $("downloadDxf").onclick=()=>download("gridpulse-mep-concept.dxf",dxfText(),"application/dxf");
 $("downloadRevit").onclick=()=>download("gridpulse-revit-dynamo-concept.py",revitScriptText(),"text/x-python");
@@ -305,6 +353,12 @@ $("json").onclick=()=>download("gridpulse-mep-project.json",JSON.stringify(packa
 $("model").addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};$("model").setPointerCapture(e.pointerId)});
 $("model").addEventListener("pointermove",e=>{if(!drag)return;rotation.y+=(e.clientX-drag.x)*.01;rotation.x=Math.max(-1.3,Math.min(1.3,rotation.x+(e.clientY-drag.y)*.01));drag={x:e.clientX,y:e.clientY};draw()});
 $("model").addEventListener("pointerup",()=>drag=null);$("model").addEventListener("pointercancel",()=>drag=null);$("model").addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.35,Math.min(2.5,zoom*(e.deltaY<0?1.08:.92)));draw()},{passive:false});
-window.addEventListener("resize",()=>{draw();drawPlan()});inputIds.forEach(id=>$(id).addEventListener("change",()=>{update();renderRooms()}));update();renderRooms();
+window.addEventListener("resize",()=>{draw();drawPlan()});inputIds.forEach(id=>$(id).addEventListener("change",()=>{update();renderRooms();autoSaveProject()}));
+$("addRoom").addEventListener("click",()=>{const d=read();rooms.push({name:"Room "+(rooms.length+1),floor:1,x:0,y:0,length:Math.min(5,d.L),width:Math.min(4,d.W),use:"other",people:0,sockets:0,lux:300});renderRooms();autoSaveProject();});
+const oldRenderRooms=renderRooms;
+renderRooms=function(){oldRenderRooms();autoSaveProject();};
+update();renderRooms();renderEquipment();
+try{const saved=localStorage.getItem("gridpulse-mep-project-v03");if(saved){const p=JSON.parse(saved);if(p&&p.fields&&p.rooms)applyProjectSnapshot(p);}else autoSaveProject();}catch(e){autoSaveProject();}
+
 </script>
 </body></html>
