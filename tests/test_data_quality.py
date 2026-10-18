@@ -60,6 +60,16 @@ def test_data_quality_is_deterministic_and_scores_full_clean_evidence():
     assert first["data_quality_score"] == 100
     assert first["evidence_coverage_score"] == 100
     assert first["issue_count"] == 0
+    assert first["audit"]["input_sha256"] == second["audit"]["input_sha256"]
+    assert len(first["audit"]["input_sha256"]) == 64
+    assert first["audit"]["issues_sha256"] == second["audit"]["issues_sha256"]
+    assert first["audit"]["reproducible"] is True
+
+
+def test_data_quality_input_fingerprint_changes_when_evidence_changes():
+    original = assess_data_quality([row("a", 1, "2026-01-01")])
+    changed = assess_data_quality([row("a", 2, "2026-01-01")])
+    assert original["audit"]["input_sha256"] != changed["audit"]["input_sha256"]
 
 
 def test_data_quality_handles_empty_input_explicitly():
