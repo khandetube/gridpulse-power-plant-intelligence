@@ -7,12 +7,23 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
-from gridpulse.cad_engine import Discipline, EngineeringSpec, build_spec, review_spec, to_dxf, to_freecad_macro, to_openscad, to_svg
+from gridpulse.cad_engine import (
+    Discipline,
+    EngineeringSpec,
+    review_spec,
+    to_dxf,
+    to_freecad_macro,
+    to_openscad,
+    to_svg,
+)
 from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine_agent import run_design_agent
 from gridpulse.cad_engine_calculations import run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
-from gridpulse.cad_engine_multiformat import export_engineering_workbook, export_multi_application_bundle
+from gridpulse.cad_engine_multiformat import (
+    export_engineering_workbook,
+    export_multi_application_bundle,
+)
 
 router = APIRouter(prefix="/api/v1/cad", tags=["parametric-cad"])
 
