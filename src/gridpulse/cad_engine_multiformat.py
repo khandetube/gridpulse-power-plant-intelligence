@@ -49,12 +49,12 @@ def export_3ds_max_script(spec: EngineeringSpec) -> str:
             radius = (asset.diameter / 2 if asset.diameter else min(length, width) / 2)
             lines.append(
                 f'local gpObj = cylinder radius:{max(radius, 0.01):.4f} height:{max(height, 0.01):.4f} '
-                f'sides:32 pos:[{x:.4f},{y:.4f},{z:.4f}]'
+                f'sides:32 pos:[{x+length/2:.4f},{y+width/2:.4f},{z+height/2:.4f}]'
             )
         else:
             lines.append(
                 f'local gpObj = box length:{length:.4f} width:{width:.4f} height:{height:.4f} '
-                f'pos:[{x:.4f},{y:.4f},{z:.4f}]'
+                f'pos:[{x+length/2:.4f},{y+width/2:.4f},{z+height/2:.4f}]'
             )
         lines.append(f'gpObj.name = "{label}"')
         lines.append(f"gpObj.wirecolor = {color}")
