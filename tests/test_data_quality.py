@@ -1,4 +1,7 @@
+from fastapi.testclient import TestClient
+
 from gridpulse.data_quality import assess_data_quality
+from gridpulse.main import app
 
 
 def row(record_id, value, start, end=None, *, unit="MW", scope="unit", source="SRC-1", status="verified"):
@@ -67,9 +70,6 @@ def test_data_quality_handles_empty_input_explicitly():
 
 
 def test_data_quality_api_endpoint_returns_scores_and_issues():
-    from fastapi.testclient import TestClient
-    from gridpulse.main import app
-
     client = TestClient(app)
     response = client.post("/api/v1/ai/data-quality", json={"records": [row("api-1", 5, "2026-01-01")]})
     assert response.status_code == 200
