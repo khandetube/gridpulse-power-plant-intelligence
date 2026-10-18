@@ -95,6 +95,7 @@ def export_revit_dynamo_python(spec: EngineeringSpec) -> str:
 # Paste into a Dynamo Python node in Revit and run with an open project.
 # Creates approximate DirectShape solids in Revit internal feet; not a native family library.
 import json
+import math
 import clr
 clr.AddReference("RevitServices")
 from RevitServices.Persistence import DocumentManager
