@@ -9,7 +9,7 @@ from gridpulse.cad_engine import (
     to_openscad,
     to_svg,
 )
-from gridpulse.cad_engine_api import GenerateCadRequest, generate_cad
+from gridpulse.cad_engine_api import GenerateCadRequest, export_cad, generate_cad
 
 
 def test_process_prompt_generates_editable_model_and_exports():
@@ -119,3 +119,16 @@ def test_freecad_macro_is_valid_python_for_all_supported_templates():
         assert "Part.export(export_objects, step_path)" in macro
         assert "engineering approval" in macro.lower() or "not for construction" in macro.lower()
 
+
+
+
+def test_xlsx_export_endpoint_returns_real_excel_file():
+    spec, _ = build_spec(
+        "industrial power plant with pumps and piping",
+        80, 55, ["Mechanical", "Piping", "Electrical", "Architecture"],
+        "power", False,
+    )
+    response = export_cad("xlsx", spec)
+    assert response.media_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert response.body[:2] == b"PK"
+    assert "gridpulse_engineering_handoff.xlsx" in response.headers["content-disposition"]
