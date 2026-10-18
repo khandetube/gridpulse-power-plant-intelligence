@@ -114,7 +114,6 @@ def _template_spec(prompt: str, w: float, h: float, selected: set[str], template
     ]
     # Explicit prompt dimensions override the supplied envelope only when safely parseable.
     # Caller-provided dimensions remain authoritative to keep all generated geometry bounded.
-    cx, cy = w / 2, h / 2
     if template == "substation" or any(k in p for k in ("substation", "پست برق", "پست فشار قوی")):
         if "Architecture" in selected:
             assets.append(_asset("BLD-CTRL", "Control building", "Architecture", "building", 2, h-12, 14, 9, 4))
