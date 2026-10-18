@@ -33,7 +33,7 @@ function selected(){return [...document.querySelectorAll('.checks input:checked'
 function createModel(){
  let w=Math.max(10,Math.min(500,Number($("width").value)||80)),h=Math.max(10,Math.min(500,Number($("height").value)||55));const tpl=$("template").value,sys=selected();
  const promptText=$("prompt").value,p=promptText.toLowerCase(),a=[],r=[],checks=[];
- const dimMatch=promptText.match(/(\\d{2,3})\\s*(?:در|x|×|by)\\s*(\\d{2,3})\\s*(?:متر|m|meters?)?/i);
+ const dimMatch=promptText.match(/(\d{2,3})\s*(?:در|x|×|by)\s*(\d{2,3})\s*(?:متر|m|meters?)?/i);
  if(dimMatch){w=Math.max(10,Math.min(500,Number(dimMatch[1])));h=Math.max(10,Math.min(500,Number(dimMatch[2])));$("width").value=w;$("height").value=h;}
  const add=(tag,name,discipline,x,y,ww,hh,z=2,extra={})=>{a.push({id:tag,tag,name,discipline,x:+x.toFixed(2),y:+y.toFixed(2),w:+ww.toFixed(2),h:+hh.toFixed(2),z,system:extra.system||discipline,status:"concept",parameters:extra.parameters||{},source:"parametric-template"});};
  const route=(tag,name,discipline,pts,level=3)=>r.push({id:tag,tag,name,discipline,pts:pts.map(q=>q.map(n=>+n.toFixed(2))),level,system:discipline});
@@ -68,7 +68,45 @@ function createModel(){
   {keys:["ژنراتور اضطراری","emergency generator","standby generator"],tag:"GEN-EM-01",name:"ژنراتور اضطراری (توان TBD)",d:"Electrical",x:.84,y:.37,w:.09,h:.07,z:4}
  ];
  requested.forEach(o=>{if(has(o.keys)&&!a.some(x=>x.tag===o.tag))add(o.tag,o.name,o.d,w*o.x,h*o.y,w*o.w,h*o.h,o.z,{parameters:{rating:"TBD",requiresEngineeringReview:true}});});
- const pumpCountMatch=promptText.match(/(\\d+)\\s*(?:پمپ|pump)/i);
+ // Semantic equipment expansion: map additional explicit requests into distinct editable assets.
+ const catalog=[
+  {keys:["پمپ","pump","pumps"],tag:"P-REQ",name:"پمپ درخواستی",d:"Mechanical",shape:"pump",w:.055,h:.055,z:2},
+  {keys:["مبدل حرارتی","heat exchanger","exchanger"],tag:"E-REQ",name:"مبدل حرارتی درخواستی",d:"Mechanical",shape:"heat_exchanger",w:.11,h:.065,z:4},
+  {keys:["راکتور","reactor"],tag:"R-REQ",name:"راکتور درخواستی",d:"Mechanical",shape:"vessel",w:.10,h:.12,z:7},
+  {keys:["توربین بخار","steam turbine"],tag:"ST-REQ",name:"توربین بخار درخواستی",d:"Mechanical",shape:"box",w:.13,h:.09,z:6},
+  {keys:["توربین گاز","gas turbine"],tag:"GT-REQ",name:"توربین گاز درخواستی",d:"Mechanical",shape:"box",w:.13,h:.10,z:7},
+  {keys:["ژنراتور","generator"],tag:"GEN-REQ",name:"ژنراتور درخواستی",d:"Electrical",shape:"motor",w:.09,h:.06,z:4},
+  {keys:["بویلر بازیاب","hrsg","heat recovery steam generator"],tag:"HRSG-REQ",name:"HRSG درخواستی",d:"Mechanical",shape:"box",w:.12,h:.13,z:12},
+  {keys:["کندانسور","condenser"],tag:"COND-REQ",name:"کندانسور درخواستی",d:"Mechanical",shape:"box",w:.12,h:.06,z:3},
+  {keys:["فیلتر","filter","filtration"],tag:"FLT-REQ",name:"فیلتر درخواستی",d:"Mechanical",shape:"vessel",w:.08,h:.09,z:5},
+  {keys:["حوضچه ته نشینی","حوضچه ته‌نشینی","clarifier"],tag:"CLAR-REQ",name:"حوضچه ته‌نشینی",d:"Mechanical",shape:"box",w:.13,h:.08,z:3},
+  {keys:["کمپرسور","compressor"],tag:"K-REQ",name:"کمپرسور درخواستی",d:"Mechanical",shape:"box",w:.08,h:.06,z:4},
+  {keys:["چیلر","chiller"],tag:"CH-REQ",name:"چیلر درخواستی",d:"HVAC",shape:"box",w:.10,h:.07,z:3},
+  {keys:["هواساز","ahu","air handling unit"],tag:"AHU-REQ",name:"هواساز درخواستی",d:"HVAC",shape:"box",w:.09,h:.07,z:3},
+  {keys:["اتاق باتری","battery room"],tag:"BAT-REQ",name:"اتاق باتری",d:"Electrical",shape:"building",w:.09,h:.07,z:4},
+  {keys:["ژنراتور اضطراری","emergency generator"],tag:"GEN-EM-REQ",name:"ژنراتور اضطراری",d:"Electrical",shape:"motor",w:.09,h:.06,z:4},
+  {keys:["مخزن ذخیره","storage tank"],tag:"TK-REQ",name:"مخزن ذخیره درخواستی",d:"Mechanical",shape:"tank",w:.09,h:.12,z:6}
+ ];
+ const recognized=[];
+ catalog.forEach((o,i)=>{
+   const matched=o.keys.some(k=>p.includes(k.toLowerCase()));
+   if(!matched)return;
+   recognized.push(o.name);
+   if(a.some(x=>x.tag===o.tag)||a.some(x=>o.tag==="P-REQ"&&x.tag.startsWith("P-101")))return;
+   const col=i%5,row=Math.floor(i/5);
+   const x=w*(.08+col*.18),y=h*(.12+row*.19);
+   const width=w*o.w,height=h*o.h;
+   if(x+width>w||y+height>h){checks.push("فضای کافی برای جانمایی خودکار "+o.name+" وجود نداشت؛ جانمایی دستی لازم است.");return;}
+   add(o.tag,o.name,o.d,x,y,width,height,o.z,{parameters:{shape:o.shape,rating:"TBD",requiresEngineeringReview:true}});
+ });
+ // Select plant template from explicit prompt intent when the default template conflicts.
+ let effectiveTemplate=tpl;
+ if(tpl==="process"&&/(نیروگاه|سیکل ترکیبی|power plant|combined cycle|gas turbine)/i.test(promptText))effectiveTemplate="power";
+ else if(tpl==="process"&&/(پست برق|پست فشار قوی|substation)/i.test(promptText))effectiveTemplate="substation";
+ else if(tpl==="process"&&/(تصفیه خانه|تصفیه‌خانه|wastewater|water treatment)/i.test(promptText))effectiveTemplate="water";
+ if(effectiveTemplate!==tpl)checks.push("قالب به‌صورت خودکار از روی متن به «"+effectiveTemplate+"» تغییر داده شد.");
+
+ const pumpCountMatch=promptText.match(/(\d+)\s*(?:پمپ|pump)/i);
  const requestedPumps=pumpCountMatch?Math.max(1,Math.min(8,Number(pumpCountMatch[1]))):((has(["سه پمپ","three pumps"])&&sys.includes("mechanical"))?3:2);
  if(sys.includes("mechanical")&&requestedPumps>2){for(let i=3;i<=requestedPumps;i++){const tag="P-101"+String.fromCharCode(64+i);if(!a.some(x=>x.tag===tag))add(tag,"پمپ فرایندی "+i,"Mechanical",w*(.18+((i-1)%6)*.075),h*.22,w*.045,h*.045,2,{parameters:{flow:"TBD",head:"TBD",duty:"TBD"}});}}
  if(sys.includes("mechanical")&&tpl!=="power"&&tpl!=="substation"&&tpl!=="water"){
@@ -162,7 +200,7 @@ function render(){
  $("nAssets").textContent=model.assets.length;$("nRoutes").textContent=model.routes.length;$("nLayers").textContent=model.layers.length;$("nChecks").textContent=model.checks.length;
  const svg=view==="iso"?svgIso(model):svgPlan(model);$("viewport").innerHTML=svg;
  $("legend").innerHTML=model.layers.map(x=>'<span style="--c:'+palette[x]+'">'+esc(x)+'</span>').join("");
- $("checks").innerHTML='<ul>'+model.checks.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul><p class="small">شناسه مدل: '+esc(model.meta.createdAt)+' · قالب: '+esc(model.meta.template)+' · وضعیت: مفهومی</p>';
+ const promptText=model.meta.prompt||"";const detected=[["نیروگاه / power plant",/(نیروگاه|سیکل ترکیبی|power plant|combined cycle)/i],["پست برق / substation",/(پست برق|پست فشار قوی|substation)/i],["تصفیه‌خانه / water",/(تصفیه خانه|تصفیه‌خانه|water treatment|wastewater)/i],["پایپینگ",/(لوله|پایپینگ|piping|pipe)/i],["برق و کابل",/(برق|کابل|electrical|cable)/i],["HVAC",/(تهویه|هواساز|hvac|ventilation|chiller)/i],["حریق",/(حریق|آتش|fire)/i],["ارت",/(ارت|grounding|earthing)/i],["روشنایی",/(روشنایی|lighting|lux)/i],["زهکشی",/(زهکشی|drainage)/i]].filter(x=>x[1].test(promptText)).map(x=>x[0]);const fingerprint=(()=>{let s=JSON.stringify({site:model.site,assets:model.assets,routes:model.routes});let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16).padStart(8,"0");})();$("checks").innerHTML='<p><b>حالت مولد:</b> قواعد پارامتریک محلی (بدون اتصال به API هوش مصنوعی)</p><p><b>قصدهای شناسایی‌شده از متن:</b> '+(detected.length?detected.map(esc).join("، "):"مورد مشخصی شناسایی نشد")+'</p><p><b>شناسه تغییر مدل:</b> '+fingerprint+' · تجهیزات: '+model.assets.length+' · مسیرها: '+model.routes.length+'</p><ul>'+model.checks.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul><p class="small">زمان: '+esc(model.meta.createdAt)+' · قالب: '+esc(model.meta.template)+' · وضعیت: مفهومی</p>';
  renderRows();
 }
 function renderRows(){const q=$("assetSearch").value.toLowerCase(),d=$("disciplineFilter").value,rows=model.assets.filter(x=>(!q||(x.tag+" "+x.name+" "+x.discipline).toLowerCase().includes(q))&&(!d||x.discipline===d));$("assetRows").innerHTML=rows.map(x=>'<tr><td><b>'+esc(x.tag)+'</b></td><td>'+esc(x.name)+'</td><td><span class="pill">'+esc(x.discipline)+'</span></td><td>'+x.w+' × '+x.h+' × '+x.z+' m</td></tr>').join("")||'<tr><td colspan="4">نتیجه‌ای یافت نشد.</td></tr>';}
