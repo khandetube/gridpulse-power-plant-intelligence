@@ -115,5 +115,6 @@ document.getElementById("print").addEventListener("click",()=>{
  style.textContent='@media print{@page{size:'+paper+' landscape;margin:0}html,body{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;margin:0!important;padding:0!important}.wrap{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;max-width:none!important;margin:0!important;padding:0!important}.sheet{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;overflow:hidden!important}.sheet svg{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;min-width:0!important;max-width:none!important}}';
  window.print();
 });
+window.addEventListener("message",event=>{if(event.data&&event.data.type==="gridpulse-print"){const select=document.getElementById("paperSize");if(select&&paperDims[event.data.paperSize])select.value=event.data.paperSize;document.getElementById("print").click();}});
 </script>
 </body></html>
