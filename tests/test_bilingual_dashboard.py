@@ -55,3 +55,20 @@ def test_main_dashboard_has_one_click_excel_exports_and_embedded_charts() -> Non
         assert f'"{scope}"' in html
     assert "source_id" in html
     assert "verification_status" in html
+
+
+def test_excel_reporting_avoids_mixing_measurement_units_in_summary_charts() -> None:
+    html = read_page("index.html")
+    assert 'Observation count by metric (not measurement magnitude)' in html
+    assert 'Filtered record count by metric and unit' in html
+    assert 'This chart counts records by metric and unit.' in html
+    assert 'values retain their original units' not in html
+
+
+def test_excel_reporting_has_full_and_section_specific_workbooks() -> None:
+    html = read_page("index.html")
+    assert 'addEventListener("click",()=>exportGridPulseExcel("all"))' in html
+    assert 'btn.addEventListener("click",()=>exportGridPulseExcel(scope))' in html
+    assert 'gridpulse-"+scope+"-report-' in html
+    assert 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' in html
+    assert 'No example events are fabricated.' in html
