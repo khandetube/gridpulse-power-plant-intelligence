@@ -362,3 +362,115 @@ def review_spec(spec: EngineeringSpec) -> dict:
     return {"status":"concept_review_only","asset_count":len(spec.assets),"route_count":len(spec.routes),
         "geometric_findings":findings,"engineering_approval":False,
         "exports":["JSON","SVG","DXF-R12","OpenSCAD"],"model_units":spec.units}
+
+
+def to_freecad_macro(spec: EngineeringSpec) -> str:
+    """Build a standalone FreeCAD Python macro that creates native B-rep solids and STEP/FCStd files.
+
+    This exports executable FreeCAD macro source. The macro must be run in a real
+    FreeCAD installation; this API does not claim to execute FreeCAD on the server.
+    """
+    payload = json.dumps(spec.model_dump(mode="json"), ensure_ascii=False)
+    embedded = repr(payload)
+    return f'''# GridPulse FreeCAD macro — conceptual model only; not for construction.
+# Run with FreeCAD GUI or FreeCADCmd. Outputs are written to ./gridpulse_freecad_output.
+import json
+import math
+import os
+import FreeCAD as App
+import Part
+from FreeCAD import Vector
+
+spec = json.loads({embedded})
+out_dir = os.path.abspath("gridpulse_freecad_output")
+os.makedirs(out_dir, exist_ok=True)
+scale = 1000.0 if spec.get("units", "m") == "m" else 304.8
+doc = App.newDocument("GridPulse_Concept")
+export_objects = []
+
+def vec(point):
+    return Vector(float(point[0])*scale, float(point[1])*scale, float(point[2])*scale)
+
+def add_feature(label, shape, color):
+    if shape.isNull():
+        return None
+    obj = doc.addObject("PartDesign::Feature", "GP_" + str(len(export_objects)+1))
+    obj.Label = label[:120]
+    obj.Shape = shape
+    obj.ViewObject.ShapeColor = color
+    obj.ViewObject.LineColor = (0.12, 0.16, 0.20)
+    export_objects.append(obj)
+    return obj
+
+# Site boundary is a visual reference and is deliberately not included in STEP export.
+site = Part.makeBox(float(spec["site_width"])*scale, float(spec["site_length"])*scale, 100.0)
+site_obj = doc.addObject("PartDesign::Feature", "SiteReference")
+site_obj.Label = "SITE REFERENCE — NOT FOR CONSTRUCTION"
+site_obj.Shape = site
+site_obj.ViewObject.ShapeColor = (0.45, 0.52, 0.58)
+site_obj.ViewObject.Transparency = 85
+
+colors = {{
+    "Mechanical": (0.86, 0.39, 0.16), "Piping": (0.10, 0.42, 0.76),
+    "Electrical": (0.55, 0.30, 0.68), "Instrumentation": (0.0, 0.56, 0.50),
+    "Fire": (0.86, 0.18, 0.16), "HVAC": (0.16, 0.54, 0.70),
+    "Grounding": (0.48, 0.39, 0.20), "Lighting": (0.78, 0.60, 0.05),
+    "Drainage": (0.27, 0.50, 0.30), "Architecture": (0.38, 0.45, 0.52)
+}}
+
+for item in spec["assets"]:
+    x,y,z = [float(item.get(k, 0))*scale for k in ("x","y","z")]
+    length,width,height = [float(item.get(k, 2))*scale for k in ("length","width","height")]
+    shape_type = item.get("shape", "box")
+    base = Vector(x,y,z)
+    shapes = []
+    if shape_type in ("cylinder", "tank", "vessel"):
+        diameter = float(item.get("diameter") or min(float(item["length"]), float(item["width"])))*scale
+        shapes.append(Part.makeCylinder(max(diameter/2, 1), max(height, 1), base))
+    elif shape_type == "pump":
+        shapes.append(Part.makeBox(max(length*0.62,1), max(width,1), max(height*0.65,1), base))
+        motor_base = Vector(x+length*0.62, y+width/2, z+height*0.35)
+        shapes.append(Part.makeCylinder(max(min(width,height)*0.28*scale,1), max(length*0.38,1), motor_base, Vector(1,0,0)))
+    elif shape_type == "heat_exchanger":
+        shapes.append(Part.makeCylinder(max(min(width,height)*0.42,1), max(length,1), Vector(x,y+width/2,z+height/2), Vector(1,0,0)))
+        shapes.append(Part.makeBox(max(length,1), max(width*0.12,1), max(height*0.12,1), Vector(x,y+width*0.44,z+height*0.44)))
+    elif shape_type == "transformer":
+        shapes.append(Part.makeBox(max(length,1), max(width,1), max(height,1), base))
+        for i in range(3):
+            shapes.append(Part.makeBox(max(length*0.12,1), max(width*0.55,1), max(height*0.2,1),
+                Vector(x+length*(0.18+i*0.25), y+width*0.2, z+height)))
+    elif shape_type == "panel":
+        shapes.append(Part.makeBox(max(length,1), max(width,1), max(height,1), base))
+    elif shape_type == "fan":
+        shapes.append(Part.makeCylinder(max(min(length,width)*scale*0.45,1), max(height,1), Vector(x+length*scale/2,y+width*scale/2,z), Vector(0,0,1)))
+    else:
+        shapes.append(Part.makeBox(max(length,1), max(width,1), max(height,1), base))
+    compound = Part.makeCompound(shapes)
+    add_feature(item.get("tag","ASSET") + " | " + item.get("name","Equipment"), compound, colors.get(item.get("discipline"), (0.35,0.45,0.55)))
+
+route_colors = {{"pipe": (0.08,0.40,0.78), "cable_tray": (0.62,0.25,0.72), "duct": (0.16,0.58,0.70), "fire": (0.88,0.16,0.13), "grounding": (0.50,0.40,0.18)}}
+for route in spec.get("routes", []):
+    pts = route.get("points", [])
+    radius = max(float(route.get("width", 0.15))*scale/2, 2.0)
+    segments = []
+    for start, end in zip(pts, pts[1:]):
+        p1, p2 = vec(start), vec(end)
+        delta = p2.sub(p1)
+        seg_len = delta.Length
+        if seg_len <= 0.001:
+            continue
+        segments.append(Part.makeCylinder(radius, seg_len, p1, delta))
+    if segments:
+        add_feature(route.get("tag","ROUTE") + " | " + route.get("name","Schematic route"),
+                    Part.makeCompound(segments), route_colors.get(route.get("kind"), (0.2,0.5,0.7)))
+
+doc.recompute()
+fcstd_path = os.path.join(out_dir, "gridpulse_concept.FCStd")
+step_path = os.path.join(out_dir, "gridpulse_concept.step")
+doc.saveAs(fcstd_path)
+if export_objects:
+    Part.export(export_objects, step_path)
+print("GridPulse export complete")
+print("FCStd:", fcstd_path)
+print("STEP:", step_path if export_objects else "No exportable solids")
+'''
