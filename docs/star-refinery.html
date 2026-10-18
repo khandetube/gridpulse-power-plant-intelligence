@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GridPulse | Persian Gulf Star-scale Refinery Digital Twin</title>
+<meta name="description" content="Procedural large-scale refinery site model with process trains, pipe racks, tank farm, utilities and interactive 3D inspection.">
+<style>
+:root{color-scheme:dark;--bg:#07101b;--panel:#101d2b;--line:#263c50;--text:#edf6ff;--muted:#a6bbce;--cyan:#53e0d0;--amber:#ffc86f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 system-ui,Segoe UI,sans-serif}header{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:15px 20px;border-bottom:1px solid var(--line);background:#0b1725}h1{font-size:clamp(18px,2.5vw,28px);margin:0}small,.muted{color:var(--muted)}a{color:var(--cyan);text-decoration:none}.tag{color:var(--cyan);font-weight:800;font-size:11px;letter-spacing:1px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;min-height:calc(100vh - 75px)}#viewport{position:relative;min-height:75vh;background:radial-gradient(ellipse at 50% 30%,#1a3044,#07101b 70%);overflow:hidden}canvas{display:block;width:100%;height:100%;position:absolute;inset:0}.hud{position:absolute;z-index:2;left:14px;top:14px;display:flex;gap:7px;flex-wrap:wrap;max-width:70%;direction:ltr}.pill,.control{background:#0a1724eF;border:1px solid #35516a;color:#d9ecfb;padding:7px 10px;border-radius:8px;font-size:12px}.pill strong{color:var(--cyan)}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#07101b;color:var(--cyan);z-index:5}.side{padding:16px;background:var(--panel);border-left:1px solid var(--line);overflow:auto}.side h2{font-size:15px;margin:0 0 10px}.section{padding:13px 0;border-bottom:1px solid var(--line)}button,select,input{font:inherit;color:var(--text);background:#14273a;border:1px solid #35516a;border-radius:7px;padding:8px}button{cursor:pointer}button:hover{border-color:var(--cyan)}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}.buttons button{font-size:12px}.checks{display:grid;gap:8px}.checks label{display:flex;gap:8px;align-items:center;font-size:13px;color:#d5e4f1}.checks input{accent-color:#53e0d0}.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#0b1825;padding:10px;border:1px solid var(--line);border-radius:9px}.stat b{display:block;font-size:19px;color:var(--cyan)}.stat span{font-size:11px;color:var(--muted)}#assetInfo{font-size:12px;color:var(--muted);min-height:50px}#tooltip{position:absolute;z-index:4;display:none;pointer-events:none;background:#071521ed;border:1px solid #53e0d0;border-radius:7px;padding:7px 10px;font-size:12px;max-width:220px}.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--muted)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px}@media(max-width:850px){.layout{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line)}#viewport{min-height:62vh}.hud{max-width:90%}}
+</style>
+</head>
+<body>
+<header><div><div class="tag">GRIDPULSE INDUSTRIAL DIGITAL TWIN</div><h1>مدل سه‌بعدی مجتمع پالایشگاهی در مقیاس عظیم</h1><small>الهام‌گرفته از مقیاس و تراکم زیرساخت پالایشگاه ستاره خلیج فارس — مدل مفهومی پارامتریک</small></div><a href="./mep-studio.html">← بازگشت به MEP Studio</a></header>
+<div class="layout"><main id="viewport"><div class="loading" id="loading">در حال ساخت سایت صنعتی سه‌بعدی و هزاران جزء تکرارشونده…</div><div class="hud"><span class="pill">SITE <strong>4 × PROCESS TRAINS</strong></span><span class="pill">INTERACTIVE 3D / ORBIT</span><span class="pill" id="meshCount">BUILDING SCENE…</span></div><div id="tooltip"></div></main>
+<aside class="side">
+<div class="section"><h2>بازرسی مدل</h2><p class="muted">برای چرخش درگ کنید، با اسکرول زوم کنید و روی تجهیزات کلیک کنید تا مشخصات نمایشی آن‌ها را ببینید.</p><div class="buttons"><button id="fit">نمای کل مجتمع</button><button id="top">نمای پلان</button><button id="iso">نمای ایزومتریک</button><button id="reset">بازنشانی</button></div></div>
+<div class="section"><h2>لایه‌های سایت</h2><div class="checks">
+<label><input type="checkbox" data-layer="process" checked> واحدهای فرایندی و برج‌ها</label>
+<label><input type="checkbox" data-layer="pipes" checked> پایپ‌رک‌ها و خطوط لوله</label>
+<label><input type="checkbox" data-layer="tanks" checked> مخازن و کروی‌ها</label>
+<label><input type="checkbox" data-layer="utilities" checked> یوتیلیتی، خنک‌کاری و فلر</label>
+<label><input type="checkbox" data-layer="buildings" checked> ساختمان‌ها و پست برق</label>
+<label><input type="checkbox" data-layer="roads" checked> جاده‌ها و محدوده سایت</label>
+<label><input type="checkbox" data-layer="labels" checked> برچسب‌های واحدها</label>
+</div></div>
+<div class="section"><h2>شاخص‌های مدل نمایشی</h2><div class="statgrid"><div class="stat"><b id="assetCount">—</b><span>اجزای قابل انتخاب</span></div><div class="stat"><b id="unitCount">—</b><span>بلوک‌های صنعتی</span></div><div class="stat"><b id="pipeCount">—</b><span>قطعات خط لوله</span></div><div class="stat"><b id="tankCount">—</b><span>مخازن و برج‌ها</span></div></div><small>این شمارنده‌ها تعداد اجزای تولیدشده در صحنه را نشان می‌دهند؛ به معنی تجهیزات واقعی پالایشگاه نیستند.</small></div>
+<div class="section"><h2>جست‌وجوی تجهیز</h2><input id="search" placeholder="مثلاً برج تقطیر، پمپ، مخزن..." style="width:100%"><div id="assetInfo" style="margin-top:10px">هیچ تجهیزی انتخاب نشده است.</div></div>
+<div class="section"><h2>راهنمای رنگ</h2><div class="legend"><span><i class="dot" style="background:#aab7c4"></i>فولاد</span><span><i class="dot" style="background:#e1b75c"></i>خطوط فرایندی</span><span><i class="dot" style="background:#4f9aab"></i>مخازن</span><span><i class="dot" style="background:#63816f"></i>سازه</span><span><i class="dot" style="background:#e67f54"></i>فلر/داغ</span></div></div>
+<div class="section"><small>هشدار مهندسی: این صحنه یک مدل مفهومی بزرگ‌مقیاس و تولیدشده به‌صورت رویه‌ای است، نه برداشت اسکن‌شده یا مدل As-Built پالایشگاه ستاره خلیج فارس. برای طراحی اجرایی باید نقشه‌ها، مختصات، ابعاد و P&amp;ID معتبر وارد شوند.</small></div>
+</aside></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/controls/OrbitControls.js';
+const viewport=document.getElementById('viewport'),loading=document.getElementById('loading');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#081421');scene.fog=new THREE.Fog('#081421',260,700);
+const camera=new THREE.PerspectiveCamera(48,1,.1,1500);camera.position.set(190,175,210);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;viewport.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,8,0);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.485;controls.minDistance=25;controls.maxDistance=600;
+scene.add(new THREE.HemisphereLight(0xc8e3ff,0x273526,2.0));const sun=new THREE.DirectionalLight(0xffe0b2,3.2);sun.position.set(-120,200,90);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-250;sun.shadow.camera.right=250;sun.shadow.camera.top=250;sun.shadow.camera.bottom=-250;scene.add(sun);
+const mats={steel:mat('#aab7c4',.65),darkSteel:mat('#536676',.72),structure:mat('#63816f',.72),pipe:mat('#d9ad58',.5),pipeBlue:mat('#4d91a8',.45),vessel:mat('#8295a6',.4),tank:mat('#4f9aab',.42),concrete:mat('#64717a',.9),building:mat('#b6c1c8',.8),glass:mat('#244a62',.25,.25),hot:mat('#df8053',.5),white:mat('#dce6ec',.4),black:mat('#192833',.7),green:mat('#507b62',.8),yellow:mat('#dfbd57',.55)};
+function mat(color,roughness=.6,metalness=.25){return new THREE.MeshStandardMaterial({color,roughness,metalness})}
+const groups={process:new THREE.Group(),pipes:new THREE.Group(),tanks:new THREE.Group(),utilities:new THREE.Group(),buildings:new THREE.Group(),roads:new THREE.Group(),labels:new THREE.Group()};Object.values(groups).forEach(g=>scene.add(g));
+const pickables=[],allPipes=[];let unitCount=0,tankCount=0,assetCount=0;
+function addMesh(group,geo,material,pos,scale,name,kind='equipment'){const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(scale)m.scale.set(...scale);m.castShadow=true;m.receiveShadow=true;m.userData={name,kind,baseY:pos[1]};group.add(m);pickables.push(m);assetCount++;return m}
+const boxGeo=new THREE.BoxGeometry(1,1,1),cylGeo=new THREE.CylinderGeometry(1,1,1,16),sphereGeo=new THREE.SphereGeometry(1,20,12);
+function box(g,x,y,z,sx,sy,sz,ma,n,k){return addMesh(g,boxGeo,ma,[x,y,z],[sx,sy,sz],n,k)}
+function cyl(g,x,y,z,r,h,ma,n,k='equipment',rad=16){return addMesh(g,new THREE.CylinderGeometry(r*.94,r,h,rad),ma,[x,y,z],[1,1,1],n,k).scale.set(1,h,1),void 0}
+function cylinder(g,x,y,z,r,h,ma,n,k='equipment',rad=16){const m=addMesh(g,new THREE.CylinderGeometry(r,r,h,rad),ma,[x,y,z],null,n,k);return m}
+function beam(g,a,b,r,ma,n,k='pipe'){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),d=new THREE.Vector3().subVectors(B,A);const m=addMesh(g,new THREE.CylinderGeometry(r,r,d.length(),7),ma,[(A.x+B.x)/2,(A.y+B.y)/2,(A.z+B.z)/2],null,n,k);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return m}
+function pipeLine(points,r,ma,name){for(let i=1;i<points.length;i++){beam(groups.pipes,points[i-1],points[i],r,ma,name,'pipe');allPipes.push(1)}}
+function label(text,x,y,z){const c=document.createElement('canvas');c.width=512;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle='rgba(5,16,28,.86)';ctx.fillRect(0,0,512,96);ctx.strokeStyle='#53e0d0';ctx.strokeRect(2,2,508,92);ctx.fillStyle='#e7f5ff';ctx.font='bold 34px sans-serif';ctx.textAlign='center';ctx.fillText(text,256,61);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));spr.position.set(x,y,z);spr.scale.set(18,3.4,1);spr.userData={name:'برچسب '+text,kind:'label'};groups.labels.add(spr)}
+// Site base, bunds, perimeter and grid
+box(groups.roads,0,-2,0,390,3,330,mat('#26383a',1,0),'پهنه سایت','site');
+for(let x=-185;x<=185;x+=20)box(groups.roads,x,-.35,0,.22,.12,320,mat('#405254',1,0),'خط شبکه سایت','road');
+for(let z=-155;z<=155;z+=20)box(groups.roads,0,-.34,z,380,.12,.22,mat('#405254',1,0),'خط شبکه سایت','road');
+box(groups.roads,0,-.05,-158,380,.3,5,mats.concrete,'جاده پیرامونی','road');box(groups.roads,0,-.05,158,380,.3,5,mats.concrete,'جاده پیرامونی','road');
+box(groups.roads,-188,-.05,0,5,.3,320,mats.concrete,'جاده پیرامونی','road');box(groups.roads,188,-.05,0,5,.3,320,mats.concrete,'جاده پیرامونی','road');
+for(let x=-175;x<=175;x+=25){cylinder(groups.roads,x,1,-150,.55,2,mats.yellow,'بولارد ایمنی','safety',8);cylinder(groups.roads,x,1,150,.55,2,mats.yellow,'بولارد ایمنی','safety',8)}
+// Repeating industrial module: dense steel frames, columns, platforms, stairs and pipes
+function rack(x,z,len=36,width=13,levels=4,name='پایپ‌رک اصلی'){
+const y0=2;for(let xx=x-len/2;xx<=x+len/2+.1;xx+=4){for(const zz of [z-width/2,z+width/2]){beam(groups.pipes,[xx,y0,zz],[xx,y0+levels*3,zz],.22,mats.structure,name+' ستون','structure');box(groups.pipes,xx,y0+levels*3,zz,.8,.5,.8,mats.concrete,name+' فونداسیون','foundation')}
+for(let lv=1;lv<=levels;lv++){const y=y0+lv*3;beam(groups.pipes,[xx,y,z-width/2],[xx,y,z+width/2],.16,mats.structure,name+' تیر عرضی','structure');}
+}
+for(let lv=1;lv<=levels;lv++){const y=y0+lv*3;beam(groups.pipes,[x-len/2,y,z-width/2],[x+len/2,y,z-width/2],.17,mats.structure,name+' تیر طولی','structure');beam(groups.pipes,[x-len/2,y,z+width/2],[x+len/2,y,z+width/2],.17,mats.structure,name+' تیر طولی','structure');
+for(let zz=-width/2+1.3;zz<width/2;zz+=2.2){pipeLine([[x-len/2,y+.35,z+zz],[x+len/2,y+.35,z+zz]],.18,[mats.pipe,mats.pipeBlue,mats.steel,mats.hot][Math.abs(Math.round(zz*10))%4],name+' خط لوله')}}
+for(let xx=x-len/2;xx<x+len/2;xx+=8)beam(groups.pipes,[xx,3,z-width/2],[xx+8,8,z+width/2],.1,mats.structure,name+' مهاربند','structure');
+}
+function column(x,z,h,r,name,group=groups.process){
+cylinder(group,x,h/2+1,z,r,h,mats.vessel,name,'vessel',24);
+cylinder(group,x,h+1,z,r*1.05,.65,mats.steel,name+' درپوش','vessel',24);
+cylinder(group,x,1.5,z,r*1.28,.7,mats.darkSteel,name+' دامن','foundation',20);
+for(let y=5;y<h;y+=4){cylinder(group,x,y,z,r*1.035,.18,mats.white,name+' رینگ تقویتی','detail',24);for(let a=0;a<8;a++){const ang=a*Math.PI/4;beam(group,[x+Math.cos(ang)*r*1.1,y-1,z+Math.sin(ang)*r*1.1],[x+Math.cos(ang)*r*1.1,y+1.2,z+Math.sin(ang)*r*1.1],.055,mats.structure,name+' نردبان/حفاظ','detail')}}
+for(let y=6;y<h-2;y+=7){const rr=r*1.55;beam(group,[x-rr,y,z],[x+rr,y,z],.09,mats.structure,name+' سکوی سرویس','platform');beam(group,[x,y,z-rr],[x,y,z+rr],.09,mats.structure,name+' سکوی سرویس','platform');}
+for(let y=3;y<h-1;y+=2.4){const a=Math.PI*2*(y/8);beam(group,[x+Math.cos(a)*r*1.2,y,z+Math.sin(a)*r*1.2],[x+Math.cos(a+.35)*r*1.2,y+2.4,z+Math.sin(a+.35)*r*1.2],.045,mats.yellow,name+' نردبان','ladder')}
+tankCount++;return {x,z,h,r,name}
+}
+function horizontalVessel(x,y,z,len,r,name){const m=cylinder(groups.process,x,y,z,r,len,mats.vessel,name,'pressure-vessel',20);m.rotation.z=Math.PI/2;for(const xx of [x-len*.28,x+len*.28])box(groups.process,xx,y-r,z,r*.55,r*1.2,r*1.4,mats.darkSteel,name+' پایه','support');for(const xx of [x-len*.48,x+len*.48])cylinder(groups.process,xx,y,z,r*.92,.15,mats.white,name+' فلنج','flange',16);return m}
+function pump(x,z,name){box(groups.process,x,1.2,z,3.3,1.5,2.2,mats.darkSteel,name+' شاسی','pump');cylinder(groups.process,x-.5,2.2,z,.85,1.1,mats.steel,name+' موتور','motor',16);cylinder(groups.process,x+1.3,1.9,z,.75,1.2,mats.pipeBlue,name+' پوسته پمپ','pump',16);pipeLine([[x+1.3,2,z],[x+1.3,3.5,z],[x+3,3.5,z]],.22,mats.pipe,name+' خط مکش')}
+function processTrain(cx,cz,index){
+unitCount++;const trainName='واحد فرایندی '+String(index).padStart(2,'0');box(groups.roads,cx,0,cz,72,.7,54,mats.concrete,trainName+' فونداسیون','foundation');
+rack(cx,cz-13,62,12,4,trainName+' پایپ‌رک');
+const specs=[[cx-23,cz-5,28,2.1,'برج تقطیر اصلی'],[cx-10,cz+5,21,1.6,'برج جذب'],[cx+5,cz-2,25,1.8,'برج تثبیت'],[cx+22,cz+6,17,1.35,'درام فرایندی']];
+specs.forEach(([x,z,h,r,n])=>{column(x,z,h,r,trainName+' / '+n);label(n,x,h+5,z);});
+for(let i=0;i<8;i++){const x=cx-25+(i%4)*16,z=cz+17+Math.floor(i/4)*7;horizontalVessel(x,3.2,z,8,1.15,trainName+' مبدل حرارتی '+(i+1));}
+for(let i=0;i<6;i++){const x=cx-24+i*9,z=cz+3;pump(x,z,trainName+' پمپ '+(i+1));}
+for(let i=0;i<7;i++){const x=cx-28+i*9;pipeLine([[x,2,cz-18],[x,4,cz-13],[x,10,cz-13],[x,10,cz+15],[x,3,cz+15]],.22,[mats.pipe,mats.pipeBlue,mats.steel][i%3],trainName+' مسیر فرایندی');}
+for(let i=0;i<6;i++){const x=cx-27+i*10;box(groups.process,x,1.6,cz-24,5,3,4,mats.darkSteel,trainName+' فیلتر/اسکید '+(i+1),'skid');}
+}
+processTrain(-115,-70,1);processTrain(0,-70,2);processTrain(115,-70,3);processTrain(-55,30,4);processTrain(65,30,5);
+// Main trunk pipe bridges, crossovers, large headers and valve stations
+rack(0,-18,300,18,5,'پایپ‌رک ستون فقرات مجتمع');rack(0,75,250,14,4,'پایپ‌رک یوتیلیتی شرقی');
+for(let lane=0;lane<18;lane++){const z=-27+lane*1.05;pipeLine([[-150,18,z],[ -90,18,z],[ -90,21,z],[0,21,z],[65,21,z],[65,18,z],[150,18,z]],.17,[mats.pipe,mats.pipeBlue,mats.steel,mats.hot][lane%4],'هدر سراسری '+(lane+1))}
+for(let i=0;i<32;i++){const x=-145+i*9;box(groups.pipes,x,2,0,2.3,1.5,3,mats.yellow,'ایستگاه شیر '+(i+1),'valve');cylinder(groups.pipes,x,3.2,0,.55,.5,mats.hot,'عملگر شیر '+(i+1),'valve',12);}
+// Tank farm with diked areas, large tanks, roofs, ladders and manifolds
+function storageTank(x,z,r,h,name){tankCount++;cylinder(groups.tanks,x,h/2+1,z,r,h,mats.tank,name,'storage-tank',32);cylinder(groups.tanks,x,h+1,z,r,.45,mats.white,name+' سقف','roof',32);cylinder(groups.tanks,x,h+1.35,z,r*.83,.22,mats.steel,name+' لبه سقف','roof',32);for(let y=4;y<h;y+=3.2)cylinder(groups.tanks,x,y,z,r*1.005,.12,mats.white,name+' رینگ بدنه','detail',32);beam(groups.tanks,[x+r*.78,2,z],[x+r*.78,h+1,z],.12,mats.yellow,name+' نردبان','ladder');beam(groups.tanks,[x+r*.78,h*.72,z],[x+r*1.4,h*.72,z],.13,mats.yellow,name+' خط اتصال','pipe');}
+box(groups.roads,142,0,92,92,.6,94,mats.concrete,'حوضچه مخازن','bund');for(let x=108;x<=176;x+=17)for(let z=58;z<=126;z+=17)storageTank(x,z,5.7,10+((x+z)%3)*2,'مخزن ذخیره '+(++tankCount));
+box(groups.roads,-150,0,95,70,.6,75,mats.concrete,'ناحیه مخازن کروی','bund');
+for(let i=0;i<8;i++){const x=-175+(i%4)*17,z=72+Math.floor(i/4)*26;const s=addMesh(groups.tanks,sphereGeo,mats.tank,[x,9,z],[6,6,6],'مخزن کروی LPG '+(i+1),'spherical-tank');cylinder(groups.tanks,x,2,z,3,.8,mats.darkSteel,'پایه کروی','support',16);for(let a=0;a<4;a++){const ang=a*Math.PI/2;beam(groups.tanks,[x+Math.cos(ang)*5,3,z+Math.sin(ang)*5],[x+Math.cos(ang)*3,8,z+Math.sin(ang)*3],.2,mats.structure,'پایه مخزن کروی','support')}}
+for(let i=0;i<6;i++){const x=105+i*12;pipeLine([[x,2,48],[x,5,55],[x,5,130],[x,2,136]],.25,mats.pipe,'مانیفولد مخازن '+(i+1));}
+// Utilities, cooling towers, boilers, water treatment, air compressors
+for(let i=0;i<4;i++){const x=-135+i*32,z=130;const base=box(groups.utilities,x,11,z,23,20,19,mats.structure,'برج خنک‌کننده '+(i+1),'cooling-tower');box(groups.utilities,x,1,z,25,2,22,mats.concrete,'فونداسیون برج خنک‌کننده','foundation');cylinder(groups.utilities,x,22,z,6,1.1,mats.darkSteel,'فن برج خنک‌کننده','fan',24);for(let a=0;a<8;a++){const ang=a*Math.PI/4;beam(groups.utilities,[x,22.6,z],[x+Math.cos(ang)*5,22.6,z+Math.sin(ang)*5],.22,mats.white,'پره فن','fan-blade')}for(let y=4;y<19;y+=4)box(groups.utilities,x,y,z+10,22,.45,.55,mats.white,'رینگ تقویتی برج','detail');}
+for(let i=0;i<6;i++){const x=-120+i*44,z=112;box(groups.utilities,x,5,z,22,9,12,mats.building,'اسکید تصفیه آب '+(i+1),'utility');for(let j=0;j<3;j++)cylinder(groups.utilities,x-6+j*6,10,z,1.8,6,mats.pipeBlue,'فیلتر آب','filter',16);}
+for(let i=0;i<5;i++){const x=5+i*18,z=115;box(groups.utilities,x,9,z,12,16,12,mats.darkSteel,'بویلر/مبدل یوتیلیتی '+(i+1),'boiler');for(let j=0;j<3;j++)cylinder(groups.utilities,x-3+j*3,19,z+5,1,5,mats.steel,'لوله دود/بخار','stack',12);}
+// Flare stack and safety zone
+cylinder(groups.utilities,-178,32,10,1.1,62,mats.steel,'فلر مرتفع اصلی','flare',20);cylinder(groups.utilities,-178,63,10,1.7,1.5,mats.hot,'سر فلر','flare-tip',20);const flame=addMesh(groups.utilities,new THREE.ConeGeometry(1.5,5,12),mats.hot,[-178,67,10],null,'شعله فلر','flare-flame');for(let y=5;y<60;y+=5)beam(groups.utilities,[-179.5,y,8.5],[-176.5,y+5,11.5],.09,mats.yellow,'مهاربند فلر','brace');
+// Substation, transformer banks, switchgear and busbars
+box(groups.buildings,-125,0,-132,70,.6,32,mats.concrete,'محوطه پست برق','substation');
+for(let i=0;i<8;i++){const x=-153+i*8;box(groups.buildings,x,3,-132,4,6,5,mats.building,'سلول سوئیچگیر '+(i+1),'switchgear');for(let j=0;j<4;j++)cylinder(groups.buildings,x-1.2+j*.8,6.5,-132, .22,1.3,mats.white,'مقره پست','insulator',8)}
+for(let i=0;i<4;i++){const x=-150+i*16;box(groups.buildings,x,3,-119,7,5,7,mats.darkSteel,'ترانسفورماتور قدرت '+(i+1),'transformer');for(let j=0;j<9;j++)box(groups.buildings,x-3.2+j*.8,3.5,-114, .3,4,.6,mats.steel,'پره رادیاتور ترانس','radiator');}
+for(let y of [8,11,14])beam(groups.buildings,[-160,y,-137],[-90,y,-137],.18,mats.white,'باس‌بار پست','busbar');
+// Control rooms, workshops, warehouses, admin and roads
+function building(x,z,sx,sz,h,name){box(groups.buildings,x,h/2,z,sx,h,sz,mats.building,name,'building');box(groups.buildings,x,h+.2,z,sx+1,.4,sz+1,mats.darkSteel,name+' بام','roof');for(let xx=x-sx/2+2;xx<x+sx/2;xx+=4)box(groups.buildings,xx,h*.65,z-sz/2-.06,1.7,2,.12,mats.glass,name+' پنجره','window');}
+building(0,125,40,18,8,'ساختمان کنترل مرکزی');building(48,126,26,18,7,'اتاق کنترل اضطراری');building(92,-130,32,20,8,'کارگاه تعمیرات');building(145,-126,28,18,7,'انبار قطعات');building(20,-132,28,20,7,'آزمایشگاه و کنترل کیفیت');building(-35,-132,25,18,6,'ساختمان اداری و HSE');
+for(let x=-170;x<175;x+=15){box(groups.roads,x,.15,145,7,.3,3,mats.concrete,'مسیر دسترسی','road');}
+for(let x=-175;x<=175;x+=35){cylinder(groups.roads,x,7,145,.3,14,mats.steel,'دکل روشنایی سایت','light',10);box(groups.roads,x,14,145,2,.3,.5,mats.yellow,'پروژکتور','light')}
+// Many cable trays, instrument stands, pipe supports, valves and local connections
+for(let z=-120;z<105;z+=12){for(let x=-150;x<155;x+=10){box(groups.pipes,x,2.5,z,5,.5,1.5,mats.darkSteel,'ساپورت خطوط لوله','support');if((x+z)%3===0){cylinder(groups.process,x,4,z,.38,1.2,mats.yellow,'ابزار دقیق محلی','instrument',10);box(groups.process,x,4.8,z,.7,.5,.3,mats.black,'جعبه اتصال ابزار دقیق','junction-box')}}}
+for(let i=0;i<24;i++){const x=-145+i*12;pipeLine([[x,1.5,-105],[x,5,-100],[x,5,-35]],.1,mats.pipeBlue,'رایزر کابل/لوله فرعی '+(i+1));}
+label('PROCESS TRAINS 01–05',0,48,-70);label('TANK FARM',142,26,92);label('UTILITIES / COOLING',0,32,130);label('ELECTRICAL SUBSTATION',-125,20,-132);label('FLARE STACK',-178,72,10);
+document.getElementById('assetCount').textContent=assetCount.toLocaleString();document.getElementById('unitCount').textContent=unitCount;document.getElementById('pipeCount').textContent=allPipes.length.toLocaleString();document.getElementById('tankCount').textContent=tankCount.toLocaleString();document.getElementById('meshCount').innerHTML='<strong>'+assetCount.toLocaleString()+'</strong> SCENE OBJECTS';
+const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2(),tooltip=document.getElementById('tooltip'),info=document.getElementById('assetInfo');let selected=null;
+function selectAt(ev){const rect=renderer.domElement.getBoundingClientRect();mouse.x=((ev.clientX-rect.left)/rect.width)*2-1;mouse.y=-((ev.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(pickables,false);if(hits.length){selected=hits[0].object;const d=selected.userData;info.innerHTML='<b style="color:#53e0d0">'+d.name+'</b><br>دسته: '+d.kind+'<br>مختصات تقریبی: X '+selected.position.x.toFixed(1)+' / Y '+selected.position.y.toFixed(1)+' / Z '+selected.position.z.toFixed(1);selected.material.emissive?.set('#244e50');}else{selected=null;info.textContent='هیچ تجهیزی انتخاب نشده است.'}}
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.button===0)selectAt(e)});renderer.domElement.addEventListener('pointermove',e=>{const rect=renderer.domElement.getBoundingClientRect();mouse.x=((e.clientX-rect.left)/rect.width)*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(mouse,camera);const h=raycaster.intersectObjects(pickables,false);if(h.length){tooltip.style.display='block';tooltip.style.left=Math.min(e.clientX-rect.left+12,rect.width-220)+'px';tooltip.style.top=Math.min(e.clientY-rect.top+12,rect.height-50)+'px';tooltip.textContent=h[0].object.userData.name}else tooltip.style.display='none'});
+document.querySelectorAll('[data-layer]').forEach(el=>el.addEventListener('change',()=>groups[el.dataset.layer].visible=el.checked));
+document.getElementById('fit').onclick=()=>{camera.position.set(190,175,210);controls.target.set(0,8,0);controls.update()};
+document.getElementById('iso').onclick=()=>{camera.position.set(210,180,210);controls.target.set(0,8,0);controls.update()};
+document.getElementById('top').onclick=()=>{camera.position.set(0,300,.1);controls.target.set(0,0,0);controls.update()};
+document.getElementById('reset').onclick=()=>{camera.position.set(190,175,210);controls.target.set(0,8,0);controls.update();document.querySelectorAll('[data-layer]').forEach(el=>{el.checked=true;groups[el.dataset.layer].visible=true})};
+document.getElementById('search').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();if(!q)return;const m=pickables.find(o=>o.userData.name.toLowerCase().includes(q));if(m){controls.target.copy(m.position);camera.position.set(m.position.x+25,m.position.y+20,m.position.z+25);controls.update();info.innerHTML='<b style="color:#53e0d0">'+m.userData.name+'</b><br>مختصات تقریبی: '+m.position.x.toFixed(1)+', '+m.position.y.toFixed(1)+', '+m.position.z.toFixed(1)}});
+function resize(){const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h)}
+window.addEventListener('resize',resize);resize();loading.style.display='none';
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}animate();
+</script></body></html>
