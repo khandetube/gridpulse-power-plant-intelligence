@@ -324,7 +324,7 @@ def export_observations_csv(
         "period_end", "scope", "source_id", "verification_status",
     ]
     output = io.StringIO(newline="")
-    writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore", lineterminator="\\n")
+    writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
     writer.writeheader()
     formula_prefixes = ("=", "+", "-", "@", "\\t", "\\r")
     for record in records:
