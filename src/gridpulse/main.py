@@ -42,13 +42,59 @@ app.include_router(turnarounds_router)
 
 
 @app.middleware("http")
-async def optional_api_key_guard(request: Request, call_next):
-    expected_key = os.environ.get("GRIDPULSE_API_KEY", "")
-    if expected_key and request.url.path.startswith("/api/v1/"):
-        supplied_key = request.headers.get("X-API-Key", "")
-        if not secrets.compare_digest(supplied_key, expected_key):
-            return JSONResponse(status_code=401, content={"detail": "Missing or invalid API key."}, headers={"WWW-Authenticate": "ApiKey"})
-    return await call_next(request)
+async def api_security_guard(request: Request, call_next):
+    """Fail closed in production and apply defensive response/request limits."""
+    is_versioned_api = request.url.path.startswith("/api/v1/")
+    expected_key = os.environ.get("GRIDPULSE_API_KEY", "").strip()
+    environment = os.environ.get("GRIDPULSE_ENV", "development").strip().lower()
+
+    if is_versioned_api:
+        if environment in {"production", "prod"} and not expected_key:
+            response = JSONResponse(
+                status_code=503,
+                content={"detail": "API authentication is not configured; service access is disabled."},
+            )
+        elif expected_key and not secrets.compare_digest(
+            request.headers.get("X-API-Key", ""), expected_key
+        ):
+            response = JSONResponse(
+                status_code=401,
+                content={"detail": "Missing or invalid API key."},
+                headers={"WWW-Authenticate": "ApiKey"},
+            )
+        elif request.method in {"POST", "PUT", "PATCH"}:
+            content_length = request.headers.get("content-length")
+            if content_length:
+                try:
+                    body_size = int(content_length)
+                except ValueError:
+                    response = JSONResponse(status_code=400, content={"detail": "Invalid Content-Length."})
+                else:
+                    if body_size < 0:
+                        response = JSONResponse(status_code=400, content={"detail": "Invalid Content-Length."})
+                    elif body_size > 5 * 1024 * 1024:
+                        response = JSONResponse(
+                            status_code=413,
+                            content={"detail": "Request body exceeds the 5 MiB API limit."},
+                        )
+                    else:
+                        response = await call_next(request)
+            else:
+                response = await call_next(request)
+        else:
+            response = await call_next(request)
+    else:
+        response = await call_next(request)
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if is_versioned_api:
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+    return response
 
 
 # Permit the public static dashboard to talk only to a loopback API instance.
