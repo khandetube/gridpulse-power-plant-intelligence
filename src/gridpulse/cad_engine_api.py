@@ -79,7 +79,7 @@ def generate_cad(request: GenerateCadRequest) -> dict:
             "plan.dxf": to_dxf(spec),
             "model.scad": to_openscad(spec),
             "model.FCMacro": to_freecad_macro(spec),
-            **export_multi_application_bundle(spec),
+            **export_multi_application_bundle(spec, agent["calculations"], agent["advanced_calculations"]),
         },
         "notice": "Conceptual engineering assistance only. Numeric calculations are traceable deterministic calculations, but project-specific codes, design basis, manufacturer data and qualified engineering review remain mandatory.",
     }
