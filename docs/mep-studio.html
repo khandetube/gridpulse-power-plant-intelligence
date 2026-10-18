@@ -46,7 +46,7 @@
 <div class="actions"><button class="primary" id="addRoom">+ افزودن فضا</button><button id="roomCsvOut">خروجی جدول فضاها CSV</button><button id="roomJsonOut">خروجی جدول فضاها JSON</button><button id="roomCsvIn">ورود CSV فضاها</button><input id="roomFile" type="file" accept=".csv,text/csv" hidden></div>
 <div class="metrics"><div class="metric"><b id="roomCount">—</b><span>تعداد فضاها</span></div><div class="metric"><b id="roomArea">—</b><span>مجموع مساحت تعریف‌شده (m²)</span></div><div class="metric"><b id="roomAir">—</b><span>هوای تازه برآوردی (m³/h)</span></div><div class="metric"><b id="roomLights">—</b><span>چراغ مفهومی (عدد)</span></div></div>
 <div class="scroll"><table id="roomTable"><thead><tr><th>نام فضا</th><th>طبقه</th><th>X (m)</th><th>Y (m)</th><th>طول (m)</th><th>عرض (m)</th><th>کاربری</th><th>نفر</th><th>پریز</th><th>لوکس هدف</th><th>مساحت m²</th><th>چراغ تخمینی</th><th>هوای تازه m³/h</th><th>کنترل</th></tr></thead><tbody id="roomRows"></tbody></table></div>
-<h3>نقشه دوبعدی جانمایی فضاها</h3><canvas id="floorPlan" class="canvas" style="height:330px" aria-label="نقشه دوبعدی مفهومی فضاها"></canvas>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">نقشه دوبعدی معماری و جانمایی فضاها</h3><label style="display:flex;align-items:center;gap:7px">طبقه <select id="planFloor" style="margin:0;min-width:90px;padding:6px"><option value="1">طبقه ۱</option><option value="2">طبقه ۲</option><option value="3">طبقه ۳</option><option value="4">طبقه ۴</option><option value="5">طبقه ۵</option><option value="6">طبقه ۶</option><option value="7">طبقه ۷</option><option value="8">طبقه ۸</option><option value="9">طبقه ۹</option><option value="10">طبقه ۱۰</option></select></label></div><canvas id="floorPlan" class="canvas" style="height:330px" aria-label="نقشه دوبعدی مفهومی فضاها"></canvas>
 <div id="roomValidation" class="small" role="status"></div>
 <p class="small">CSV ورودی باید ستون‌های name,floor,x,y,length,width,use,people,sockets,lux داشته باشد. X/Y از گوشه جنوب‌غربی ساختمان است. چراغ‌ها بر اساس لومن مفروض 1200 lm، ضریب بهره 0.60 و ضریب نگهداری 0.80 تخمین زده می‌شوند؛ طراحی روشنایی واقعی به محاسبه فوتومتریک و فایل/مشخصات چراغ نیاز دارد.</p>
 </section>
@@ -593,7 +593,7 @@ $("zoomIn").onclick=()=>{zoom=Math.min(8,zoom*1.22);draw();syncCameraUi()};$("zo
 $("cameraReset").onclick=()=>{rotation={x:-.52,y:.62,z:0};zoom=$("modelMode").value==="refinery"?.78:1;draw();syncCameraUi()};
 $("modelFullscreen").onclick=async()=>{const c=$("model");try{if(!document.fullscreenElement)await c.requestFullscreen();else await document.exitFullscreen()}catch(e){$("modelModeInfo").textContent="تمام‌صفحه توسط مرورگر پشتیبانی/اجازه داده نشد."}};
 document.addEventListener("fullscreenchange",()=>{draw();});
-window.addEventListener("resize",()=>{draw();drawPlan()});inputIds.forEach(id=>$(id).addEventListener("change",()=>{update();renderRooms();autoSaveProject()}));
+window.addEventListener("resize",()=>{draw();drawPlan()});$("planFloor")?.addEventListener("change",drawPlan);inputIds.forEach(id=>$(id).addEventListener("change",()=>{update();renderRooms();autoSaveProject()}));
 $("addRoom").addEventListener("click",()=>{const d=read();rooms.push({name:"Room "+(rooms.length+1),floor:1,x:0,y:0,length:Math.min(5,d.L),width:Math.min(4,d.W),use:"other",people:0,sockets:0,lux:300});renderRooms();autoSaveProject();});
 const oldRenderRooms=renderRooms;
 renderRooms=function(){oldRenderRooms();autoSaveProject();};
