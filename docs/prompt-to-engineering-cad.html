@@ -233,8 +233,8 @@ function multiAppSpec(m){
 function maxScript(m){
  const spec=multiAppSpec(m),L=["-- GridPulse 3ds Max generator: conceptual editable envelopes only.","units.systemType = #meters"];
  const q=s=>String(s).replace(/\\/g,"\\\\").replace(/"/g,'\\"');
- spec.assets.forEach(a=>{L.push('local o = box length:'+a.length+' width:'+a.width+' height:'+a.height+' pos:['+a.x+','+a.y+','+a.z+']');L.push('o.name = "'+q(a.tag+"_"+a.name)+'"');L.push('o.wirecolor = (color 70 150 205)');});
- spec.routes.forEach(r=>{for(let i=0;i<r.points.length-1;i++){const a=r.points[i],b=r.points[i+1];L.push('local a = ['+a.join(",")+']; local b = ['+b.join(",")+']; local d = b-a');L.push('if (length d) > 0.001 do (local o = cylinder radius:'+Math.max(.02,r.width/2)+' height:(length d) sides:12; o.pos=a; o.rotation=(rotationTo [0,0,1] (normalize d)); o.name="'+q(r.tag+"_"+(i+1))+'")');}});
+ spec.assets.forEach(a=>{L.push('local o = box length:'+a.length+' width:'+a.width+' height:'+a.height+' pos:['+(a.x+a.length/2)+','+(a.y+a.width/2)+','+(a.z+a.height/2)+']');L.push('o.name = "'+q(a.tag+"_"+a.name)+'"');L.push('o.wirecolor = (color 70 150 205)');});
+ spec.routes.forEach(r=>{for(let i=0;i<r.points.length-1;i++){const a=r.points[i],b=r.points[i+1];L.push('local a = ['+a.join(",")+']; local b = ['+b.join(",")+']; local d = b-a');L.push('if (length d) > 0.001 do (local o = cylinder radius:'+Math.max(.02,r.width/2)+' height:(length d) sides:12; o.pos=(a+b)/2; o.rotation=(rotationTo [0,0,1] (normalize d)); o.name="'+q(r.tag+"_"+(i+1))+'")');}});
  L.push('format "GridPulse: generated conceptual scene; validate units and geometry.\\n"');return L.join("\n")+"\n";
 }
 function revitDynamoScript(m){
