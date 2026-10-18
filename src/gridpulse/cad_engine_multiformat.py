@@ -8,6 +8,12 @@ without running inside Revit.
 from __future__ import annotations
 
 import json
+from io import BytesIO
+from math import dist
+
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from gridpulse.cad_engine import EngineeringSpec, to_dxf
 
@@ -79,7 +85,7 @@ def export_3ds_max_script(spec: EngineeringSpec) -> str:
         f'format "GridPulse created {len(spec.assets)} equipment envelopes and '
         f'{sum(max(0, len(r.points)-1) for r in spec.routes)} route segments. Conceptual only.\\n"'
     )
-    return "\\n".join(lines) + "\\n"
+    return "\n".join(lines) + "\n"
 
 
 def export_revit_dynamo_python(spec: EngineeringSpec) -> str:
@@ -166,12 +172,6 @@ def export_multi_application_bundle(spec: EngineeringSpec) -> dict[str, str]:
 
 def export_engineering_workbook(spec: EngineeringSpec, review: dict | None = None) -> bytes:
     """Create a real multi-sheet XLSX handoff with equipment, routes, coordinates and checks."""
-    from io import BytesIO
-    from math import dist
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Font, PatternFill
-    from openpyxl.worksheet.table import Table, TableStyleInfo
-
     report = review or {"status": "concept_review_only", "engineering_approval": False,
                         "geometric_findings": []}
     wb = Workbook()
