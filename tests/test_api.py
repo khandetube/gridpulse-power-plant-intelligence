@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+import gridpulse.main as main
 from gridpulse.main import app
 
 client = TestClient(app)
@@ -307,3 +308,23 @@ def test_api_key_guard_protects_versioned_api_when_configured(monkeypatch):
     valid = client.get("/api/v1/project", headers={"X-API-Key": "test-only-secret"})
     assert valid.status_code == 200
     assert client.get("/health").status_code == 200
+
+
+def test_readiness_endpoint_reports_healthy_dependencies(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "ready.sqlite3"))
+    response = client.get("/ready")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ready"
+    assert payload["checks"] == {"source_registry": "ok", "database": "ok"}
+
+
+def test_readiness_endpoint_returns_503_when_source_registry_is_missing(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "not-ready.sqlite3"))
+    monkeypatch.setattr(main, "SOURCE_REGISTRY", tmp_path / "missing-source-registry.csv")
+    response = client.get("/ready")
+    assert response.status_code == 503
+    payload = response.json()
+    assert payload["status"] == "not_ready"
+    assert payload["checks"]["source_registry"] == "unavailable"
+    assert payload["checks"]["database"] == "ok"
