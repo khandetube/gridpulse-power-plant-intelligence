@@ -26,6 +26,10 @@ def test_process_prompt_generates_editable_model_and_exports():
     assert "NO_ENGINEERING_CALCULATIONS" in {f["code"] for f in review_spec(spec)["geometric_findings"]}
     assert "<svg" in to_svg(spec)
     assert "SECTION" in to_dxf(spec)
+    dxf = to_dxf(spec)
+    assert "$INSUNITS" in dxf and "\n70\n4\n" in dxf
+    assert "\n2\nLAYER\n" in dxf and "\n2\nSITE\n" in dxf
+    assert "\n0\nLAYER\n" in dxf
     assert "module box_at" in to_openscad(spec)
     macro = to_freecad_macro(spec)
     assert "import FreeCAD as App" in macro
