@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from datetime import date
+from itertools import pairwise
 from math import isfinite
 from statistics import median
 from typing import Any
@@ -108,7 +109,7 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
         ordered = sorted(entries, key=lambda item: (item[2][0], item[2][1], _text(item[1].get("record_id"))))
         starts = [period[0] for _, _, period in ordered]
         unique_starts = sorted(set(starts))
-        deltas = [(b - a).days for a, b in zip(unique_starts, unique_starts[1:]) if (b - a).days > 0]
+        deltas = [(b - a).days for a, b in pairwise(unique_starts) if (b - a).days > 0]
         expected = median(deltas) if deltas else None
         gap_days = []
         irregular = False
