@@ -263,7 +263,8 @@ function packageData(){return {product:"GridPulse MEP Studio",schema_version:"0.
 function update(){try{state=build(read());renderTables(state);draw();$("scriptPreview").hidden=true}catch(e){alert(e.message)}}
 $("calculate").onclick=update;$("reset").onclick=()=>{location.reload()};$("viewReset").onclick=()=>{rotation={x:-.48,y:.65};zoom=1;draw()};
 $("downloadObj").onclick=()=>download("gridpulse-mep-concept.obj",objText(),"text/plain");
-$("downloadDxf").onclick=()=>download("gridpulse-mep-concept.dxf",dxfText(),"application/dxf");\n$("downloadRevit").onclick=()=>download("gridpulse-revit-dynamo-concept.py",revitScriptText(),"text/x-python");
+$("downloadDxf").onclick=()=>download("gridpulse-mep-concept.dxf",dxfText(),"application/dxf");
+$("downloadRevit").onclick=()=>download("gridpulse-revit-dynamo-concept.py",revitScriptText(),"text/x-python");
 $("downloadMax").onclick=()=>download("gridpulse-mep-concept.ms",maxText(),"text/plain");
 $("showScript").onclick=()=>{$("scriptPreview").hidden=!$("scriptPreview").hidden;$("scriptPreview").textContent=maxText()};
 $("csv").onclick=()=>{const rows=[["System","Description","Quantity","Unit","Basis"],...state.boq];const csv="\ufeff"+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");download("gridpulse-mep-boq.csv",csv,"text/csv;charset=utf-8")};
