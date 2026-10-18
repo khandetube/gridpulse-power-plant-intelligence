@@ -1,9 +1,9 @@
 """Smoke-test inline JavaScript in static GridPulse pages when Node.js is available."""
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 import pytest
 
