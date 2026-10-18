@@ -4,6 +4,8 @@ These checks are intentionally lightweight and complement (not replace) browser-
 accessibility and interaction tests.
 """
 
+# ruff: noqa: I001
+
 from pathlib import Path
 
 
