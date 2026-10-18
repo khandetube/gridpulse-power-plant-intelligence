@@ -1,15 +1,10 @@
-"""Multi-stage engineering design agent built around the bounded CAD spec.
-
-The agent is intentionally deterministic after prompt interpretation. It decomposes a
-request into requirements, derives a design plan, generates a validated candidate,
-and performs a critique pass before returning the final handoff. It is an engineering
-coordination assistant, not an authority for construction or safety approval.
-"""
+"""Multi-stage engineering design agent with deterministic calculation feedback."""
 from __future__ import annotations
 
 from typing import Any
 
 from gridpulse.cad_engine import Discipline, EngineeringSpec, build_spec, review_spec
+from gridpulse.cad_engine_calculations import parse_explicit_parameters, run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
 
 
@@ -42,12 +37,14 @@ def extract_requirements(prompt: str, selected: list[Discipline] | None = None) 
     }.items():
         if any(w in text for w in words):
             plant_types.append(label)
+    explicit_parameters = parse_explicit_parameters(prompt)
     return {
         "objective": prompt.strip(),
         "inferred_plant_types": plant_types or ["process"],
         "required_disciplines": disciplines,
-        "deliverables": ["validated EngineeringSpec", "editable CAD exports", "engineering intelligence report", "assumption and risk register"],
-        "unknowns": ["approved design basis and applicable codes", "vendor/manufacturer dimensions and connection points", "survey/geotechnical information and authoritative plant interfaces", "process, electrical and instrumentation design calculations"],
+        "explicit_parameters": explicit_parameters,
+        "deliverables": ["validated EngineeringSpec", "editable CAD exports", "engineering intelligence report", "deterministic calculation report", "assumption and risk register"],
+        "unknowns": ["approved design basis and applicable codes", "vendor/manufacturer dimensions and connection points", "survey/geotechnical information and authoritative plant interfaces", "process, electrical and instrumentation design calculations not represented by explicit inputs"],
     }
 
 
@@ -58,18 +55,21 @@ def plan_design(requirements: dict[str, Any], template: str) -> dict[str, Any]:
         {"stage": 2, "name": "discipline coordination", "status": "planned", "inputs": disciplines},
         {"stage": 3, "name": "parametric geometry", "status": "planned", "template": template},
         {"stage": 4, "name": "topology and clash heuristics", "status": "planned"},
-        {"stage": 5, "name": "design critique", "status": "planned"},
-        {"stage": 6, "name": "multi-application handoff", "status": "planned"},
+        {"stage": 5, "name": "deterministic engineering calculations and rules", "status": "planned"},
+        {"stage": 6, "name": "design critique", "status": "planned"},
+        {"stage": 7, "name": "multi-application handoff", "status": "planned"},
     ]
-    return {"strategy": "single-source-of-truth EngineeringSpec", "phases": phases}
+    return {"strategy": "single-source-of-truth EngineeringSpec + traceable calculation layer", "phases": phases}
 
 
-def _critique(spec: EngineeringSpec, intelligence: dict[str, Any]) -> dict[str, Any]:
+def _critique(spec: EngineeringSpec, intelligence: dict[str, Any], calculations: dict[str, Any]) -> dict[str, Any]:
     findings = []
     if len(spec.assets) < 2:
         findings.append({"severity": "high", "code": "LOW_MODEL_COVERAGE", "message": "Model contains too few assets for meaningful system coordination."})
     if not spec.routes:
         findings.append({"severity": "medium", "code": "NO_ROUTES", "message": "No schematic routes were generated; connectivity remains incomplete."})
+    if calculations["summary"]["insufficient_input"]:
+        findings.append({"severity": "medium", "code": "CALC_INPUT_GAPS", "message": f"{calculations['summary']['insufficient_input']} calculation(s) require explicit engineering inputs before numeric evaluation."})
     for action in intelligence["recommended_actions"]:
         findings.append({"severity": action.get("priority", "medium"), "code": action.get("code", "REVIEW"), "message": action.get("action", "Review required")})
     return {"finding_count": len(findings), "findings": findings, "gate": "review_required" if any(x["severity"] == "high" for x in findings) else "coordination_review"}
@@ -83,17 +83,19 @@ def run_design_agent(prompt: str, site_width: float = 80, site_length: float = 5
     effective_disciplines = requirements["required_disciplines"]
     spec, interpretation = build_spec(prompt, site_width, site_length, effective_disciplines, template, use_llm)
     review = review_spec(spec)
-    intelligence = analyze_design_intelligence(spec)
-    critique = _critique(spec, intelligence)
+    calculations = run_engineering_calculations(spec, requirements["explicit_parameters"])
+    intelligence = analyze_design_intelligence(spec, calculations)
+    critique = _critique(spec, intelligence, calculations)
     return {
-        "agent": "GridPulse Engineering Design Agent v0.1",
+        "agent": "GridPulse Engineering Design Agent v0.2",
         "interpretation_mode": interpretation,
         "requirements": requirements,
         "plan": plan,
         "model": spec.model_dump(mode="json"),
         "review": review,
+        "calculations": calculations,
         "intelligence": intelligence,
         "critique": critique,
-        "metrics": {"assets": len(spec.assets), "routes": len(spec.routes), "disciplines": sorted(set(a.discipline for a in spec.assets) | set(r.discipline for r in spec.routes)), "readiness_score": intelligence["readiness_score"], "risk_count": critique["finding_count"]},
-        "next_actions": ["Resolve high-priority findings.", "Replace conceptual assumptions with approved design-basis data.", "Run discipline-specific engineering calculations and code checks before construction use."],
+        "metrics": {"assets": len(spec.assets), "routes": len(spec.routes), "disciplines": sorted(set(a.discipline for a in spec.assets) | set(r.discipline for r in spec.routes)), "readiness_score": intelligence["readiness_score"], "risk_count": critique["finding_count"], "calculations_total": calculations["summary"]["total"], "calculations_complete": calculations["summary"]["calculated"]},
+        "next_actions": ["Resolve high-priority findings.", "Provide approved design-basis/code/vendor inputs for calculations marked insufficient_input.", "Run project-specific discipline calculations and code checks before construction use."],
     }
