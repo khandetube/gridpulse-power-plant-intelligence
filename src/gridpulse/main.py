@@ -172,7 +172,7 @@ def health() -> dict[str, str]:
     return {"status": "ok", "service": "gridpulse-api", "version": "0.1.0"}
 
 
-@app.get("/ready")
+@app.get("/ready", response_model=None)
 def readiness() -> JSONResponse | dict[str, object]:
     """Readiness probe checks the source registry and configured SQLite storage."""
     checks: dict[str, str] = {
