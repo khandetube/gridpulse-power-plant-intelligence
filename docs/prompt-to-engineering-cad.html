@@ -190,7 +190,7 @@ function createModel(){
    if(d==="Mechanical")return sys.includes("mechanical");
    if(d==="Piping")return sys.includes("piping");
    if(d==="Electrical")return sys.includes("electrical");
-   if(d==="Instrumentation")return sys.includes("instrument")||sys.includes("cable");
+   if(d==="Instrumentation")return sys.includes("instrument");
    if(d==="Fire")return sys.includes("fire");
    if(d==="HVAC")return sys.includes("hvac");
    if(d==="Grounding")return sys.includes("grounding");
@@ -202,7 +202,7 @@ function createModel(){
  for(let i=a.length-1;i>=0;i--)if(!enabledForAsset(a[i].discipline))a.splice(i,1);
  for(let i=r.length-1;i>=0;i--){
    const routeItem=r[i],tag=routeItem.tag||"";
-   const enabled=tag.startsWith("CT-")?sys.includes("cable")||sys.includes("electrical"):
+   const enabled=tag.startsWith("CT-")?sys.includes("cable"):
      tag.startsWith("SIG-")?sys.includes("instrument"):
      enabledForAsset(routeItem.discipline);
    if(!enabled)r.splice(i,1);
