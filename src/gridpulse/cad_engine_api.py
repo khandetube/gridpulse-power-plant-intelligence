@@ -17,6 +17,7 @@ from gridpulse.cad_engine import (
     to_openscad,
     to_svg,
 )
+from gridpulse.cad_engine_intelligence import analyze_design_intelligence
 from gridpulse.cad_engine_multiformat import (
     export_engineering_workbook,
     export_multi_application_bundle,
@@ -46,12 +47,12 @@ def cad_engine_status() -> dict:
     ))
     return {
         "engine": "GridPulse Parametric CAD Engine",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "available": True,
-        "geometry_backend": "parametric-spec + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
+        "geometry_backend": "parametric-spec + engineering-intelligence + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
         "llm_configured": configured,
-        "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser",
-        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx"],
+        "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser + reasoning layer",
+        "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx", "engineering_intelligence.json"],
         "limitations": [
             "Conceptual envelopes and schematic routes only",
             "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment",
@@ -63,7 +64,7 @@ def cad_engine_status() -> dict:
 
 @router.post("/generate")
 def generate_cad(request: GenerateCadRequest) -> dict:
-    """Generate one bounded, editable geometry model and multiple exports."""
+    """Generate one bounded, editable geometry model plus reasoning and exports."""
     try:
         spec, interpretation = build_spec(
             request.prompt, request.site_width, request.site_length,
@@ -72,13 +73,16 @@ def generate_cad(request: GenerateCadRequest) -> dict:
     except (ValueError, ValidationError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     payload = spec.model_dump(mode="json")
+    intelligence = analyze_design_intelligence(spec)
     return {
-        "engine": "gridpulse-parametric-cad-v0.2.0",
+        "engine": "gridpulse-parametric-cad-v0.3.0",
         "interpretation_mode": interpretation,
         "spec": payload,
         "review": review_spec(spec),
+        "engineering_intelligence": intelligence,
         "exports": {
             "engineering_spec.json": json.dumps(payload, ensure_ascii=False, indent=2),
+            "engineering_intelligence.json": json.dumps(intelligence, ensure_ascii=False, indent=2),
             "plan.svg": to_svg(spec),
             "plan.dxf": to_dxf(spec),
             "model.scad": to_openscad(spec),
@@ -87,6 +91,12 @@ def generate_cad(request: GenerateCadRequest) -> dict:
         },
         "notice": "Conceptual design only. Outputs are editable but are not construction-approved engineering.",
     }
+
+
+@router.post("/analyze")
+def analyze_cad(spec: EngineeringSpec) -> dict:
+    """Run the engineering reasoning layer on an existing validated EngineeringSpec."""
+    return analyze_design_intelligence(spec)
 
 
 @router.post("/export/{format_name}")
@@ -107,7 +117,6 @@ def export_cad(format_name: Literal["json", "svg", "dxf", "scad", "FCMacro", "xl
     else:
         content, media, name = to_freecad_macro(spec), "text/plain; charset=utf-8", "model.FCMacro"
     return Response(content=content, media_type=media, headers={"Content-Disposition": f'attachment; filename="{name}"'})
-
 
 
 @router.post("/export-bundle")
