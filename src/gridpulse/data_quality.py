@@ -42,11 +42,7 @@ def _key(row: dict[str, Any]) -> tuple[str, str, str, str]:
 
 
 def _record_signature(row: dict[str, Any]) -> tuple[Any, ...]:
-    return (
-        _key(row), _text(row.get("record_id")), _number(row.get("value")),
-        _text(row.get("period_start")), _text(row.get("period_end")),
-        _text(row.get("source_id")), _text(row.get("verification_status")),
-    )
+    return (_key(row), _text(row.get("record_id")), _number(row.get("value")), _text(row.get("period_start")), _text(row.get("period_end")), _text(row.get("source_id")), _text(row.get("verification_status")))
 
 
 def _severity_for_issue(kind: str) -> str:
@@ -68,12 +64,9 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
     by_id: dict[str, list[tuple[int, dict[str, Any]]]] = defaultdict(list)
     groups: dict[tuple[str, str, str, str], list[tuple[int, dict[str, Any], tuple[date, date]]]] = defaultdict(list)
     field_missing = Counter()
-    verified = 0
-    source_present = 0
-    valid_periods = 0
-    valid_values = 0
-
+    verified = source_present = valid_periods = valid_values = 0
     required = ("record_id", "plant", "metric", "unit", "scope", "value", "period_start", "period_end")
+
     for index, row in enumerate(records):
         if not isinstance(row, dict):
             issues.append({"issue_id": f"row:{index}:not_object", "kind": "invalid_record", "severity": "high", "index": index, "action": "Replace non-object record."})
@@ -81,7 +74,7 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
         rid = _text(row.get("record_id"))
         if rid:
             by_id[rid].append((index, row))
-        missing = [field for field in required if field == "value" and row.get(field) is None or field != "value" and not _text(row.get(field))]
+        missing = [field for field in required if (field == "value" and row.get(field) is None) or (field != "value" and not _text(row.get(field)))]
         for field in missing:
             field_missing[field] += 1
         if missing:
@@ -108,14 +101,7 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
             continue
         signatures = {_record_signature(row) for _, row in entries}
         kind = "duplicate_record_id" if len(signatures) == 1 else "duplicate_record_id_conflict"
-        issues.append({
-            "issue_id": f"record:{rid}:duplicate",
-            "kind": kind,
-            "severity": _severity_for_issue(kind),
-            "record_id": rid,
-            "indices": [i for i, _ in entries],
-            "action": "Keep one authoritative record or resolve the conflicting duplicate before analysis.",
-        })
+        issues.append({"issue_id": f"record:{rid}:duplicate", "kind": kind, "severity": _severity_for_issue(kind), "record_id": rid, "indices": [i for i, _ in entries], "action": "Keep one authoritative record or resolve the conflicting duplicate before analysis."})
 
     temporal_stats: list[dict[str, Any]] = []
     for key, entries in sorted(groups.items()):
@@ -129,7 +115,7 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
         if expected and expected > 0:
             for a, b in zip(unique_starts, unique_starts[1:]):
                 delta = (b - a).days
-                if delta > expected * 2:
+                if delta >= expected * 2:
                     gap_days.append({"from": a.isoformat(), "to": b.isoformat(), "days": delta})
                 if delta != expected:
                     irregular = True
@@ -147,8 +133,6 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
                     issues.append({"issue_id": f"group:{key}:overlap:{left[0]}:{right[0]}", "kind": "overlapping_reporting_period", "severity": "high", "group": key, "record_ids": [_text(left[1].get("record_id")), _text(right[1].get("record_id"))], "periods": [list(map(str, left_period)), list(map(str, right_period))], "action": "Resolve overlapping reporting windows or explicitly document that the records are non-additive."})
         temporal_stats.append({"group": key, "record_count": len(entries), "distinct_start_dates": len(unique_starts), "sampling_intervals_days": deltas, "median_interval_days": expected, "gap_count": len(gap_days), "irregular_sampling": irregular})
 
-    # Cross-record consistency checks: a metric/scope with multiple units or scopes
-    # cannot be silently combined. These are evidence-governance flags, not unit conversions.
     metric_units: dict[tuple[str, str], set[str]] = defaultdict(set)
     metric_scopes: dict[tuple[str, str], set[str]] = defaultdict(set)
     for row in records:
@@ -191,10 +175,6 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
         "missing_field_counts": dict(sorted(field_missing.items())),
         "temporal_groups": temporal_stats,
         "issues": actionable,
-        "limitations": [
-            "Scores are governance heuristics for evidence quality, not physical health or safety scores.",
-            "Unit and scope mismatches are flagged rather than automatically converted or reconciled.",
-            "Temporal gaps and overlaps are inferred from supplied reporting periods only.",
-        ],
+        "limitations": ["Scores are governance heuristics for evidence quality, not physical health or safety scores.", "Unit and scope mismatches are flagged rather than automatically converted or reconciled.", "Temporal gaps and overlaps are inferred from supplied reporting periods only."],
         "safety_notice": "Resolve material evidence-quality issues and verify source documents before using analytics for engineering review.",
     }
