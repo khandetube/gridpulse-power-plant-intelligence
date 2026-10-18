@@ -106,3 +106,50 @@ def test_local_language_model_rejects_oversized_context(monkeypatch, tmp_path):
         assert "20 context records" in str(exc)
     else:
         raise AssertionError("Oversized context must be rejected")
+
+
+
+def test_offline_analysis_adds_quality_metrics_and_actionable_evidence_insights():
+    records = [
+        row("a1", 10, "2026-01-01", "verified"),
+        row("a2", 11, "2026-01-02", "verified"),
+        row("a3", 12, "2026-01-03", "reviewed"),
+        row("a4", 13, "2026-01-04", "unverified"),
+    ]
+    records[2]["source_id"] = "SRC-002"
+    result = analyze_offline(records)
+
+    assert result["data_quality"]["analysis_coverage_pct"] == 100
+    assert result["data_quality"]["distinct_source_count"] == 2
+    assert result["data_quality"]["verification_status_counts"] == {
+        "reviewed": 1,
+        "unverified": 1,
+        "verified": 2,
+    }
+    group = result["groups"][0]
+    assert group["first_value"] == 10
+    assert group["latest_value"] == 13
+    assert group["change_from_first_pct"] == 30
+    assert group["latest_rolling_mean_3"] == 12
+    assert group["trend_direction"] == "increasing"
+    assert any(item["id"] == "source_verification_review" for item in result["insights"])
+    assert any(item["id"].startswith("trend:") for item in result["insights"])
+
+
+def test_offline_analysis_zero_baseline_does_not_divide_by_zero():
+    records = [
+        row("z1", 0, "2026-01-01"),
+        row("z2", 1, "2026-01-02"),
+    ]
+    group = analyze_offline(records)["groups"][0]
+    assert group["change_from_first_pct"] is None
+    assert group["latest_rolling_mean_3"] == 0.5
+
+
+def test_offline_analysis_data_quality_tracks_invalid_records():
+    valid = row("good", 2, "2026-01-01", "verified")
+    invalid = row("bad", 3, "not-a-date", "unverified")
+    result = analyze_offline([valid, invalid])
+    assert result["data_quality"]["analysis_coverage_pct"] == 50
+    assert result["data_quality"]["invalid_reason_counts"] == {"invalid_period_date": 1}
+    assert result["insights"][0]["id"] == "data_quality_review"
