@@ -68,3 +68,29 @@ def test_advanced_engine_never_invents_missing_inputs():
     report = run_advanced_calculations({})
     assert all(c["status"] == "insufficient_input" for c in report["calculations"])
     assert all(c["value"] is None for c in report["calculations"])
+
+
+def test_pipe_minor_loss_requires_explicit_k_and_properties():
+    report = run_advanced_calculations({"flow_m3_h": 100, "diameter_mm": 100,
+        "fluid_density_kg_m3": 1000, "minor_loss_coefficient": 5})
+    calc = get(report, "PIP-MINOR-DP-001")
+    assert calc["status"] == "calculated"
+    assert calc["value"] > 0
+
+
+def test_hvac_sensible_load_and_lighting_count():
+    report = run_advanced_calculations({"airflow_m3_h": 3600, "air_density_kg_m3": 1.2,
+        "air_specific_heat_j_kg_k": 1005, "temperature_difference_k": 10,
+        "target_illuminance_lux": 500, "area_m2": 100, "fixture_lumens": 10000,
+        "utilization_factor": 0.7, "maintenance_factor": 0.8})
+    assert abs(get(report, "HVAC-LOAD-001")["value"] - 12.06) < 0.1
+    assert get(report, "LIGHT-FIX-001")["value"] == 9
+
+
+def test_ground_rod_resistance_is_labeled_approximate():
+    report = run_advanced_calculations({"soil_resistivity_ohm_m": 100, "ground_rod_length_m": 3,
+        "ground_rod_diameter_m": 0.016})
+    calc = get(report, "GROUND-ROD-R-001")
+    assert calc["status"] == "calculated"
+    assert calc["value"] > 0
+    assert "Not a grounding compliance result" in calc["warnings"][0]
