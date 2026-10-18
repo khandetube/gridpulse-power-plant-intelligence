@@ -5,7 +5,10 @@ from typing import Any
 
 from gridpulse.cad_engine import Discipline, EngineeringSpec, build_spec, review_spec
 from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
-from gridpulse.cad_engine_calculations import parse_explicit_parameters, run_engineering_calculations
+from gridpulse.cad_engine_calculations import (
+    parse_explicit_parameters,
+    run_engineering_calculations,
+)
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
 from gridpulse.cad_engine_parameter_parser import parse_advanced_parameters
 
@@ -107,6 +110,6 @@ def run_design_agent(prompt: str, site_width: float = 80, site_length: float = 5
         "advanced_calculations": advanced,
         "intelligence": intelligence,
         "critique": critique,
-        "metrics": {"assets": len(spec.assets), "routes": len(spec.routes), "disciplines": sorted(set(a.discipline for a in spec.assets) | set(r.discipline for r in spec.routes)), "readiness_score": intelligence["readiness_score"], "risk_count": critique["finding_count"], "calculations_total": calculations["summary"]["total"] + advanced["summary"]["total"], "calculations_complete": calculations["summary"]["calculated"] + advanced["summary"]["calculated"]},
+        "metrics": {"assets": len(spec.assets), "routes": len(spec.routes), "disciplines": sorted({a.discipline for a in spec.assets} | {r.discipline for r in spec.routes}), "readiness_score": intelligence["readiness_score"], "risk_count": critique["finding_count"], "calculations_total": calculations["summary"]["total"] + advanced["summary"]["total"], "calculations_complete": calculations["summary"]["calculated"] + advanced["summary"]["calculated"]},
         "next_actions": ["Resolve high-priority findings.", "Provide approved design-basis/code/vendor inputs for calculations marked insufficient_input.", "Run project-specific discipline calculations and code checks before construction use."],
     }
