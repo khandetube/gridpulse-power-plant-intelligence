@@ -75,7 +75,7 @@ def export_3ds_max_script(spec: EngineeringSpec) -> str:
                 f"local gpB = [{x2:.4f},{y2:.4f},{z2:.4f}]",
                 "local gpDelta = gpB - gpA",
                 f"if (length gpDelta) > 0.001 do (local gpRoute = cylinder radius:{radius:.4f} height:(length gpDelta) sides:12",
-                "gpRoute.pos = gpA",
+                "gpRoute.pos = (gpA + gpB) / 2",
                 "gpRoute.rotation = (rotationTo [0,0,1] (normalize gpDelta))",
                 f'gpRoute.name = "{label}"',
                 f"gpRoute.wirecolor = {color})",
