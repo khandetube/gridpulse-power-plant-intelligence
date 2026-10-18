@@ -1,5 +1,5 @@
 from gridpulse.cad_engine import CadAsset, EngineeringSpec
-from gridpulse.cad_engine_calculations import parse_explicit_parameters, run_engineering_calculations
+from gridpulse.cad_engine_calculations import (\n    parse_explicit_parameters,\n    run_engineering_calculations,\n)
 
 
 def _spec():
