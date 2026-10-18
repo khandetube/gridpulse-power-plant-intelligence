@@ -49,7 +49,7 @@ def test_3ds_max_script_has_assets_and_routes():
     assert "gpObj.name =" in script
     assert "gpRoute.name =" in script
     assert "units.systemType = #meters" in script
-    assert "Conceptual model only" in script
+    assert "conceptual geometry only" in script.lower()
 
 
 
