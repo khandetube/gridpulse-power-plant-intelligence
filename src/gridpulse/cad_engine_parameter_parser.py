@@ -34,4 +34,22 @@ def parse_advanced_parameters(prompt: str) -> dict[str, float]:
             result[key] = float(match.group(1))
         except ValueError:
             continue
+    extras = {
+        "minor_loss_coefficient": r"(?:minor loss coefficient|total K)\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)",
+        "airflow_m3_h": r"airflow\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*m3/h",
+        "air_density_kg_m3": r"air density\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*kg/m3",
+        "air_specific_heat_j_kg_k": r"air specific heat\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*J/kg/K",
+        "temperature_difference_k": r"temperature difference\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*K",
+        "target_illuminance_lux": r"target illuminance\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*lux",
+        "fixture_lumens": r"fixture output\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*lm",
+        "utilization_factor": r"utilization factor\s*[:=]?\s*(0?\.[0-9]+|1(?:\.0)?)",
+        "maintenance_factor": r"maintenance factor\s*[:=]?\s*(0?\.[0-9]+|1(?:\.0)?)",
+        "soil_resistivity_ohm_m": r"soil resistivity\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*ohm.m",
+        "ground_rod_length_m": r"ground rod length\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*m\b",
+        "ground_rod_diameter_m": r"ground rod diameter\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*m\b",
+    }
+    for key, pattern in extras.items():
+        match = re.search(pattern, text, re.I)
+        if match:
+            result[key] = float(match.group(1))
     return result
