@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-import gridpulse.main as main
+from gridpulse import main
 from gridpulse.main import app
 
 client = TestClient(app)
