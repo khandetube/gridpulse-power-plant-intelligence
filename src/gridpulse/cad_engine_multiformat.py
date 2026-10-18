@@ -139,7 +139,12 @@ try:
         safe_tag = str(asset.get("tag", "ASSET"))[:60]
         shape.ApplicationId = "GridPulse"
         shape.ApplicationDataId = safe_tag
-        shape.Name = safe_tag + " | " + str(asset.get("name", "Conceptual equipment"))[:80]
+        mark = shape.get_Parameter(DB.BuiltInParameter.ALL_MODEL_MARK)
+        if mark and not mark.IsReadOnly:
+            mark.Set(safe_tag)
+        comments = shape.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        if comments and not comments.IsReadOnly:
+            comments.Set(str(asset.get("name", "Conceptual equipment"))[:250])
         shape.SetShape([solid])
         created.append(shape.Id.IntegerValue)
     # Routes are intentionally not auto-converted to MEP systems; that needs
