@@ -61,3 +61,4 @@ def test_knowledge_search_api_returns_citations():
     body = response.json()
     assert body["network_access"] is False
     assert body["results"][0]["source_id"] == "DOC-MAINT-01"
+\n\ndef test_local_retrieval_normalizes_persian_arabic_character_variants():\n    documents = [{\n        "title": "راهنمای فارسی",\n        "source_id": "FA-GUIDE-01",\n        "text": "بررسی لرزش یاتاقان و کالیبراسیون حسگر",\n    }]\n    result = search_documents("بررسي لرزش ياتاقان و كاليبراسيون حسگر", documents)\n    assert result["results"]\n    assert result["results"][0]["source_id"] == "FA-GUIDE-01"\n\n\ndef test_local_retrieval_normalizes_zero_width_non_joiner():\n    documents = [{"title": "فارسی", "source_id": "FA-02", "text": "داده‌های نیروگاه و نگهداری پیش‌بینانه"}]\n    result = search_documents("داده های نیروگاه نگهداری پیش بینانه", documents)\n    assert result["results"]\n
