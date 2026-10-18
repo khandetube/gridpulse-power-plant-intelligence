@@ -2,7 +2,7 @@
 import ast
 import json
 
-from gridpulse.cad_engine import build_spec
+from gridpulse.cad_engine import CadAsset, CadRoute, EngineeringSpec, build_spec, review_spec
 from gridpulse.cad_engine_multiformat import (
     export_3ds_max_script,
     export_multi_application_bundle,
@@ -45,3 +45,30 @@ def test_3ds_max_script_has_assets_and_routes():
     assert "for asset in spec[\"assets\"]" in script
     assert "for route in spec[\"routes\"]" in script
     assert "Conceptual model only" in script
+
+
+
+def test_geometric_review_detects_route_crossing_equipment():
+    spec = EngineeringSpec(
+        project_name="clash-test",
+        site_width=20,
+        site_length=20,
+        assets=[
+            CadAsset(
+                tag="P-101", name="Pump", discipline="Mechanical", shape="pump",
+                x=5, y=5, z=0, length=4, width=4, height=3,
+            )
+        ],
+        routes=[
+            CadRoute(
+                tag="P-1001", name="Schematic pipe", discipline="Piping", kind="pipe",
+                points=[(1, 6, 1), (10, 6, 1)], width=0.2,
+            )
+        ],
+    )
+    report = review_spec(spec)
+    clashes = [item for item in report["geometric_findings"]
+               if item["code"] == "ROUTE_ASSET_ENVELOPE_CLASH"]
+    assert clashes
+    assert clashes[0]["items"] == ["P-1001", "P-101"]
+    assert report["engineering_approval"] is False
