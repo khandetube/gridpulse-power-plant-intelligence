@@ -18,61 +18,68 @@ def export_autocad_dxf(spec: EngineeringSpec) -> str:
 
 
 def export_3ds_max_script(spec: EngineeringSpec) -> str:
-    """Build a runnable .ms script for editable conceptual 3ds Max geometry."""
-    payload = json.dumps(spec.model_dump(mode="json"), ensure_ascii=False)
-    # MaxScript string escaping is handled by JSON's quoted string representation.
-    payload_literal = json.dumps(payload, ensure_ascii=True)
-    return f'''-- GridPulse 3ds Max generator; conceptual envelopes, not fabrication geometry.
--- Run this script in 3ds Max. Scene units are set to meters where supported.
-local specJson = {payload_literal}
-local spec = (dotNetClass "System.Web.Script.Serialization.JavaScriptSerializer").Create().DeserializeObject specJson
-fn gpBox label pos dims wireColor =
-(
-    local obj = box length:dims[1] width:dims[2] height:dims[3] pos:pos
-    obj.name = label
-    obj.wirecolor = wireColor
-    obj
-)
-fn gpRoute label pts radius wireColor =
-(
-    for i = 1 to (pts.count - 1) do
-    (
-        local a = [pts[i][1], pts[i][2], pts[i][3]]
-        local b = [pts[i+1][1], pts[i+1][2], pts[i+1][3]]
-        local delta = b - a
-        if (length delta) > 0.001 do
-        (
-            local obj = cylinder radius:radius height:(length delta) sides:12
-            obj.name = label + "_" + (i as string)
-            obj.pos = a
-            obj.rotation = (rotationTo (normalize delta) [0,0,1])
-            obj.wirecolor = wireColor
-        )
+    """Generate dependency-light MaxScript with named editable equipment and route geometry."""
+    def quote(value: str) -> str:
+        return value.replace("\\\\", "\\\\\\\\").replace('"', '\\"').replace("\\n", " ").replace("\\r", " ")
+
+    lines = [
+        "-- GridPulse 3ds Max generator; conceptual geometry only, not fabrication-ready.",
+        "units.systemType = #meters",
+        "clearSelection()",
+    ]
+    colors = {
+        "Mechanical": "(color 225 120 65)", "Piping": "(color 40 130 220)",
+        "Electrical": "(color 170 95 190)", "Instrumentation": "(color 0 150 130)",
+        "Fire": "(color 220 40 45)", "HVAC": "(color 40 140 185)",
+        "Grounding": "(color 138 109 59)", "Lighting": "(color 213 166 0)",
+        "Drainage": "(color 91 140 90)", "Architecture": "(color 99 115 129)",
+    }
+    for asset in spec.assets:
+        label = quote(f"{asset.tag}_{asset.name}")
+        x, y, z = asset.x, asset.y, asset.z
+        length, width, height = asset.length, asset.width, asset.height
+        color = colors.get(asset.discipline, "(color 120 140 160)")
+        if asset.shape in {"cylinder", "tank", "vessel", "fan"}:
+            radius = (asset.diameter / 2 if asset.diameter else min(length, width) / 2)
+            lines.append(
+                f'local gpObj = cylinder radius:{max(radius, 0.01):.4f} height:{max(height, 0.01):.4f} '
+                f'sides:32 pos:[{x:.4f},{y:.4f},{z:.4f}]'
+            )
+        else:
+            lines.append(
+                f'local gpObj = box length:{length:.4f} width:{width:.4f} height:{height:.4f} '
+                f'pos:[{x:.4f},{y:.4f},{z:.4f}]'
+            )
+        lines.append(f'gpObj.name = "{label}"')
+        lines.append(f"gpObj.wirecolor = {color}")
+    route_colors = {
+        "pipe": "(color 40 130 220)", "cable_tray": "(color 170 95 190)",
+        "duct": "(color 40 140 185)", "fire": "(color 220 40 45)",
+        "grounding": "(color 138 109 59)",
+    }
+    for route in spec.routes:
+        radius = max(route.width / 2, 0.01)
+        color = route_colors.get(route.kind, "(color 100 130 150)")
+        for index, (start, end) in enumerate(zip(route.points, route.points[1:]), start=1):
+            x1, y1, z1 = start
+            x2, y2, z2 = end
+            label = quote(f"{route.tag}_{index}")
+            lines.extend([
+                f"local gpA = [{x1:.4f},{y1:.4f},{z1:.4f}]",
+                f"local gpB = [{x2:.4f},{y2:.4f},{z2:.4f}]",
+                "local gpDelta = gpB - gpA",
+                f"if (length gpDelta) > 0.001 do (local gpRoute = cylinder radius:{radius:.4f} "
+                "height:(length gpDelta) sides:12",
+                "gpRoute.pos = gpA",
+                "gpRoute.rotation = (rotationTo [0,0,1] (normalize gpDelta))",
+                f'gpRoute.name = "{label}"',
+                f"gpRoute.wirecolor = {color})",
+            ])
+    lines.append(
+        f'format "GridPulse created {len(spec.assets)} equipment envelopes and '
+        f'{sum(max(0, len(r.points)-1) for r in spec.routes)} route segments. Conceptual only.\\n"'
     )
-)
--- Import through the JSON .NET serializer. All dimensions are conceptual model units.
-units.systemType = #meters
-for asset in spec["assets"] do
-(
-    local p = asset["x"] as float
-    local q = asset["y"] as float
-    local z = asset["z"] as float
-    local l = asset["length"] as float
-    local w = asset["width"] as float
-    local h = asset["height"] as float
-    local col = if asset["discipline"] == "Electrical" then (color 170 95 190) else (color 225 120 65)
-    local obj = gpBox (asset["tag"] + "_" + asset["name"]) [p,q,z] [l,w,h] col
-    obj.boxmap = true
-)
-for route in spec["routes"] do
-(
-    local pts = #()
-    for p in route["points"] do append pts #(p[1] as float, p[2] as float, p[3] as float)
-    local col = if route["kind"] == "cable_tray" then (color 150 80 190) else (color 40 130 220)
-    gpRoute route["tag"] pts ((route["width"] as float)/2.0) col
-)
-format "GridPulse: created % assets and % routes. Conceptual model only.\\n" spec["assets"].count spec["routes"].count
-'''
+    return "\\n".join(lines) + "\\n"
 
 
 def export_revit_dynamo_python(spec: EngineeringSpec) -> str:
