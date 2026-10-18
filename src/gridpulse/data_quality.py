@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from datetime import date
+from hashlib import sha256
+import json
 from itertools import pairwise
 from math import isfinite
 from statistics import median
@@ -164,8 +166,19 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
     severity_counts = Counter(issue["severity"] for issue in issues)
     actionable = sorted(issues, key=lambda x: ({"high": 0, "medium": 1, "review": 2}.get(x["severity"], 3), x["issue_id"]))
 
+    canonical_input = json.dumps(records, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    input_fingerprint = sha256(canonical_input.encode("utf-8")).hexdigest()
+    issue_fingerprint = sha256(json.dumps(actionable, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")).hexdigest()
+
     return {
         "engine": ENGINE_ID,
+        "audit": {
+            "input_sha256": input_fingerprint,
+            "issues_sha256": issue_fingerprint,
+            "fingerprint_algorithm": "SHA-256",
+            "canonicalization": "UTF-8 JSON, sorted object keys, compact separators",
+            "reproducible": True,
+        },
         "mode": "governance_review_only",
         "input_record_count": total,
         "issue_count": len(issues),
