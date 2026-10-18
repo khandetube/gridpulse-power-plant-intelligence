@@ -274,6 +274,7 @@ ${Array.from({length:s.d.F-1},(_,i)=>`box name:"Floor_Slab_${i+1}" length:${s.d.
 box name:"Concept_Cable_Tray" length:${s.d.L} width:${(s.d.W*.025).toFixed(3)} height:0.08 pos:[0,${(s.d.W*.16).toFixed(3)},${s.d.tray}] wirecolor:(color 50 220 205)
 box name:"Concept_Pipe_Main" length:${(s.d.L*.84).toFixed(3)} width:0.08 height:0.08 pos:[${(s.d.L*.08).toFixed(3)},${(s.d.W*.50).toFixed(3)},${s.d.pipe}] wirecolor:(color 255 185 90)
 box name:"Concept_Duct_Main" length:${(s.d.L*.8).toFixed(3)} width:0.18 height:0.18 pos:[${(s.d.L*.10).toFixed(3)},${(s.d.W*.78).toFixed(3)},${s.d.duct}] wirecolor:(color 125 175 255)
+${customObjects.filter(o=>o.visible!==false).map(o=>o.type==="cylinder" ? ("cylinder name:\""+o.name.replace(/["\\]/g,"_")+"\" radius:"+ (Math.max(o.dx,o.dy)/2).toFixed(3)+" height:"+o.dz+" pos:["+(o.x+o.dx/2).toFixed(3)+","+(o.y+o.dy/2).toFixed(3)+","+o.z+"]") : ("box name:\""+o.name.replace(/["\\]/g,"_")+"\" length:"+o.dx+" width:"+o.dy+" height:"+o.dz+" pos:["+o.x+","+o.y+","+o.z+"]")).join("\n")}
 -- Approximate bounding-box model only. No connectors, sizing, schedules or BIM metadata.
 `}
 
@@ -346,6 +347,9 @@ try:
     created.append(solid_box("Concept_Duct",DATA['L']*0.10,DATA['W']*0.78,DATA['duct'],DATA['L']*0.80,0.18,0.18))
     for r in DATA['rooms']:
         created.append(solid_box("Room_"+r['name'],r['x'],r['y'],(r['floor']-1)*DATA['H'],r['length'],r['width'],DATA['H']))
+    # User-created solids are exported as conceptual DirectShape envelopes.
+    for o in DATA.get('custom_objects',[]):
+        created.append(solid_box('Custom_'+o['name'],o['x'],o['y'],o['z'],o['dx'],o['dy'],o['dz']))
 finally:
     TransactionManager.Instance.TransactionTaskDone()
 OUT = {"created_elements":len([x for x in created if x is not None]), "units":"meters input / Revit feet internal", "note":"Conceptual DirectShape geometry only; not native MEP families or construction-ready BIM."}
