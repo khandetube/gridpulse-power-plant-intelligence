@@ -43,7 +43,6 @@ def infer_system_topology(spec: EngineeringSpec) -> dict[str, Any]:
     routes_by_discipline = defaultdict(list)
     for r in spec.routes:
         routes_by_discipline[r.discipline].append(r.tag)
-
     roles = {a.tag: _kind_for_asset(a) for a in spec.assets}
     for a, b in combinations(spec.assets, 2):
         ka, kb = roles[a.tag], roles[b.tag]
@@ -63,7 +62,6 @@ def infer_system_topology(spec: EngineeringSpec) -> dict[str, Any]:
         if proposed and distance <= max(spec.site_width, spec.site_length) * 0.55:
             edges.append({"from": a.tag, "to": b.tag, "relation": proposed,
                           "distance_model_units": round(distance, 3), "confidence": "heuristic"})
-
     return {
         "nodes": nodes,
         "candidate_connections": edges,
@@ -72,7 +70,7 @@ def infer_system_topology(spec: EngineeringSpec) -> dict[str, Any]:
     }
 
 
-def analyze_design_intelligence(spec: EngineeringSpec) -> dict[str, Any]:
+def analyze_design_intelligence(spec: EngineeringSpec, calculations: dict[str, Any] | None = None) -> dict[str, Any]:
     """Produce a deterministic engineering-assistant report from one validated spec."""
     base = review_spec(spec)
     topology = infer_system_topology(spec)
@@ -94,7 +92,6 @@ def analyze_design_intelligence(spec: EngineeringSpec) -> dict[str, Any]:
     if "Instrumentation" in selected and not any("control" in _kind_for_asset(a) for a in spec.assets):
         actions.append({"priority": "medium", "code": "CONTROL_NODE_MISSING",
                         "action": "Review DCS/PLC/control-panel location and instrumentation interfaces."})
-
     maintenance_risks = []
     for a in spec.assets:
         nearby = [b.tag for b in spec.assets if b.tag != a.tag and
@@ -105,23 +102,33 @@ def analyze_design_intelligence(spec: EngineeringSpec) -> dict[str, Any]:
         actions.append({"priority": "medium", "code": "MAINTENANCE_CLEARANCE_REVIEW",
                         "action": "Verify equipment removal paths, operating envelopes and maintenance clearances."})
 
+    calculation_summary = calculations.get("summary", {}) if calculations else {}
+    if calculations and calculation_summary.get("insufficient_input", 0):
+        actions.append({"priority": "high", "code": "ENGINEERING_INPUTS_INCOMPLETE",
+                        "action": "Provide the missing numeric design-basis inputs shown in the calculation report; do not substitute guessed values."})
+    if calculations and calculation_summary.get("calculated", 0):
+        actions.append({"priority": "medium", "code": "CALCULATIONS_REQUIRE_CODE_REVIEW",
+                        "action": "Review calculated values against the applicable project codes, equipment ratings and design basis."})
+
     penalty = min(60, len(base["geometric_findings"]) * 3) + min(20, len(missing) * 5)
     if not topology["candidate_connections"]:
         penalty += 10
     readiness = max(0, 100 - penalty)
     return {
-        "engine": "GridPulse Engineering Intelligence v0.3",
-        "mode": "deterministic_reasoning_over_validated_spec",
+        "engine": "GridPulse Engineering Intelligence v0.4",
+        "mode": "deterministic_reasoning_over_validated_spec_and_calculations",
         "readiness_score": readiness,
         "readiness_label": "coordination prototype" if readiness >= 70 else "coordination review required",
         "scope": {"assets": len(spec.assets), "routes": len(spec.routes),
                   "asset_disciplines": dict(disciplines), "route_disciplines": dict(route_disciplines)},
         "topology": topology,
         "coordination_findings": base["geometric_findings"],
+        "calculation_summary": calculation_summary,
         "recommended_actions": actions,
         "assumption_register": list(spec.design_basis),
         "limitations": [
-            "No hydraulic sizing, pipe stress, electrical load-flow/short-circuit/protection, structural analysis, fire engineering, HVAC load calculation or code compliance calculation is performed.",
+            "Deterministic calculations are performed only where required numeric inputs are explicitly available.",
+            "No universal code limit, equipment rating, material property, protection setting or safety criterion is invented.",
             "Semantic connections are candidate relationships inferred from names, disciplines and spatial proximity.",
             "The result must not be used as construction, procurement or operational approval.",
         ],
