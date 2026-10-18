@@ -28,9 +28,10 @@ def test_agent_runs_all_stages_and_returns_critique():
         use_llm=False,
     )
     assert result["agent"].startswith("GridPulse Engineering Design Agent")
-    assert len(result["plan"]["phases"]) == 7
+    assert len(result["plan"]["phases"]) == 8
     assert result["model"]["assets"]
     assert "topology" in result["intelligence"]
     assert "calculations" in result
+    assert "advanced_calculations" in result
     assert "findings" in result["critique"]
     assert result["metrics"]["assets"] == len(result["model"]["assets"])
