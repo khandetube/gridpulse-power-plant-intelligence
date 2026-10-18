@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass, field
 from collections.abc import Iterable
+from dataclasses import dataclass, field
 from typing import Any
 
 from gridpulse.cad_engine import EngineeringSpec
