@@ -2,155 +2,126 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GridPulse | نقشه مفهومی پالایشگاه A0</title>
+<title>GridPulse | نقشه جانمایی صنعتی پالایشگاه</title>
 <style>
 :root{color-scheme:dark;--bg:#071321;--panel:#102238;--line:#2a4058;--text:#edf4ff;--muted:#9fb1c8;--cyan:#55dbc8}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.65 system-ui,sans-serif}header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.wrap{max-width:1600px;margin:auto;padding:18px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}button,a.btn{border:1px solid #35516c;background:#172d43;color:var(--text);border-radius:8px;padding:9px 12px;font:inherit;text-decoration:none;cursor:pointer}button.primary{background:var(--cyan);color:#06211e;font-weight:800;border-color:var(--cyan)}label{display:flex;gap:5px;align-items:center;font-size:12px}.muted{color:var(--muted);font-size:12px}.sheet{background:white;overflow:auto;border-radius:8px;direction:ltr}.sheet svg{display:block;width:100%;height:auto;min-width:760px;background:white;transform-origin:0 0}.notice{border-right:4px solid #ffcb77;padding:8px 12px;background:#2b2519;color:#f6e6c9;margin:10px 0}
-@media print{@page{size:A0 landscape;margin:0}.view-tools{display:none!important}html,body{width:1189mm;height:841mm;margin:0;padding:0;background:#fff;color:#000}header{display:none!important}.wrap{display:block!important;width:1189mm;height:841mm;max-width:none;margin:0;padding:0}.wrap>.panel,.wrap>p,.notice,.tools,.muted{display:none!important}.sheet{display:block!important;width:1189mm;height:841mm;border:0;border-radius:0;overflow:hidden}.sheet svg{width:1189mm;height:841mm;min-width:0;max-width:none}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 22px;border-bottom:1px solid var(--line)}header a{color:var(--cyan);text-decoration:none}.wrap{max-width:1800px;margin:auto;padding:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}button,a.btn,input,select{font:inherit;border:1px solid #35516c;background:#172d43;color:var(--text);border-radius:8px;padding:8px 10px}button,a.btn{cursor:pointer;text-decoration:none}button.primary{background:var(--cyan);color:#06211e;font-weight:800}.muted{color:var(--muted);font-size:12px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:12px;align-items:start}.sheet{background:#f7f9fb;border-radius:8px;overflow:auto;direction:ltr;min-width:0}.sheet svg{display:block;width:100%;height:auto;min-width:760px;background:#fff}.side{position:sticky;top:10px}.side h3{margin:0 0 8px}.side dl{display:grid;grid-template-columns:80px 1fr;gap:5px;font-size:12px}.side dt{color:var(--muted)}.side dd{margin:0;overflow-wrap:anywhere}.layers{display:flex;gap:8px;flex-wrap:wrap}.layers label{display:flex;gap:5px;align-items:center;border:1px solid #304860;border-radius:8px;padding:6px 9px;font-size:12px}.layers input{accent-color:#55dbc8}.notice{border-right:4px solid #ffcb77;padding:8px 12px;background:#2b2519;color:#f6e6c9;margin:10px 0}.status{font-size:12px;color:#8de0c2}.legend{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px}.swatch{display:inline-block;width:22px;height:4px;margin-left:6px;vertical-align:middle}@media(max-width:950px){.layout{grid-template-columns:1fr}.side{position:static;order:2}.sheet{order:1}}@media print{@page{size:A0 landscape;margin:0}body{background:#fff;color:#111}.no-print,header,.side,.panel.controls{display:none!important}.wrap{padding:0;max-width:none}.layout{display:block}.sheet{overflow:visible;border-radius:0}.sheet svg{width:1189mm;height:841mm;min-width:0}}
 </style>
 </head>
 <body>
-<header><div><strong>GRIDPULSE · INDUSTRIAL ENGINEERING</strong><div class="muted">Refinery General Arrangement · Vector CAD-style concept drawing</div></div><a class="btn" href="mep-studio.html">بازگشت به MEP Studio</a></header>
+<header><div><strong>GRIDPULSE · INDUSTRIAL LAYOUT STUDIO</strong><div class="muted">نقشه جانمایی مفهومی · نمای دوبعدی وکتور · نسخه بازطراحی‌شده</div></div><a class="btn" href="mep-studio.html">بازگشت به MEP Studio ↗</a></header>
 <main class="wrap">
-<section class="panel">
-<h2 style="margin:0 0 6px">پلان دوبعدی سایت پالایشگاه — انتخاب اندازه چاپ A0 تا A5</h2>
-<div class="notice">این نسخه عمداً یک نقشه کلیِ متراکم‌تر است، نه سه مستطیل ساده. اما هنوز «پلان واقعی یک پالایشگاه مشخص» نیست: جانمایی و ابعاد تجهیزات مفهومی‌اند و تا دریافت نقشه‌برداری/مدارک واقعی، برای اجرا یا ایمنی فرایندی قابل استفاده نیستند.</div>
-<div class="tools">
-<button class="primary" id="svgDownload">دریافت SVG وکتور (A0)</button><label>اندازه چاپ <select id="paperSize" style="background:#091626;color:#edf4ff;border:1px solid #35516c;border-radius:8px;padding:8px"><option value="A0">A0 — 1189×841 mm</option><option value="A1">A1 — 841×594 mm</option><option value="A2">A2 — 594×420 mm</option><option value="A3">A3 — 420×297 mm</option><option value="A4" selected>A4 — 297×210 mm</option><option value="A5">A5 — 210×148 mm</option><option value="Letter">Letter — 279×216 mm</option></select></label><button id="print">چاپ با اندازه انتخابی</button>
-<label><input type="checkbox" data-layer="process" checked> واحدهای فرایندی</label>
-<label><input type="checkbox" data-layer="equipment" checked> تجهیزات و تگ‌ها</label>
-<label><input type="checkbox" data-layer="tanks" checked> مخازن و حوضچه‌ها</label>
-<label><input type="checkbox" data-layer="piping" checked> پایپ‌رک و خطوط</label>
-<label><input type="checkbox" data-layer="utilities" checked> یوتیلیتی</label>
-<label><input type="checkbox" data-layer="electrical" checked> برق و کنترل</label>
-<label><input type="checkbox" data-layer="roads" checked> راه‌ها</label>
-<label><input type="checkbox" data-layer="labels" checked> برچسب‌ها</label>
-</div>
-<p class="muted">اندازه کاغذ را پیش از چاپ انتخاب کنید. A0 برای جزئیات خواناتر است؛ در A3/A4 نقشه کوچک‌تر می‌شود و برچسب‌ها ممکن است ریز شوند. در پنجره چاپ، حالت افقی (Landscape) و حاشیه صفر/حداقل را انتخاب کنید؛ برای مقیاس دقیق 1:1000 فقط A0 و چاپ 100% بدون Fit to page معتبر است. SVG خروجی همچنان وکتور A0 است.</p>
+<section class="panel controls no-print">
+<div class="row"><strong>کنترل نقشه</strong><input id="search" type="search" placeholder="جست‌وجوی تگ یا تجهیز؛ مثال: P-101" style="min-width:220px"><button id="zoomOut">− بزرگ‌نمایی</button><button id="zoomIn">+ بزرگ‌نمایی</button><button id="zoomReset">نمای کامل</button><label>کاغذ چاپ <select id="paper"><option>A0</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option></select></label><button id="print" class="primary">چاپ نقشه</button><button id="download">دریافت SVG</button><span id="status" class="status">نقشه آماده است</span></div>
+<div class="notice">این نقشه از نو و با نواحی تفکیک‌شده ترسیم شده است تا اجزا روی یکدیگر نیفتند. تمام مختصات، تگ‌ها و ابعاد فعلاً نمونه مفهومی‌اند و برای ساخت، بهره‌برداری، ایمنی فرایندی یا تصمیم مهندسی واقعی معتبر نیستند.</div>
+<div class="layers" aria-label="لایه‌های نقشه">
+<label><input type="checkbox" data-layer="roads" checked> راه‌ها و محدوده سایت</label><label><input type="checkbox" data-layer="process" checked> واحدهای فرایندی</label><label><input type="checkbox" data-layer="equipment" checked> تجهیزات و تگ‌ها</label><label><input type="checkbox" data-layer="piping" checked> پایپ‌رک و خطوط</label><label><input type="checkbox" data-layer="tanks" checked> مخازن</label><label><input type="checkbox" data-layer="utilities" checked> یوتیلیتی و آتش‌نشانی</label><label><input type="checkbox" data-layer="electrical" checked> برق و کنترل</label><label><input type="checkbox" data-layer="labels" checked> برچسب‌ها و ابعاد</label></div>
 </section>
-<div id="mapRuntimeError" class="notice" hidden role="alert"></div><div class="sheet" id="sheet"></div>
+<div class="layout">
+<div class="sheet" id="sheet" aria-label="نقشه صنعتی وکتور"></div>
+<aside class="panel side no-print"><h3>اطلاعات جزء انتخاب‌شده</h3><p class="muted">برای مشاهده مشخصات، روی یک تجهیز یا واحد در نقشه کلیک کنید.</p><dl><dt>شناسه</dt><dd id="infoTag">—</dd><dt>شرح</dt><dd id="infoName">—</dd><dt>ناحیه</dt><dd id="infoZone">—</dd><dt>نوع</dt><dd id="infoType">—</dd><dt>وضعیت داده</dt><dd id="infoState">مفهومی / نمونه</dd><dt>مختصات نقشه</dt><dd id="infoPos">—</dd></dl><hr style="border-color:#2a4058"><h3>راهنمای خطوط</h3><div class="legend"><div><i class="swatch" style="background:#078c8c"></i>فرایندی (مفهومی)</div><div><i class="swatch" style="background:#3479b8"></i>آب / یوتیلیتی</div><div><i class="swatch" style="background:#c64e48"></i>آتش‌نشانی</div><div><i class="swatch" style="background:#b77a27"></i>سوخت / بخار</div><div><i class="swatch" style="background:#7253a6"></i>محدوده مخازن</div><div><i class="swatch" style="background:#477db0"></i>برق و کنترل</div></div><hr style="border-color:#2a4058"><p class="muted">برای استفاده مهندسی باید داده‌های نقشه‌برداری، PFD/P&amp;ID، مدارک سازنده، فاصله‌های ایمنی، کلاس‌بندی مناطق خطرناک و بازبینی مهندسان مسئول وارد و تأیید شوند.</p></aside>
+</div>
 </main>
 <script>
-const NS="http://www.w3.org/2000/svg",svg=document.createElementNS(NS,"svg");
-svg.setAttribute("xmlns",NS);svg.setAttribute("viewBox","0 0 1189 841");svg.setAttribute("width","1189mm");svg.setAttribute("height","841mm");
-// Mount the SVG before drawing: a later runtime error must never leave the entire sheet blank.
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg",W=1189,H=841;
+const svg=document.createElementNS(NS,"svg");svg.setAttribute("xmlns",NS);svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("role","img");svg.setAttribute("aria-label","Conceptual refinery general arrangement");
 document.getElementById("sheet").appendChild(svg);
-function E(tag,a={},parent=svg,text){const e=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;(parent||svg).appendChild(e);return e}
-function group(id){return E("g",{"data-layer-group":id})}
-function rect(g,x,y,w,h,fill="none",stroke="#334b5f",sw=.8,rx=0){return E("rect",{x,y,width:w,height:h,fill,stroke,"stroke-width":sw,rx},g)}
-function line(g,x1,y1,x2,y2,stroke="#718291",sw=.5,dash){let a={x1,y1,x2,y2,stroke,"stroke-width":sw};if(dash)a["stroke-dasharray"]=dash;return E("line",a,g)}
-function text(g,t,x,y,size=5,fill="#1b3042",anchor="middle",weight="normal"){return E("text",{x,y,"font-family":"Arial,sans-serif","font-size":size,fill,"text-anchor":anchor,"font-weight":weight},g,t)}
-function circle(g,x,y,r,fill="#fff",stroke="#7956a8",sw=.7){return E("circle",{cx:x,cy:y,r,fill,stroke,"stroke-width":sw},g)}
-function ellipse(g,x,y,rx,ry,fill="#f7f0fc",stroke="#8b68aa",sw=.7){return E("ellipse",{cx:x,cy:y,rx,ry,fill,stroke,"stroke-width":sw},g)}
-E("rect",{x:0,y:0,width:1189,height:841,fill:"#fff"});
-text(svg,"GRIDPULSE | REFINERY GENERAL ARRANGEMENT",35,28,10,"#142c41","start","bold");
-text(svg,"CONCEPTUAL SITE PLAN · VECTOR SHEET · NOT FOR CONSTRUCTION",35,42,5,"#526779","start");
-const ox=94,oy=72,siteW=1000,siteH=650,root=E("g",{transform:"translate("+ox+" "+oy+")"});
-const gGrid=E("g",{},root);
-for(let x=0;x<=1000;x+=25){const major=x%100===0;line(gGrid,x,0,x,650,major?"#d2dae1":"#edf0f3",major?.45:.2);if(major){text(root,String(x),x,-5,3.5,"#405569");text(root,String(x),x,657,3.5,"#405569")}}
-for(let y=0;y<=650;y+=25){const major=y%100===0;line(gGrid,0,y,1000,y,major?"#d2dae1":"#edf0f3",major?.45:.2);if(major){text(root,String(y),-5,y+1,3.5,"#405569","end");text(root,String(y),1005,y+1,3.5,"#405569","start")}}
-rect(root,0,0,1000,650,"none","#19354a",1.7);
-const road=E("g",{"data-layer-group":"roads"},root);
-rect(road,18,18,964,614,"none","#8a969f",14);rect(road,18,300,964,40,"#edf0f2","#7c8790",.6);rect(road,480,18,36,614,"#edf0f2","#7c8790",.6);
-[90,180,270,370,470,560].forEach(y=>line(road,25,y,975,y,"#c3a04d",.7,"5 4"));line(road,498,25,498,625,"#c3a04d",.7,"5 4");
-rect(road,-1,302,25,34,"#dce4e9","#526779",.6);rect(road,976,302,25,34,"#dce4e9","#526779",.6);text(road,"GATE 1",12,322,4,"#263f52");text(road,"GATE 2",988,322,4,"#263f52");
-const proc=E("g",{"data-layer-group":"process"},root);
+function el(tag,attrs,parent,textContent){const n=document.createElementNS(NS,tag);Object.entries(attrs||{}).forEach(([k,v])=>n.setAttribute(k,v));if(textContent!==undefined)n.textContent=textContent;(parent||svg).appendChild(n);return n}
+function group(id,parent){return el("g",{"data-layer-group":id},parent||svg)}
+function rect(g,x,y,w,h,fill,stroke,sw,rx){return el("rect",{x,y,width:w,height:h,fill:fill||"none",stroke:stroke||"#64798a","stroke-width":sw===undefined?1:sw,rx:rx||0},g)}
+function line(g,x1,y1,x2,y2,color,width,dash){const a={x1,y1,x2,y2,stroke:color||"#64798a","stroke-width":width===undefined?1:width};if(dash)a["stroke-dasharray"]=dash;return el("line",a,g)}
+function txt(g,t,x,y,size,color,anchor,weight){return el("text",{x,y,"font-family":"Arial,sans-serif","font-size":size||7,fill:color||"#24394a","text-anchor":anchor||"middle","font-weight":weight||"normal"},g,t)}
+function circle(g,x,y,r,fill,stroke,sw){return el("circle",{cx:x,cy:y,r,fill:fill||"#fff",stroke:stroke||"#536d80","stroke-width":sw||1},g)}
+function path(g,d,stroke,width,fill,dash){const a={d,fill:fill||"none",stroke:stroke||"#536d80","stroke-width":width||1};if(dash)a["stroke-dasharray"]=dash;return el("path",a,g)}
+const bg=group("background"),road=group("roads"),process=group("process"),tanks=group("tanks"),utilities=group("utilities"),electrical=group("electrical"),piping=group("piping"),equipment=group("equipment"),labels=group("labels");
+rect(bg,0,0,W,H,"#fff","#fff",0);
+txt(labels,"GRIDPULSE  /  REFINERY GENERAL ARRANGEMENT",38,28,13,"#132c41","start","bold");
+txt(labels,"CONCEPTUAL ENGINEERING LAYOUT  ·  REV 02  ·  NOT FOR CONSTRUCTION",38,43,6,"#637889","start");
+txt(labels,"SITE PLAN / PLOT PLAN",1148,28,8,"#132c41","end","bold");
+line(labels,38,52,1150,52,"#233f54",1);
+const sx=70,sy=76,sw=1048,sh=620;
+rect(road,sx,sy,sw,sh,"#fbfcfd","#203c50",2,2);
+rect(road,sx+12,sy+12,sw-24,sh-24,"none","#8798a4",.7,2);
+/* Internal access roads form clear separations between independent zones. */
+rect(road,82,352,1024,28,"#e9edf0","#a5afb7",.6);
+rect(road,330,88,24,250,"#e9edf0","#a5afb7",.6);
+rect(road,785,88,24,250,"#e9edf0","#a5afb7",.6);
+rect(road,82,608,1024,22,"#e9edf0","#a5afb7",.6);
+[96,210,440,670,900,1092].forEach(x=>line(road,x,364,x+30,364,"#c5a34d",1,"6 4"));
+[112,218,324,430,536,642,748,854,960,1066].forEach(x=>line(road,x,619,x+24,619,"#c5a34d",.8,"5 4"));
+txt(labels,"MAIN ACCESS / FIRE TENDER ROUTE",594,370,5.5,"#5b6e7b","middle","bold");
+txt(labels,"N",1137,95,8,"#132c41","middle","bold");line(labels,1137,123,1137,101,"#132c41",1.3);path(labels,"M 1132 108 L 1137 99 L 1142 108","#132c41",1,"#132c41");
+/* Process blocks: clear spacing and consistent internal equipment placement. */
 const units=[
-[55,55,180,190,"P-100 CRUDE DISTILLATION"],[260,55,175,190,"P-200 VACUUM DISTILLATION"],[550,55,175,190,"P-300 HYDROTREATING"],[755,55,175,190,"P-400 REFORMING / ISOM."],
-[55,375,180,155,"P-500 GAS / LPG RECOVERY"],[260,375,175,155,"P-600 SULFUR / OFF-GAS"],[550,375,175,155,"P-700 BLENDING / ADDITIVES"]
+{id:"CDU-101",name:"CRUDE DISTILLATION",x:98,y:112,w:210,h:218,kind:"process",desc:"واحد تقطیر نفت خام"},
+{id:"VDU-201",name:"VACUUM DISTILLATION",x:365,y:112,w:190,h:218,kind:"process",desc:"واحد تقطیر در خلأ"},
+{id:"HT-301",name:"HYDROTREATING",x:580,y:112,w:185,h:218,kind:"process",desc:"واحد هیدروتریتینگ"},
+{id:"REF-401",name:"REFORMING / ISOM.",x:834,y:112,w:240,h:218,kind:"process",desc:"واحد ریفرمینگ و ایزومریزاسیون"}
 ];
-units.forEach(([x,y,w,h,n],idx)=>{rect(proc,x,y,w,h,"#fff8e9","#b77a27",1);text(proc,n,x+w/2,y+9,4.8,"#85551b","middle","bold");for(let k=0;k<5;k++){let ex=x+14+k*Math.min(32,(w-35)/4);rect(proc,ex,y+22,10,Math.min(67,h*.48),"#fff","#b77a27",.7);for(let j=1;j<5;j++)line(proc,ex,y+22+j*10,ex+10,y+22+j*10,"#b77a27",.35)}for(let k=0;k<3;k++){let ex=x+22+k*((w-55)/2);rect(proc,ex,y+h-42,25,12,"#f7e5c4","#b77a27",.55);circle(proc,ex+12.5,y+h-22,3,"#fff","#b77a27",.55)}line(proc,x+7,y+h-12,x+w-7,y+h-12,"#b77a27",.5)});
-const tanks=E("g",{"data-layer-group":"tanks"},root);
-[[45,430,185,145,101,"CRUDE / FEED TANK FARM"],[250,430,185,145,201,"PRODUCT / INTERMEDIATE TANK FARM"]].forEach(([x,y,w,h,tag,title])=>{rect(tanks,x,y,w,h,"#fcf9ff","#8b68aa",1);text(tanks,title,x+w/2,y-4,4.1,"#62418a","middle","bold");for(let r=0;r<3;r++)for(let c=0;c<3;c++){let tx=x+30+c*55,ty=y+25+r*38;ellipse(tanks,tx,ty,14,9,"#f7f0fc","#8b68aa",.8);line(tanks,tx-14,ty,tx-14,ty+15,"#8b68aa",.4);line(tanks,tx+14,ty,tx+14,ty+15,"#8b68aa",.4);E("path",{d:"M "+(tx-14)+" "+(ty+15)+" A 14 9 0 0 0 "+(tx+14)+" "+(ty+15),fill:"none",stroke:"#8b68aa","stroke-width":.55},tanks);text(tanks,"T-"+(tag+r*3+c),tx,ty+3,3.1,"#63418a")}});rect(tanks,45,585,185,28,"#fcf9ff","#8b68aa",.8);text(tanks,"BUND DRAIN / OILY WATER SUMP",137,601,4,"#62418a");
-const pipe=E("g",{"data-layer-group":"piping"},root);
-[250,255,260,265,286,291,296,301,346,351,356,361].forEach(y=>line(pipe,35,y,965,y,"#13878d",.65));for(let x=45;x<970;x+=10)line(pipe,x,282,x,365,"#58a3a6",.25);[145,345,635,840].forEach(x=>{line(pipe,x,245,x,285,"#13878d",.8);line(pipe,x,365,x,375,"#13878d",.8)});text(pipe,"CENTRAL PIPE RACK: PROCESS / STEAM / WATER / FUEL GAS / FIREWATER",500,278,4.2,"#08777d","middle","bold");
-const util=E("g",{"data-layer-group":"utilities"},root);
-[[550,445,105,82,"U-710 COOLING TOWERS"],[675,445,105,82,"U-720 BOILER / STEAM"],[800,445,130,82,"U-730 WATER TREATMENT"],[550,545,100,54,"U-740 AIR / N2"],[665,545,115,54,"U-750 FIREWATER PUMPS"],[800,545,130,54,"U-760 WASTEWATER"]].forEach(([x,y,w,h,n],i)=>{rect(util,x,y,w,h,"#effaf5","#39956b",.9);text(util,n,x+w/2,y+9,4.1,"#27714f","middle","bold");if(i===0){for(let k=0;k<4;k++)rect(util,x+10+k*23,y+24,16,42,"#d8f1e6","#39956b",.5)}else if(i===2){for(let k=0;k<3;k++)circle(util,x+24+k*40,y+47,10,"#e3f6ee","#39956b",.6)}else{for(let k=0;k<3;k++)rect(util,x+10+k*(w-35)/3,y+23,18,25,"#d8f1e6","#39956b",.5)}});
-const elec=E("g",{"data-layer-group":"electrical"},root);
-[[755,200,175,70,"E-810 HV SUBSTATION"],[555,200,150,70,"E-820 MAIN MCC / SWITCHROOM"],[755,375,175,48,"E-830 EMERGENCY GENSET"],[55,200,180,70,"C-910 CONTROL ROOM / SIS / DCS"],[260,200,175,70,"L-920 LAB / QUALITY CONTROL"],[260,545,175,55,"M-910 MAINTENANCE WORKSHOP"],[55,545,180,55,"A-930 ADMIN / FIRST AID / FIRE"]].forEach((b,i)=>{rect(elec,b[0],b[1],b[2],b[3],"#f1f7fc",i<3?"#477db0":"#778a99",.9);text(elec,b[4],b[0]+b[2]/2,b[1]+10,4.1,"#234c71","middle","bold");for(let k=0;k<Math.max(3,Math.floor(b[2]/24));k++)rect(elec,b[0]+8+k*Math.min(24,(b[2]-16)/Math.max(2,Math.floor(b[2]/24))),b[1]+20,12,Math.max(10,b[3]-28),"#fff",i<3?"#477db0":"#778a99",.45)});
-const fl=E("g",{},proc);E("circle",{cx:945,cy:100,r:48,fill:"#fff6f4",stroke:"#bd4e47","stroke-width":.9,"stroke-dasharray":"4 3"},fl);line(fl,945,100,945,35,"#bd4e47",2);circle(fl,945,35,3,"#f5b0a9","#bd4e47",.7);text(fl,"FLARE / SAFETY ZONE",890,157,4.2,"#9c3933");
-rect(proc,775,565,155,40,"#fff8e9","#b77a27",.8);text(proc,"TRUCK / RAIL LOADING",852,574,4.1,"#85551b","middle","bold");for(let k=0;k<7;k++)rect(proc,786+k*20,580,9,18,"#f7e5c4","#b77a27",.45);
-// Equipment-level detail overlay: tagged vessels, exchangers, pumps, valves, instruments and tie-ins.
-const eq=E("g",{"data-layer-group":"equipment"},root);
-function vessel(g,x,y,w,h,tag){rect(g,x,y,w,h,"#fff","#526c80",.7,2);line(g,x,y+5,x+w,y+5,"#526c80",.45);line(g,x+w/2,y-4,x+w/2,y,"#526c80",.55);text(g,tag,x+w/2,y+h+5,3.2,"#253e52")}
-function exchanger(g,x,y,tag){rect(g,x,y,17,7,"#e7f2f7","#477d91",.6,2);line(g,x+2,y+1,x+15,y+6,"#477d91",.4);line(g,x+2,y+6,x+15,y+1,"#477d91",.4);text(g,tag,x+8.5,y+12,2.9,"#253e52")}
-function pump(g,x,y,tag){circle(g,x,y,4,"#fff","#286b85",.65);E("path",{d:"M "+(x-2)+" "+(y-2)+" L "+(x+2)+" "+y+" L "+(x-2)+" "+(y+2)+" Z",fill:"#286b85"},g);text(g,tag,x,y+9,2.8,"#253e52")}
-function valve(g,x,y){E("path",{d:"M "+(x-3)+" "+(y-3)+" L "+x+" "+y+" L "+(x-3)+" "+(y+3)+" Z M "+(x+3)+" "+(y-3)+" L "+x+" "+y+" L "+(x+3)+" "+(y+3)+" Z",fill:"#fff",stroke:"#13878d","stroke-width":.55},g)}
-const trains=[
-{b:[55,55],v:[["V-101",15,42],["V-102",38,42],["V-103",61,42]],e:[["E-101",92,43],["E-102",114,43]],p:[["P-101A",23,117],["P-101B",47,117]],i:80},
-{b:[260,55],v:[["V-201",15,42],["V-202",40,42]],e:[["E-201",78,43],["E-202",100,43]],p:[["P-201A",28,117],["P-201B",52,117]],i:125},
-{b:[550,55],v:[["R-301",16,42],["V-301",42,42],["V-302",66,42]],e:[["E-301",96,43],["E-302",118,43]],p:[["P-301A",24,117],["P-301B",48,117]],i:135},
-{b:[755,55],v:[["R-401",16,42],["V-401",42,42]],e:[["E-401",82,43],["E-402",104,43]],p:[["P-401A",25,117],["P-401B",49,117]],i:137},
-{b:[55,375],v:[["V-501",15,42],["V-502",40,42]],e:[["E-501",78,43],["E-502",100,43]],p:[["P-501A",25,100],["P-501B",49,100]],i:135},
-{b:[260,375],v:[["V-601",15,42],["R-601",40,42]],e:[["E-601",78,43],["E-602",100,43]],p:[["P-601A",25,100],["P-601B",49,100]],i:135},
-{b:[550,375],v:[["V-701",15,42],["V-702",40,42]],e:[["E-701",78,43],["E-702",100,43]],p:[["P-701A",25,100],["P-701B",49,100]],i:135}
+const itemIndex=[];
+function selectable(g,tag,name,zone,type,x,y,w,h){const hit=rect(g,x,y,w,h,"transparent","transparent",0,1);hit.style.cursor="pointer";hit.setAttribute("data-tag",tag);hit.setAttribute("data-name",name);hit.setAttribute("data-zone",zone);hit.setAttribute("data-type",type);hit.setAttribute("data-pos",Math.round(x)+", "+Math.round(y));hit.addEventListener("click",()=>selectItem(hit));itemIndex.push({tag,name,zone,type,node:hit});return hit}
+function selectItem(n){document.getElementById("infoTag").textContent=n.getAttribute("data-tag");document.getElementById("infoName").textContent=n.getAttribute("data-name");document.getElementById("infoZone").textContent=n.getAttribute("data-zone");document.getElementById("infoType").textContent=n.getAttribute("data-type");document.getElementById("infoPos").textContent=n.getAttribute("data-pos")+" (مختصات صفحه)";document.getElementById("infoState").textContent="نمونه مفهومی؛ تأیید نشده";svg.querySelectorAll(".selectedOutline").forEach(n=>n.remove());const b=n.getBBox();el("rect",{x:b.x-2,y:b.y-2,width:b.width+4,height:b.height+4,fill:"none",stroke:"#e34b50","stroke-width":2,"stroke-dasharray":"4 2",class:"selectedOutline","pointer-events":"none"},svg)}
+function unitFrame(u){rect(process,u.x,u.y,u.w,u.h,"#f9fbfc","#718797",1,2);rect(process,u.x+5,u.y+5,u.w-10,22,"#eaf0f4","#718797",.6);txt(labels,u.id,u.x+12,u.y+14,7,"#203b50","start","bold");txt(labels,u.name,u.x+u.w/2,u.y+39,6,"#526b7c","middle","bold");selectable(process,u.id,u.desc,"ناحیه فرایندی","واحد فرایندی",u.x,u.y,u.w,u.h)}
+units.forEach(unitFrame);
+/* Tanks and separate process/support areas, no overlapping footprints. */
+rect(tanks,98,410,255,180,"#fbf8ff","#7253a6",1.2,2);rect(tanks,104,416,243,18,"#efe8f7","#7253a6",.5);txt(labels,"TANK FARM / STORAGE",225,428,6.5,"#60428d","middle","bold");selectable(tanks,"TK-FARM","مزرعه مخازن","انبارش","ناحیه مخازن",98,410,255,180);
+const tankData=[["TK-101",145,465],["TK-102",205,465],["TK-103",265,465],["TK-104",145,525],["TK-105",205,525],["TK-106",265,525]];
+tankData.forEach(([tag,x,y])=>{circle(tanks,x,y,19,"#f6f0fc","#7253a6",1.1);circle(tanks,x,y,14,"none","#b6a4ce",.7);line(tanks,x-12,y,x+12,y,"#b6a4ce",.6);txt(labels,tag,x,y+3,5.2,"#5f4389","middle","bold");selectable(tanks,tag,"مخزن ذخیره مفهومی","مزرعه مخازن","مخزن",x-19,y-19,38,38)});
+rect(tanks,110,555,230,24,"#f4effa","#7253a6",.5);txt(labels,"BUND / DRAINAGE CONCEPT",225,570,5,"#60428d","middle");
+const lowerUnits=[
+{id:"LPG-501",name:"LPG RECOVERY",x:380,y:410,w:170,h:180,desc:"بازیافت گاز و LPG"},
+{id:"SRU-601",name:"SULFUR RECOVERY",x:570,y:410,w:170,h:180,desc:"بازیافت گوگرد"},
+{id:"BLEND-701",name:"BLENDING",x:760,y:410,w:170,h:180,desc:"اختلاط و افزودنی‌ها"}
 ];
-trains.forEach(t=>{const [bx,by]=t.b;t.v.forEach(([tag,x,y])=>vessel(eq,bx+x,by+y,12,25,tag));t.e.forEach(([tag,x,y])=>exchanger(eq,bx+x,by+y,tag));t.p.forEach(([tag,x,y])=>pump(eq,bx+x,by+y,tag));line(eq,bx+8,by+82,bx+145,by+82,"#13878d",.6);[bx+28,bx+65,bx+105].forEach(x=>valve(eq,x,by+82));line(eq,bx+28,by+68,bx+28,by+82,"#13878d",.45);line(eq,bx+65,by+68,bx+65,by+82,"#13878d",.45);circle(eq,bx+t.i,by+112,2.2,"#fff","#bd4e47",.6);line(eq,bx+t.i,by+114,bx+t.i,by+120,"#bd4e47",.45);text(eq,"PT/TT/FT",bx+t.i,by+124,2.5,"#9c3933")});
-const tankDetail=E("g",{"data-layer-group":"equipment"},root);
-[45,250].forEach((x,idx)=>{line(tankDetail,x+8,422,x+177,422,"#13878d",.8);line(tankDetail,x+8,420,x+8,438,"#13878d",.6);line(tankDetail,x+177,420,x+177,438,"#13878d",.6);for(let k=0;k<3;k++){valve(tankDetail,x+30+k*55,422);line(tankDetail,x+30+k*55,422,x+30+k*55,438,"#13878d",.45)}text(tankDetail,idx===0?"TRANSFER HEADER · CRUDE":"TRANSFER HEADER · PRODUCTS",x+92,416,3.2,"#08777d","middle","bold")});
-const tie=E("g",{"data-layer-group":"piping"},root);
-[[145,245,145,300],[345,245,345,300],[635,245,635,300],[840,245,840,300],[145,340,145,375],[345,340,345,375],[635,340,635,375],[840,340,840,375]].forEach(([x,y,x2,y2])=>{line(tie,x,y,x2,y2,"#13878d",1);valve(tie,x,(y+y2)/2)});
-// Expanded engineering-detail overlay: tagged equipment, instruments, firewater and electrical routing.
-const detailEquip=E("g",{"data-layer-group":"equipment"},root),detailPipe=E("g",{"data-layer-group":"piping"},root),detailElec=E("g",{"data-layer-group":"electrical"},root),detailUtil=E("g",{"data-layer-group":"utilities"},root),detailRoad=E("g",{"data-layer-group":"roads"},root);
-function tagBox(g,x,y,w,h,tag,fill="#f8fbfd",stroke="#526c80"){rect(g,x,y,w,h,fill,stroke,.65,1.2);text(g,tag,x+w/2,y+h/2+1.4,2.8,"#203c50","middle","bold")}
-function compressor(g,x,y,tag){rect(g,x-7,y-5,14,10,"#f0f7fc","#477d91",.65,1);circle(g,x-3,y,2.2,"#fff","#477d91",.5);circle(g,x+3,y,2.2,"#fff","#477d91",.5);text(g,tag,x,y+10,2.7,"#253e52")}
-function instrument(g,x,y,tag){circle(g,x,y,4.2,"#fff","#bd4e47",.6);text(g,tag,x,y+1.2,2.4,"#9c3933","middle","bold");line(g,x,y+4.2,x,y+9,"#bd4e47",.45)}
-function dimension(g,x1,y1,x2,y2,label){line(g,x1,y1,x2,y2,"#687d8e",.4,"2 1");if(Math.abs(y2-y1)<1){line(g,x1,y1-2,x1,y1+2,"#687d8e",.4);line(g,x2,y2-2,x2,y2+2,"#687d8e",.4);text(g,label,(x1+x2)/2,y1-2,2.7,"#526779","middle")}else{line(g,x1-2,y1,x1+2,y1,"#687d8e",.4);line(g,x2-2,y2,x2+2,y2,"#687d8e",.4);text(g,label,x1-3,(y1+y2)/2,2.7,"#526779","end")}}
-const detailedUnits=[
-{x:63,y:78,p:"CDU-101",v:[["V-101",15,23],["V-102",36,23],["V-103",57,23]],e:[["E-101",18,75],["E-102",42,75],["E-103",66,75]],pumps:[["P-101A",22,112],["P-101B",52,112]],c:["C-101",87,43]},
-{x:268,y:78,p:"VDU-201",v:[["V-201",15,23],["V-202",38,23],["V-203",61,23]],e:[["E-201",18,75],["E-202",42,75],["E-203",66,75]],pumps:[["P-201A",22,112],["P-201B",52,112]],c:["C-201",88,43]},
-{x:558,y:78,p:"HT-301",v:[["R-301",15,23],["V-301",38,23],["V-302",61,23]],e:[["E-301",18,75],["E-302",42,75],["E-303",66,75]],pumps:[["P-301A",22,112],["P-301B",52,112]],c:["K-301",88,43]},
-{x:763,y:78,p:"REF-401",v:[["R-401",15,23],["V-401",38,23],["V-402",61,23]],e:[["E-401",18,75],["E-402",42,75],["E-403",66,75]],pumps:[["P-401A",22,112],["P-401B",52,112]],c:["K-401",88,43]},
-{x:63,y:395,p:"LPG-501",v:[["V-501",15,23],["V-502",38,23],["V-503",61,23]],e:[["E-501",18,75],["E-502",42,75],["E-503",66,75]],pumps:[["P-501A",22,112],["P-501B",52,112]],c:["K-501",88,43]},
-{x:268,y:395,p:"SRU-601",v:[["R-601",15,23],["V-601",38,23],["V-602",61,23]],e:[["E-601",18,75],["E-602",42,75],["E-603",66,75]],pumps:[["P-601A",22,112],["P-601B",52,112]],c:["K-601",88,43]},
-{x:558,y:395,p:"BLEND-701",v:[["V-701",15,23],["V-702",38,23],["V-703",61,23]],e:[["E-701",18,75],["E-702",42,75],["E-703",66,75]],pumps:[["P-701A",22,112],["P-701B",52,112]],c:["K-701",88,43]}
-];
-detailedUnits.forEach(u=>{text(detailEquip,u.p+" EQUIPMENT ARRANGEMENT",u.x+83,u.y+7,3.1,"#526779","middle","bold");u.v.forEach(([tag,x,y])=>vessel(detailEquip,u.x+x,u.y+y,11,25,tag));u.e.forEach(([tag,x,y])=>exchanger(detailEquip,u.x+x,u.y+y,tag));u.pumps.forEach(([tag,x,y])=>pump(detailEquip,u.x+x,u.y+y,tag));compressor(detailEquip,u.x+u.c[1],u.y+u.c[2],u.c[0]);line(detailPipe,u.x+7,u.y+64,u.x+151,u.y+64,"#13878d",.75);line(detailPipe,u.x+7,u.y+69,u.x+151,u.y+69,"#477db0",.55);line(detailPipe,u.x+7,u.y+73,u.x+151,u.y+73,"#b77a27",.5,"3 1");[u.x+22,u.x+48,u.x+75,u.x+104,u.x+132].forEach((x,i)=>{valve(detailPipe,x,u.y+64);line(detailPipe,x,u.y+64,x,u.y+57,"#13878d",.45);if(i===1||i===3)instrument(detailEquip,x,u.y+51,i===1?"PT":"FT")});[u.x+27,u.x+65,u.x+104,u.x+141].forEach(x=>{line(detailPipe,x,u.y+80,x,u.y+101,"#13878d",.55);valve(detailPipe,x,u.y+89)});dimension(detailEquip,u.x+4,u.y+139,u.x+162,u.y+139,"UNIT BAY ≈ 180 m (CONCEPT)")});
-/* Fire protection: hydrants, monitors, firewater loop and deluge zones. */
-rect(detailUtil,30,28,940,594,"none","#c34c45",.65,4);text(detailUtil,"FIREWATER RING MAIN · ROUTING CONCEPT ONLY",500,22,3.4,"#a43c38","middle","bold");
-for(let x=45;x<965;x+=55){circle(detailUtil,x,28,2.2,"#fff","#bd4e47",.7);line(detailUtil,x,28,x,36,"#bd4e47",.5);text(detailUtil,"FH",x,41,2.4,"#9c3933")}for(let x=45;x<965;x+=110){circle(detailUtil,x,622,2.2,"#fff","#bd4e47",.7);line(detailUtil,x,622,x,613,"#bd4e47",.5)}
-[[240,48],[470,48],[735,48],[240,612],[470,612],[735,612]].forEach(([x,y],i)=>{rect(detailUtil,x-8,y-5,16,10,"#fff1ef","#bd4e47",.65);text(detailUtil,"FPM-"+(i+1),x,y+1.3,2.4,"#9c3933","middle","bold")});
-[[245,160],[455,160],[740,160],[245,460],[455,460],[740,460]].forEach(([x,y],i)=>{circle(detailUtil,x,y,5,"#fff1ef","#bd4e47",.7);line(detailUtil,x-3,y,x+3,y,"#bd4e47",.6);line(detailUtil,x,y-3,x,y+3,"#bd4e47",.6);text(detailUtil,"MON-"+(i+1),x,y+10,2.5,"#9c3933")});
-/* Electrical distribution, cable trenches and local panels. */
-line(detailElec,520,30,520,615,"#477db0",1.1,"5 2");line(detailElec,525,30,525,615,"#477db0",.45);line(detailElec,30,355,970,355,"#477db0",1.1,"5 2");line(detailElec,30,360,970,360,"#477db0",.45);
-[[490,110,"MCC-1"],[490,220,"MCC-2"],[490,420,"MCC-3"],[490,540,"MCC-4"],[300,350,"JB-01"],[690,350,"JB-02"]].forEach(([x,y,t])=>tagBox(detailElec,x,y,18,8,t,"#eef5ff","#477db0"));
-[[250,280],[440,280],[560,280],[750,280],[250,380],[440,380],[560,380],[750,380]].forEach(([x,y],i)=>{rect(detailElec,x-5,y-3,10,6,"#eef5ff","#477db0",.6);text(detailElec,"JB-"+String(i+1).padStart(2,"0"),x,y+8,2.4,"#234c71")});
-/* Pipe-rack bents, utility headers and branch take-offs. */
-for(let x=38;x<=962;x+=18){line(detailPipe,x,250,x,274,"#557b87",.45);line(detailPipe,x-2,250,x+2,250,"#557b87",.45);line(detailPipe,x-2,274,x+2,274,"#557b87",.45)}
-[["P-101",250,"#13878d"],["S-201",255,"#477db0"],["FW-301",260,"#bd4e47"],["FG-401",265,"#b77a27"],["CW-501",270,"#39956b"]].forEach(([label,y,color])=>{line(detailPipe,38,y,962,y,color,.7);text(detailPipe,label,48,y-1.5,2.6,color,"start","bold")});
-[[145,245],[345,245],[635,245],[840,245],[145,375],[345,375],[635,375],[840,375]].forEach(([x,y],i)=>{line(detailPipe,x-7,y,x+7,y,"#13878d",.8);circle(detailPipe,x,y,2,"#fff","#13878d",.6);text(detailPipe,"TI-"+String(i+1).padStart(2,"0"),x+9,y-2,2.5,"#08777d","start")});
-/* Road markings, access crossings and emergency egress indicators. */
-for(let i=0;i<8;i++){rect(detailRoad,452+i*7,304,3,31,"#fff","#fff",.1);rect(detailRoad,453+i*7,304,1,31,"#c4cdd4","none",0)}
-[[55,300],[210,300],[700,300],[920,300]].forEach(([x,y],i)=>{circle(detailRoad,x,y,3,"#fff","#526779",.55);text(detailRoad,"MH-"+(i+1),x,y-5,2.5,"#526779")});
-[[245,250],[475,250],[735,250],[245,370],[475,370],[735,370]].forEach(([x,y])=>{E("path",{d:"M "+(x-4)+" "+y+" l 4 -5 l 4 5 M "+x+" "+(y-5)+" v 10",fill:"none",stroke:"#39956b","stroke-width":.7},detailUtil);text(detailUtil,"ESCAPE",x,y+13,2.5,"#27714f")});
-text(detailEquip,"TAGGING BASIS: P pump · E exchanger · V vessel · K compressor · R reactor · PT pressure transmitter · FT flow transmitter",500,640,3.5,"#405569","middle");
-// dimensions, north arrow and title block
-line(root,0,-24,1000,-24,"#263f54",.65);line(root,0,-30,0,-18,"#263f54",.65);line(root,1000,-30,1000,-18,"#263f54",.65);text(root,"1000 m",500,-27,5,"#263f54","middle","bold");line(root,-25,0,-25,650,"#263f54",.65);line(root,-31,0,-19,0,"#263f54",.65);line(root,-31,650,-19,650,"#263f54",.65);E("text",{x:ox-34,y:oy+325,transform:"rotate(-90 "+(ox-34)+" "+(oy+325)+")","font-family":"Arial,sans-serif","font-size":5,fill:"#263f54","text-anchor":"middle","font-weight":"bold"},svg,"650 m");
-E("g",{transform:"translate(1115 85)"},svg).innerHTML='<path d="M 0 25 L 0 -12 L -5 -2 L 0 -8 L 5 -2 Z" fill="#1d3448"/><text x="0" y="-19" text-anchor="middle" font-family="Arial" font-size="8" font-weight="bold" fill="#1d3448">N</text>';
-E("g",{},svg).innerHTML='<line x1="95" y1="755" x2="295" y2="755" stroke="#1d3448" stroke-width="1"/><line x1="95" y1="751" x2="95" y2="759" stroke="#1d3448"/><line x1="195" y1="751" x2="195" y2="759" stroke="#1d3448"/><line x1="295" y1="751" x2="295" y2="759" stroke="#1d3448"/><g font-family="Arial,sans-serif" font-size="4" fill="#1d3448"><text x="95" y="766">0</text><text x="195" y="766" text-anchor="middle">100 m</text><text x="295" y="766" text-anchor="end">200 m</text><text x="315" y="757" font-weight="bold">SCALE 1:1000 · PRINT AT 100%</text></g>';
-rect(svg,410,744,739,72,"#fff","#1d3448",1);line(svg,410,770,1149,770,"#1d3448",.6);line(svg,410,793,1149,793,"#1d3448",.6);line(svg,850,744,850,816,"#1d3448",.6);line(svg,1000,770,1000,816,"#1d3448",.6);
-text(svg,"DRAWING TITLE",420,756,5,"#1d3448","start","bold");text(svg,"CONCEPT REFINERY GENERAL ARRANGEMENT",420,766,6,"#1d3448","start");text(svg,"DRAWING NO. GP-REF-GA-001",420,782,4.5,"#1d3448","start");text(svg,"UNITS: METRES · ORIGIN: SOUTH-WEST CORNER",420,789,4.5,"#1d3448","start");text(svg,"REVISION",860,756,5,"#1d3448","start","bold");text(svg,"A / CONCEPT",860,766,6,"#1d3448","start");text(svg,"STATUS: NOT FOR CONSTRUCTION",860,782,4.2,"#1d3448","start");text(svg,"SHEET 01 / 01 · A0 LANDSCAPE",1010,789,4.2,"#1d3448","start");text(svg,"WARNING: illustrative layout only; no verified survey, process safety, spacing or code review.",420,805,4.4,"#1d3448","start","bold");text(svg,"GridPulse MEP Studio · Vector SVG · Conceptual data only",35,831,4,"#526b80","start");
-const viewport=document.createElement("div");viewport.className="tools view-tools";viewport.style.cssText="position:sticky;top:0;z-index:5;padding:8px;background:#102238;border-bottom:1px solid #2a4058";
-viewport.innerHTML='<button type="button" id="zoomOut">−</button><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">بازنشانی نما</button><span class="muted" id="zoomReadout">بزرگ‌نمایی 100%</span>';
-document.querySelector(".sheet").before(viewport);
-let zoom=1;
-function applyView(){svg.style.transformOrigin="0 0";svg.style.transform="scale("+zoom+")";svg.style.width=(100*zoom)+"%";document.getElementById("zoomReadout").textContent="بزرگ‌نمایی "+Math.round(zoom*100)+"%"}
-document.getElementById("zoomIn").addEventListener("click",()=>{zoom=Math.min(3,zoom+.2);applyView()});
-document.getElementById("zoomOut").addEventListener("click",()=>{zoom=Math.max(.6,zoom-.2);applyView()});
-document.getElementById("zoomReset").addEventListener("click",()=>{zoom=1;svg.style.transform="";svg.style.width="100%";document.getElementById("zoomReadout").textContent="بزرگ‌نمایی 100%"});
-
-document.querySelectorAll("[data-layer]").forEach(cb=>cb.addEventListener("change",()=>{if(cb.dataset.layer==="labels"){root.querySelectorAll("text").forEach(t=>t.style.display=cb.checked?"":"none");return}root.querySelectorAll('[data-layer-group="'+cb.dataset.layer+'"]').forEach(g=>g.style.display=cb.checked?"":"none")}));
-function downloadSvg(){const clone=svg.cloneNode(true);clone.setAttribute("xmlns",NS);const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone)],{type:"image/svg+xml;charset=utf-8"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="GridPulse_Refinery_GA_A0_1-1000.svg";a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
-document.getElementById("svgDownload").addEventListener("click",downloadSvg);
-const paperDims={A0:[1189,841],A1:[841,594],A2:[594,420],A3:[420,297],A4:[297,210],A5:[210,148],Letter:[279,216]};
-document.getElementById("print").addEventListener("click",()=>{
- const paper=document.getElementById("paperSize").value,d=paperDims[paper]||paperDims.A4;
- let style=document.getElementById("dynamicPrintPaper");
- if(!style){style=document.createElement("style");style.id="dynamicPrintPaper";document.head.appendChild(style)}
- style.textContent='@media print{@page{size:'+paper+' landscape;margin:0}html,body{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;margin:0!important;padding:0!important}.wrap{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;max-width:none!important;margin:0!important;padding:0!important}.sheet{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;overflow:hidden!important}.sheet svg{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;min-width:0!important;max-width:none!important}}';
- window.print();
-});
-window.addEventListener("error",event=>{const box=document.getElementById("mapRuntimeError");if(box){box.hidden=false;box.textContent="خطای ترسیم نقشه: "+(event.message||"خطای نامشخص")+" — بخش ترسیم‌شده تا این نقطه حفظ شده است."}});
-window.addEventListener("message",event=>{if(event.data&&event.data.type==="gridpulse-print"){const select=document.getElementById("paperSize");if(select&&paperDims[event.data.paperSize])select.value=event.data.paperSize;document.getElementById("print").click();}});
+lowerUnits.forEach(u=>{rect(process,u.x,u.y,u.w,u.h,"#f9fbfc","#718797",1,2);rect(process,u.x+5,u.y+5,u.w-10,22,"#eaf0f4","#718797",.6);txt(labels,u.id,u.x+11,u.y+14,6.5,"#203b50","start","bold");txt(labels,u.name,u.x+u.w/2,u.y+39,5.8,"#526b7c","middle","bold");selectable(process,u.id,u.desc,"ناحیه فرایندی","واحد فرایندی",u.x,u.y,u.w,u.h)});
+/* Consistent symbolic equipment, intentionally spaced to keep tags readable. */
+function vessel(x,y,tag,zone){rect(equipment,x-9,y-18,18,36,"#fff","#486a7f",.8,4);path(equipment,"M "+(x-9)+" "+(y-12)+" Q "+x+" "+(y-17)+" "+(x+9)+" "+(y-12),"#486a7f",.6);line(equipment,x-9,y+10,x+9,y+10,"#486a7f",.5);txt(labels,tag,x,y+27,5.1,"#233f52","middle","bold");selectable(equipment,tag,"ظرف فرایندی عمودی",zone,"ظرف / برج",x-11,y-20,22,42)}
+function exchanger(x,y,tag,zone){rect(equipment,x-15,y-6,30,12,"#e8f3f8","#347b91",.8,5);line(equipment,x-11,y-4,x+11,y+4,"#347b91",.6);line(equipment,x-11,y+4,x+11,y-4,"#347b91",.6);txt(labels,tag,x,y+17,4.8,"#233f52","middle","bold");selectable(equipment,tag,"مبدل حرارتی",zone,"مبدل",x-16,y-7,32,25)}
+function pump(x,y,tag,zone){circle(equipment,x,y,7,"#fff","#078c8c",.9);path(equipment,"M "+(x-3)+" "+(y-4)+" L "+(x+4)+" "+y+" L "+(x-3)+" "+(y+4)+" Z","#078c8c",.6,"#dff4f3");txt(labels,tag,x,y+17,4.7,"#233f52","middle","bold");selectable(equipment,tag,"پمپ سانتریفیوژ نمادین",zone,"پمپ",x-8,y-8,16,26)}
+function compressor(x,y,tag,zone){rect(equipment,x-14,y-8,28,16,"#f1f7fc","#477db0",.8,2);circle(equipment,x-5,y,4,"#fff","#477db0",.7);circle(equipment,x+5,y,4,"#fff","#477db0",.7);txt(labels,tag,x,y+20,4.8,"#233f52","middle","bold");selectable(equipment,tag,"کمپرسور نمادین",zone,"کمپرسور",x-15,y-9,30,30)}
+function buildEquipment(u,kind){const x=u.x,y=u.y,w=u.w,h=u.h;const top=y+78,bot=y+h-45;const vesselCount=w>200?4:3;for(let i=0;i<vesselCount;i++)vessel(x+28+i*(w-56)/(vesselCount-1),top,"V-"+String(Number(u.id.match(/\d+/)[0])+i).padStart(3,"0"),u.name);exchanger(x+w*.28,top+65,"E-"+u.id.match(/\d+/)[0],u.name);exchanger(x+w*.52,top+65,"E-"+String(Number(u.id.match(/\d+/)[0])+1)," "+u.name);pump(x+w*.73,top+65,"P-"+u.id.match(/\d+/)[0]+"A",u.name);pump(x+w*.84,top+65,"P-"+u.id.match(/\d+/)[0]+"B",u.name);line(equipment,x+18,bot,x+w-18,bot,"#078c8c",1.2);[x+w*.25,x+w*.5,x+w*.75].forEach((px,i)=>{line(equipment,px,bot-15,px,bot,"#078c8c",.7);path(equipment,"M "+(px-4)+" "+(bot-9)+" L "+px+" "+bot+" L "+(px+4)+" "+(bot-9),"#078c8c",.7);circle(equipment,px,bot-22,3,"#fff","#c64e48",.7);txt(labels,["PT","FT","TT"][i],px,bot-28,4,"#a13c38")})}
+units.forEach(u=>buildEquipment(u));
+lowerUnits.forEach(u=>{const n=Number(u.id.match(/\d+/)[0]);vessel(u.x+32,u.y+85,"V-"+n,u.name);vessel(u.x+68,u.y+85,"V-"+(n+1),u.name);exchanger(u.x+117,u.y+85,"E-"+n,u.name);pump(u.x+45,u.y+132,"P-"+n+"A",u.name);pump(u.x+95,u.y+132,"P-"+n+"B",u.name);compressor(u.x+135,u.y+132,"K-"+n,u.name);line(equipment,u.x+16,u.y+155,u.x+u.w-16,u.y+155,"#078c8c",1.1)});
+/* Utilities and electrical rooms are in their own, non-overlapping strip. */
+rect(utilities,950,410,154,180,"#f0faf5","#39956b",1,2);rect(utilities,956,416,142,18,"#e1f4e9","#39956b",.5);txt(labels,"UTILITIES",1027,428,6.5,"#27714f","middle","bold");selectable(utilities,"U-700","یوتیلیتی مشترک","خدمات جانبی","محدوده یوتیلیتی",950,410,154,180);
+[["U-710",982,465,"COOLING"],["U-720",1025,465,"STEAM"],["U-730",1068,465,"WATER"],["U-740",982,525,"AIR / N2"],["U-750",1025,525,"FIREWATER"],["U-760",1068,525,"EFFLUENT"]].forEach(([tag,x,y,n])=>{rect(utilities,x-18,y-15,36,30,"#fff","#39956b",.7,2);txt(labels,tag,x,y-2,4.5,"#27714f","middle","bold");txt(labels,n,x,y+8,3.8,"#27714f","middle");selectable(utilities,tag,n,"یوتیلیتی","واحد خدماتی",x-18,y-15,36,30)});
+/* Buildings / power & control row. */
+const buildings=[{x:380,w:160,tag:"E-810",name:"HV SUBSTATION",fa:"پست برق"},{x:555,w:180,tag:"E-820",name:"MCC / SWITCHROOM",fa:"اتاق برق و MCC"},{x:750,w:180,tag:"C-910",name:"DCS / SIS CONTROL",fa:"اتاق کنترل"},{x:945,w:159,tag:"A-930",name:"LAB / FIRST AID",fa:"آزمایشگاه و امداد"}];
+buildings.forEach(b=>{rect(electrical,b.x,642,b.w,38,"#f1f7fc","#477db0",.8,2);txt(labels,b.tag,b.x+8,654,5.5,"#234c71","start","bold");txt(labels,b.name,b.x+b.w/2,654,5.5,"#234c71","middle","bold");txt(labels,b.fa,b.x+b.w/2,668,5,"#526b7c");selectable(electrical,b.tag,b.fa,"پشتیبانی","ساختمان برق/کنترل",b.x,642,b.w,38)});
+/* Pipe rack, separated from unit footprints; color-coded headers and branches. */
+const rackY=340;rect(piping,94,rackY,1000,8,"#edf5f7","#8ca5b0",.6,1);[["P-01",342,"#078c8c"],["S-02",344,"#3479b8"],["FW-03",346,"#c64e48"],["FG-04",348,"#b77a27"],["CW-05",350,"#39956b"]].forEach(([tag,y,c])=>{line(piping,104,y,1084,y,c,1.25);txt(labels,tag,1088,y+2,4.3,c,"start","bold")});
+[203,460,672,954].forEach((x,i)=>{line(piping,x,330,x,340,"#078c8c",1);line(piping,x,348,x,360,"#078c8c",1);circle(piping,x,340,2.4,"#fff","#078c8c",.8)});
+[465,650,835].forEach(x=>{line(piping,x,590,x,610,"#078c8c",.8);line(piping,x,610,x,642,"#078c8c",.8,"3 2")});
+/* Firewater ring and access points follow site perimeter; marked separately. */
+path(utilities,"M 87 91 H 1101 V 681 H 87 Z","#c64e48",1.5,"none","5 3");txt(labels,"FIREWATER RING (CONCEPT)",592,88,5,"#a13c38","middle","bold");
+[150,300,450,600,750,900,1050].forEach((x,i)=>{circle(utilities,x,91,3,"#fff","#c64e48",.9);txt(labels,"FH-"+String(i+1).padStart(2,"0"),x,103,4.3,"#a13c38")});
+[[310,145],[570,145],[810,145],[355,480],[745,480],[940,480]].forEach(([x,y],i)=>{circle(utilities,x,y,4,"#fff1ef","#c64e48",.8);line(utilities,x-2,y,x+2,y,"#c64e48",.6);line(utilities,x,y-2,x,y+2,"#c64e48",.6);txt(labels,"MON-"+String(i+1).padStart(2,"0"),x,y+12,4,"#a13c38")});
+/* Cable trench routes, panels and junction boxes. */
+path(electrical,"M 380 635 H 930 V 622 H 1070","#477db0",1.2,"none","4 2");path(electrical,"M 465 642 V 600 M 645 642 V 600 M 840 642 V 600","#477db0",.8,"none","3 2");
+[["MCC-1",460,618],["MCC-2",650,618],["JB-01",835,618],["JB-02",945,618]].forEach(([tag,x,y])=>{rect(electrical,x-16,y-6,32,12,"#fff","#477db0",.7,1);txt(labels,tag,x,y+2.5,4.2,"#234c71","middle","bold");selectable(electrical,tag,"تابلو/جعبه اتصال برق","مسیر برق و کنترل","تابلو برق",x-16,y-6,32,12)});
+/* Dimension strings are on clear outer edges, not across the drawing. */
+line(labels,70,714,1118,714,"#526779",.8);line(labels,70,706,70,721,"#526779",.8);line(labels,1118,706,1118,721,"#526779",.8);txt(labels,"CONCEPTUAL SITE WIDTH  ≈  1,000 m",594,708,6,"#526779");
+line(labels,52,76,52,696,"#526779",.8);line(labels,45,76,59,76,"#526779",.8);line(labels,45,696,59,696,"#526779",.8);txt(labels,"SITE DEPTH ≈ 600 m",43,386,5.5,"#526779","middle");
+/* Title block */
+rect(labels,38,750,1112,64,"#f9fbfc","#203c50",1);
+line(labels,38,773,1150,773,"#9aa9b4",.6);line(labels,770,750,770,814,"#9aa9b4",.6);line(labels,950,750,950,814,"#9aa9b4",.6);
+txt(labels,"PROJECT: GRIDPULSE INDUSTRIAL LAYOUT",50,765,6.5,"#203b50","start","bold");txt(labels,"DRAWING: GA-001  |  REV: 02",50,788,6,"#526b7c","start");
+txt(labels,"STATUS: CONCEPT ONLY",785,765,6,"#a13c38","start","bold");txt(labels,"NOT FOR CONSTRUCTION",785,788,5.5,"#a13c38","start");
+txt(labels,"SHEET: A0",965,765,6,"#203b50","start","bold");txt(labels,"UNITS: m (indicative)",965,788,5.5,"#526b7c","start");
+txt(labels,"All equipment locations and labels are illustrative, not verified plant data.",594,831,5.5,"#637889","middle");
+/* Searchable layer toggles. */
+document.querySelectorAll("[data-layer]").forEach(cb=>cb.addEventListener("change",()=>{const name=cb.dataset.layer;if(name==="labels"){labels.style.display=cb.checked?"":"none";return}const node=svg.querySelector('[data-layer-group="'+name+'"]');if(node)node.style.display=cb.checked?"":"none"}));
+let zoom=1;function applyZoom(){svg.style.width=(100*zoom)+"%";svg.style.transformOrigin="0 0";document.getElementById("status").textContent="بزرگ‌نمایی "+Math.round(zoom*100)+"٪"}document.getElementById("zoomIn").addEventListener("click",()=>{zoom=Math.min(2.5,zoom+.15);applyZoom()});document.getElementById("zoomOut").addEventListener("click",()=>{zoom=Math.max(.65,zoom-.15);applyZoom()});document.getElementById("zoomReset").addEventListener("click",()=>{zoom=1;svg.style.width="100%";svg.style.transform="";document.getElementById("status").textContent="نمای کامل نقشه"});
+document.getElementById("search").addEventListener("input",e=>{const q=e.target.value.trim().toLowerCase();svg.querySelectorAll(".searchHit").forEach(n=>n.classList.remove("searchHit"));if(!q)return;const found=itemIndex.find(i=>i.tag.toLowerCase().includes(q)||i.name.toLowerCase().includes(q)||i.zone.toLowerCase().includes(q));if(found){selectItem(found.node);document.getElementById("status").textContent="یافت شد: "+found.tag}else document.getElementById("status").textContent="موردی پیدا نشد"});
+document.getElementById("paper").addEventListener("change",e=>{const p=e.target.value;document.getElementById("status").textContent="اندازه چاپ انتخاب‌شده: "+p});
+document.getElementById("print").addEventListener("click",()=>{const p=document.getElementById("paper").value;const sizes={A0:[1189,841],A1:[841,594],A2:[594,420],A3:[420,297],A4:[297,210],A5:[210,148]};let style=document.getElementById("printStyle");if(!style){style=document.createElement("style");style.id="printStyle";document.head.appendChild(style)}style.textContent="@media print{@page{size:"+p+" landscape;margin:0}.sheet svg{width:"+sizes[p][0]+"mm!important;height:"+sizes[p][1]+"mm!important;min-width:0!important}}";window.print()});
+document.getElementById("download").addEventListener("click",()=>{const clone=svg.cloneNode(true);clone.setAttribute("xmlns",NS);const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone)],{type:"image/svg+xml;charset=utf-8"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="GridPulse_Refinery_GA-001.svg";a.click();setTimeout(()=>URL.revokeObjectURL(url),1200)});
+window.addEventListener("error",e=>{document.getElementById("status").textContent="خطا در ترسیم: "+e.message});
+/* Tell the parent MEP Studio that this view is ready and support its print request. */
+window.parent!==window&&window.parent.postMessage({type:"gridpulse-map-ready"},"*");
+window.addEventListener("message",e=>{if(e.data&&e.data.type==="gridpulse-print"){document.getElementById("paper").value=e.data.paperSize||"A0";document.getElementById("print").click()}});
+})();
 </script>
 </body></html>
