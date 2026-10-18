@@ -326,7 +326,7 @@ def export_observations_csv(
     output = io.StringIO(newline="")
     writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
     writer.writeheader()
-    formula_prefixes = ("=", "+", "-", "@", "\\t", "\\r")
+    formula_prefixes = ("=", "+", "-", "@", chr(9), chr(13))
     for record in records:
         row = {field: record.get(field, "") for field in fields}
         # Prevent spreadsheet formula execution for untrusted textual fields.
