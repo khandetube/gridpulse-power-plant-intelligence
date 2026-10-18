@@ -42,4 +42,4 @@ $('downloadAudit').onclick=()=>{if(!latestResult)return;const blob=new Blob([JSO
 $('copyInputHash').onclick=()=>navigator.clipboard?.writeText(latestResult?.audit?.input_sha256||'').then(()=>msg('Input SHA-256 copied.')).catch(()=>msg('Clipboard unavailable.'));
 $('copyIssuesHash').onclick=()=>navigator.clipboard?.writeText(latestResult?.audit?.issues_sha256||'').then(()=>msg('Issues SHA-256 copied.')).catch(()=>msg('Clipboard unavailable.'));
 </script>
-</body></html>
+<a id="gpDesignCopilotLink" href="design-ai-copilot.html" title="بازبینی هوشمند طراحی، تجهیزات و کیفیت داده" style="position:fixed;z-index:99999;left:14px;bottom:14px;display:inline-block;padding:10px 13px;border:1px solid #53d8c5;border-radius:10px;background:#0b2232;color:#53d8c5;font:700 13px/1.4 system-ui,Tahoma,sans-serif;text-decoration:none;box-shadow:0 6px 24px #0006">✦ AI Design Copilot</a></body></html>
