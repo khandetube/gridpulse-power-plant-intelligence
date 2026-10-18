@@ -27,6 +27,13 @@ Every imported record should include its source, publication date (when known), 
 
 No credentials, private records, network addresses, control-system configurations, or confidential dispatch data belong in this repository.
 
+
+## MEP Studio — preliminary electrical/mechanical design and 3D concept export
+
+Open the static [MEP Studio](docs/mep-studio.html) from GitHub Pages to enter building dimensions, floor count, net-area ratio, and explicit preliminary electrical/mechanical assumptions. The browser computes geometric areas, rough connected/coincident electrical loads, a first-pass cooling estimate, fresh-air volume, and a concept BOQ. It supports CSV/JSON export, a lightweight rotatable conceptual massing view, OBJ export, and a MAXScript (.ms) script that can be run inside Autodesk 3ds Max to generate simple boxes representing the building and main conceptual routes.
+
+**This is not a construction-ready design or BIM authoring tool.** The built-in values are example assumptions, not surveyed building data or code-prescribed values. The counts and route quantities are rough estimates. It does not size cables or protective devices, calculate fault current/voltage drop/earthing, perform hourly heating/cooling load calculations, size ducts/pipes, calculate pressure losses, or create a native MAX file directly. OBJ/MAXScript output is simplified massing geometry without detailed fittings, connectors, coordinated architecture/structure, or BIM metadata. All project inputs, units, geometry scale, local codes, engineering calculations, and quantities require review by qualified electrical and mechanical engineers before procurement or construction. The page operates locally in the browser and does not upload project data.
+
 ## Development status
 **Prototype — active development.** The repository includes a FastAPI/SQLite API for caller-supplied observations, source-aware maintenance events, assets, test management, FMEA, inspections, and maintenance work orders, plus a bilingual static dashboard, local engineering workbenches, Docker deployment and CI tests. These modules are under active development and are not yet a production-validated plant system. Public-source figures still require record-by-record verification before they can be treated as validated dataset entries. No live plant telemetry, dispatch connection, multi-user authorization, or validated predictive model is available.
 
