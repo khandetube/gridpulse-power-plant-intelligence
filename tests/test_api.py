@@ -102,6 +102,33 @@ def test_persisted_observation_ingest_and_query(tmp_path, monkeypatch):
     assert len(queried.json()["records"]) == 1
 
 
+def test_observation_csv_export_preserves_status_and_supports_filters(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "export.db"))
+    response = client.post(
+        "/api/v1/observations",
+        json={"records": [_observation("export-1", 12.5), {**_observation("export-2", 20), "metric": "fuel_input"}]},
+    )
+    assert response.status_code == 201
+
+    exported = client.get("/api/v1/observations/export.csv?metric=net_generation&status=reviewed")
+    assert exported.status_code == 200
+    assert "text/csv" in exported.headers["content-type"]
+    assert exported.headers["content-disposition"].endswith('filename="gridpulse-observations.csv"')
+    assert exported.headers["x-gridpulse-export-total"] == "1"
+    assert exported.headers["x-gridpulse-export-returned"] == "1"
+    assert "record_id,plant,metric,value,unit" in exported.text
+    assert "export-1,Example plant,net_generation,12.5,MWh" in exported.text
+    assert ",reviewed" in exported.text
+    assert "export-2" not in exported.text
+
+
+def test_observation_csv_export_rejects_reversed_date_filter():
+    response = client.get(
+        "/api/v1/observations/export.csv?start_date=2026-02-01&end_date=2026-01-01"
+    )
+    assert response.status_code == 422
+
+
 def test_persisted_observation_duplicate_batch_is_atomic(tmp_path, monkeypatch):
     monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "atomic.db"))
     assert client.post(
