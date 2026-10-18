@@ -288,26 +288,56 @@ def to_openscad(spec: EngineeringSpec) -> str:
 
 
 def to_dxf(spec: EngineeringSpec) -> str:
-    """Minimal ASCII DXF R12 writer for 2D plan footprints and schematic route centerlines."""
-    out = ["0","SECTION","2","HEADER","9","$INSUNITS","70","6","0","ENDSEC","0","SECTION","2","ENTITIES"]
-    scale = 1000 if spec.units == "m" else 304.8
-    def line(x1,y1,x2,y2,layer):
-        out.extend(["0","LINE","8",layer,"10",f"{x1*scale:.3f}","20",f"{y1*scale:.3f}","30","0","11",f"{x2*scale:.3f}","21",f"{y2*scale:.3f}","31","0"])
-    def text(x,y,label,layer="TAGS"):
-        label = label.replace("\n"," ").replace("\r"," ")[:64]
-        out.extend(["0","TEXT","8",layer,"10",f"{x*scale:.3f}","20",f"{y*scale:.3f}","30","0","40","250","1",label])
-    for a in spec.assets:
-        x,y,l,w=a.x,a.y,a.length,a.width
-        layer=re.sub(r"[^A-Za-z0-9_-]","_",a.discipline.upper())[:31]
-        line(x,y,x+l,y,layer); line(x+l,y,x+l,y+w,layer)
-        line(x+l,y+w,x,y+w,layer); line(x,y+w,x,y,layer)
-        text(x,y,a.tag)
-    for r in spec.routes:
-        layer=re.sub(r"[^A-Za-z0-9_-]","_",r.discipline.upper())[:31]
-        for a,b in zip(r.points,r.points[1:]): line(a[0],a[1],b[0],b[1],layer)
-        text(r.points[0][0],r.points[0][1],r.tag)
-    out.extend(["0","ENDSEC","0","EOF"])
-    return "\n".join(out) + "\n"
+    """Write editable ASCII DXF R12 geometry with explicit layers and millimetre units."""
+    scale = 1000.0 if spec.units == "m" else 304.8
+    layers = sorted({
+        re.sub(r"[^A-Za-z0-9_-]", "_", item.discipline.upper())[:31]
+        for item in [*spec.assets, *spec.routes]
+    } | {"TAGS", "SITE"})
+    out = [
+        "0", "SECTION", "2", "HEADER",
+        "9", "$ACADVER", "1", "AC1009",
+        "9", "$INSUNITS", "70", "4",
+        "0", "ENDSEC",
+        "0", "SECTION", "2", "TABLES",
+        "0", "TABLE", "2", "LTYPE", "70", "1",
+        "0", "LTYPE", "2", "CONTINUOUS", "70", "0",
+        "3", "Solid line", "72", "65", "73", "0", "40", "0.0",
+        "0", "ENDTAB",
+        "0", "TABLE", "2", "LAYER", "70", str(len(layers)),
+    ]
+    for layer in layers:
+        out.extend(["0", "LAYER", "2", layer, "70", "0", "62", "7", "6", "CONTINUOUS"])
+    out.extend(["0", "ENDTAB", "0", "ENDSEC", "0", "SECTION", "2", "ENTITIES"])
+
+    def line(x1, y1, x2, y2, layer):
+        out.extend(["0", "LINE", "8", layer, "10", f"{x1*scale:.3f}", "20", f"{y1*scale:.3f}",
+                    "30", "0.000", "11", f"{x2*scale:.3f}", "21", f"{y2*scale:.3f}", "31", "0.000"])
+
+    def text(x, y, label, layer="TAGS"):
+        label = label.replace("\\n", " ").replace("\\r", " ")[:64]
+        out.extend(["0", "TEXT", "8", layer, "10", f"{x*scale:.3f}", "20", f"{y*scale:.3f}",
+                    "30", "0.000", "40", "250", "1", label])
+
+    line(0, 0, spec.site_width, 0, "SITE")
+    line(spec.site_width, 0, spec.site_width, spec.site_length, "SITE")
+    line(spec.site_width, spec.site_length, 0, spec.site_length, "SITE")
+    line(0, spec.site_length, 0, 0, "SITE")
+    for asset in spec.assets:
+        x, y, length, width = asset.x, asset.y, asset.length, asset.width
+        layer = re.sub(r"[^A-Za-z0-9_-]", "_", asset.discipline.upper())[:31]
+        line(x, y, x+length, y, layer)
+        line(x+length, y, x+length, y+width, layer)
+        line(x+length, y+width, x, y+width, layer)
+        line(x, y+width, x, y, layer)
+        text(x, y, asset.tag)
+    for route in spec.routes:
+        layer = re.sub(r"[^A-Za-z0-9_-]", "_", route.discipline.upper())[:31]
+        for p1, p2 in zip(route.points, route.points[1:]):
+            line(p1[0], p1[1], p2[0], p2[1], layer)
+        text(route.points[0][0], route.points[0][1], route.tag)
+    out.extend(["0", "ENDSEC", "0", "EOF"])
+    return "\\n".join(out) + "\\n"
 
 
 def to_svg(spec: EngineeringSpec) -> str:
