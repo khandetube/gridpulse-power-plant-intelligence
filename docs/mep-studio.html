@@ -39,16 +39,26 @@
 </div><p class="small">برچسب «تأیید مهندسی مستند» فقط متادیتای انتخابی کاربر است و به‌تنهایی هیچ ورودی را تأیید نمی‌کند. این صفحه تمام مقادیر محاسباتی را به‌عنوان تخمینی برچسب می‌زند.</p></section>
 </aside>
 <div>
-<section class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h2>۳. مدل سه‌بعدی حجمی</h2><span class="pill">مدل پارامتریک · بدون هندسه اجرایی</span></div><div class="actions" style="margin:0"><button id="viewReset">نمای ایزومتریک</button><button id="downloadObj">خروجی OBJ</button><button id="downloadMax">اسکریپت 3ds Max (.ms)</button></div></div>
+<section class="panel" id="roomStudio">
+<h2>۳. طراحی مبتنی بر فضاها و اتاق‌ها (Room Schedule)</h2>
+<p>هر فضا را با ابعاد واقعی، مختصات روی طبقه، طبقه، کاربری و تعداد نفرات تعریف کنید. مساحت، روشنایی مفهومی، هوای تازه بر مبنای نفرات، پریزها و کنترل تداخل/خروج از محدوده محاسبه می‌شود. این بخش از مقادیر پیش‌فرض کل ساختمان مستقل است.</p>
+<div class="actions"><button class="primary" id="addRoom">+ افزودن فضا</button><button id="roomCsvOut">خروجی جدول فضاها CSV</button><button id="roomJsonOut">خروجی جدول فضاها JSON</button><button id="roomCsvIn">ورود CSV فضاها</button><input id="roomFile" type="file" accept=".csv,text/csv" hidden></div>
+<div class="metrics"><div class="metric"><b id="roomCount">—</b><span>تعداد فضاها</span></div><div class="metric"><b id="roomArea">—</b><span>مجموع مساحت تعریف‌شده (m²)</span></div><div class="metric"><b id="roomAir">—</b><span>هوای تازه برآوردی (m³/h)</span></div><div class="metric"><b id="roomLights">—</b><span>چراغ مفهومی (عدد)</span></div></div>
+<div class="scroll"><table id="roomTable"><thead><tr><th>نام فضا</th><th>طبقه</th><th>X (m)</th><th>Y (m)</th><th>طول (m)</th><th>عرض (m)</th><th>کاربری</th><th>نفر</th><th>پریز</th><th>لوکس هدف</th><th>مساحت m²</th><th>چراغ تخمینی</th><th>هوای تازه m³/h</th><th>کنترل</th></tr></thead><tbody id="roomRows"></tbody></table></div>
+<h3>نقشه دوبعدی جانمایی فضاها</h3><canvas id="floorPlan" class="canvas" style="height:330px" aria-label="نقشه دوبعدی مفهومی فضاها"></canvas>
+<div id="roomValidation" class="small" role="status"></div>
+<p class="small">CSV ورودی باید ستون‌های name,floor,x,y,length,width,use,people,sockets,lux داشته باشد. X/Y از گوشه جنوب‌غربی ساختمان است. چراغ‌ها بر اساس لومن مفروض 1200 lm، ضریب بهره 0.60 و ضریب نگهداری 0.80 تخمین زده می‌شوند؛ طراحی روشنایی واقعی به محاسبه فوتومتریک و فایل/مشخصات چراغ نیاز دارد.</p>
+</section>
+<section class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h2>۴. مدل سه‌بعدی حجمی</h2><span class="pill">مدل پارامتریک · بدون هندسه اجرایی</span></div><div class="actions" style="margin:0"><button id="viewReset">نمای ایزومتریک</button><button id="downloadObj">خروجی OBJ</button><button id="downloadMax">اسکریپت 3ds Max (.ms)</button></div></div>
 <canvas id="model" class="canvas" aria-label="نمای سه‌بعدی حجمی ساختمان و مسیرهای مفهومی تاسیسات"></canvas>
 <div class="small">با کشیدن ماوس مدل را بچرخانید؛ با چرخ ماوس زوم کنید. رنگ‌ها صرفاً برای تمایز بصری‌اند: پوسته ساختمان، مسیر کابل، مسیر لوله و مسیر کانال. مدل، مدل BIM نیست.</div></section>
 <div class="metrics">
 <div class="metric"><b id="gross">—</b><span>زیربنای ناخالص (m²)</span></div><div class="metric"><b id="netArea">—</b><span>زیربنای مفید تخمینی (m²)</span></div><div class="metric"><b id="demand">—</b><span>بار الکتریکی تخمینی (kW)</span></div><div class="metric"><b id="cooling">—</b><span>بار سرمایشی تخمینی (kW)</span></div>
 </div>
-<section class="panel"><h2>۴. محاسبات اولیه و فرضیات</h2><div class="scroll"><table><thead><tr><th>شاخص</th><th>روش/فرض</th><th>نتیجه</th><th>وضعیت</th></tr></thead><tbody id="calcRows"></tbody></table></div></section>
-<section class="panel"><h2>۵. فهرست مقادیر اولیه (BOQ)</h2><div class="scroll"><table><thead><tr><th>سیستم</th><th>شرح</th><th>مقدار</th><th>واحد</th><th>مبنای برآورد</th></tr></thead><tbody id="boqRows"></tbody></table></div><div class="actions"><button class="primary" id="csv">دریافت BOQ به CSV</button><button id="json">دریافت بسته پروژه JSON</button></div></section>
-<section class="panel"><h2>۶. خروجی و گردش کار CAD / 3ds Max</h2><p>خروجی OBJ شامل پوسته حجمی و مسیرهای نمایشی ساده است. فایل MAX باینری تولید نمی‌شود؛ اسکریپت MAXScript برای اجرا در Autodesk 3ds Max ساخته می‌شود و هندسه مفهومی را ایجاد می‌کند. واحدها، مختصات و مقیاس را پس از واردسازی بررسی کنید.</p><div class="actions"><button id="showScript">نمایش پیش‌نمایش اسکریپت MAXScript</button></div><pre id="scriptPreview" hidden></pre><p class="small">این ابزار به Autodesk 3ds Max متصل نیست، فایل .max بومی را مستقیماً تولید نمی‌کند و از فایل‌های DWG/IFC/Revit یا نقشه معماری به‌طور خودکار اطلاعات استخراج نمی‌کند.</p></section>
-<section class="panel"><h2>۷. کنترل کیفیت پیش از طراحی اجرایی</h2><div id="qualityChecks"></div></section>
+<section class="panel"><h2>۵. محاسبات اولیه و فرضیات</h2><div class="scroll"><table><thead><tr><th>شاخص</th><th>روش/فرض</th><th>نتیجه</th><th>وضعیت</th></tr></thead><tbody id="calcRows"></tbody></table></div></section>
+<section class="panel"><h2>۶. فهرست مقادیر اولیه (BOQ)</h2><div class="scroll"><table><thead><tr><th>سیستم</th><th>شرح</th><th>مقدار</th><th>واحد</th><th>مبنای برآورد</th></tr></thead><tbody id="boqRows"></tbody></table></div><div class="actions"><button class="primary" id="csv">دریافت BOQ به CSV</button><button id="json">دریافت بسته پروژه JSON</button></div></section>
+<section class="panel"><h2>۷. خروجی و گردش کار CAD / 3ds Max</h2><p>خروجی OBJ شامل پوسته حجمی و مسیرهای نمایشی ساده است. فایل MAX باینری تولید نمی‌شود؛ اسکریپت MAXScript برای اجرا در Autodesk 3ds Max ساخته می‌شود و هندسه مفهومی را ایجاد می‌کند. واحدها، مختصات و مقیاس را پس از واردسازی بررسی کنید.</p><div class="actions"><button id="showScript">نمایش پیش‌نمایش اسکریپت MAXScript</button></div><pre id="scriptPreview" hidden></pre><p class="small">این ابزار به Autodesk 3ds Max متصل نیست، فایل .max بومی را مستقیماً تولید نمی‌کند و از فایل‌های DWG/IFC/Revit یا نقشه معماری به‌طور خودکار اطلاعات استخراج نمی‌کند.</p></section>
+<section class="panel"><h2>۸. کنترل کیفیت پیش از طراحی اجرایی</h2><div id="qualityChecks"></div></section>
 </div>
 </div>
 <footer>GridPulse MEP Studio · ابزار مفهومی برای برنامه‌ریزی مهندسی · تمام محاسبات در مرورگر انجام می‌شود و داده‌ها به سرور ارسال نمی‌شوند. خروجی‌ها باید توسط متخصص مربوطه راستی‌آزمایی شوند.</footer>
@@ -96,6 +106,53 @@ $("calcRows").innerHTML=s.rows.map(r=>"<tr>"+r.map((x,i)=>"<td>"+(i===3?'<span c
 $("boqRows").innerHTML=s.boq.map(r=>"<tr>"+r.map(x=>"<td>"+escapeHtml(x)+"</td>").join("")+"</tr>").join("");
 $("qualityChecks").innerHTML=["ابعاد و طبقات هنوز باید با نقشه معماری اندازه‌برداری‌شده تطبیق داده شوند.","انتخاب کابل، افت ولتاژ، جریان اتصال کوتاه، هماهنگی حفاظتی، ارت و صاعقه‌گیر در این نسخه محاسبه نشده‌اند.","بار سرمایش/گرمایش واقعی به داده اقلیم، پوسته، جهت، نفوذ هوا، افراد، روشنایی و تجهیزات نیاز دارد.","قطر لوله و کانال، افت فشار، سرعت، نویز و انتخاب فن/پمپ محاسبه نشده‌اند.","BOQ مسیرهای اصلی و شمارش تجهیزات، برآورد مفهومی با فرض‌های نمایان است؛ پیش از سفارش باید برداشت و طراحی تفصیلی شود."].map(x=>"<p>• "+escapeHtml(x)+"</p>").join("")}
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+// Room schedule is user-defined project data; no room dimensions are fabricated after editing.
+let rooms=[
+{name:"Office 01",floor:1,x:0,y:0,length:8,width:6,use:"office",people:6,sockets:8,lux:500},
+{name:"Meeting 01",floor:1,x:8,y:0,length:6,width:6,use:"meeting",people:10,sockets:6,lux:500},
+{name:"Service 01",floor:1,x:14,y:0,length:6,width:6,use:"service",people:2,sockets:4,lux:300},
+{name:"Office 02",floor:2,x:0,y:0,length:8,width:6,use:"office",people:6,sockets:8,lux:500}
+];
+const roomUses=[["office","اداری"],["meeting","جلسه"],["residential","مسکونی"],["corridor","راهرو"],["service","خدماتی"],["plant","تجهیزات/موتورخانه"],["retail","تجاری"],["other","سایر"]];
+const roomNum=(v,field)=>{const n=Number(v);if(!Number.isFinite(n))throw Error("مقدار نامعتبر برای "+field);return n};
+function roomCalc(r){const area=r.length*r.width;const airPerPerson=roomUses.find(x=>x[0]===r.use)?.[0]==="plant"?0:10;const air=Math.max(0,r.people)*airPerPerson;const lights=Math.ceil(area*Math.max(0,r.lux)/(1200*.60*.80));return {...r,area,air,lights};}
+function renderRooms(){
+ const body=$("roomRows");
+ body.innerHTML=rooms.map((r,i)=>{const q=roomCalc(r);return '<tr>'+
+ '<td><input data-room="'+i+'" data-k="name" value="'+escapeHtml(r.name)+'" style="min-width:120px"></td>'+
+ '<td><input data-room="'+i+'" data-k="floor" type="number" min="1" step="1" value="'+r.floor+'" style="min-width:65px"></td>'+
+ ['x','y','length','width'].map(k=>'<td><input data-room="'+i+'" data-k="'+k+'" type="number" min="0" step=".1" value="'+r[k]+'" style="min-width:75px"></td>').join('')+
+ '<td><select data-room="'+i+'" data-k="use">'+roomUses.map(u=>'<option value="'+u[0]+'" '+(u[0]===r.use?'selected':'')+'>'+u[1]+'</option>').join('')+'</select></td>'+
+ ['people','sockets','lux'].map(k=>'<td><input data-room="'+i+'" data-k="'+k+'" type="number" min="0" step="1" value="'+r[k]+'" style="min-width:70px"></td>').join('')+
+ '<td>'+fmt(q.area)+'</td><td>'+q.lights+'</td><td>'+fmt(q.air)+'</td><td><button data-remove-room="'+i+'">حذف</button></td></tr>'}).join('');
+ $("roomCount").textContent=fmt(rooms.length);$("roomArea").textContent=fmt(rooms.reduce((a,r)=>a+roomCalc(r).area,0));$("roomAir").textContent=fmt(rooms.reduce((a,r)=>a+roomCalc(r).air,0));$("roomLights").textContent=fmt(rooms.reduce((a,r)=>a+roomCalc(r).lights,0));
+ body.querySelectorAll("[data-room]").forEach(el=>el.addEventListener("change",()=>{const i=Number(el.dataset.room),k=el.dataset.k;rooms[i][k]=k==="name"||k==="use"?el.value:Number(el.value);renderRooms();drawPlan();validateRooms()}));
+ body.querySelectorAll("[data-remove-room]").forEach(el=>el.addEventListener("click",()=>{rooms.splice(Number(el.dataset.removeRoom),1);renderRooms();drawPlan();validateRooms()}));
+ drawPlan();validateRooms();
+}
+function validateRooms(){
+ const d=read(),issues=[],seen=new Set();
+ rooms.forEach((r,i)=>{if(!r.name.trim())issues.push("ردیف "+(i+1)+": نام فضا خالی است.");if(!Number.isInteger(r.floor)||r.floor<1||r.floor>d.F)issues.push(r.name+": شماره طبقه باید بین 1 و "+d.F+" باشد.");if(r.length<=0||r.width<=0)issues.push(r.name+": طول و عرض باید مثبت باشند.");if(r.x<0||r.y<0||r.x+r.length>d.L+1e-6||r.y+r.width>d.W+1e-6)issues.push(r.name+": فضا از محدوده پوسته ساختمان خارج است.");if(r.people<0||r.sockets<0||r.lux<0)issues.push(r.name+": تعدادها و لوکس نباید منفی باشند.");const key=r.floor+"|"+r.name.trim().toLowerCase();if(seen.has(key))issues.push("نام تکراری در یک طبقه: "+r.name);seen.add(key)});
+ for(let i=0;i<rooms.length;i++)for(let j=i+1;j<rooms.length;j++){const a=rooms[i],b=rooms[j];if(a.floor===b.floor&&a.x<b.x+b.length&&a.x+a.length>b.x&&a.y<b.y+b.width&&a.y+a.width>b.y)issues.push("احتمال هم‌پوشانی: "+a.name+" / "+b.name);}
+ $("roomValidation").innerHTML=issues.length?'<p class="warning"><b>نیازمند اصلاح ('+issues.length+')</b><br>'+issues.map(escapeHtml).join("<br>")+'</p>':'<p class="ok">کنترل هندسی اولیه: فضاهای تعریف‌شده در محدوده پوسته هستند و تداخل مستطیلی شناسایی نشد. این کنترل جایگزین بررسی نقشه معماری نیست.</p>';
+}
+function drawPlan(){
+ const c=$("floorPlan"),ctx=c.getContext("2d"),r=c.getBoundingClientRect(),ratio=devicePixelRatio||1;c.width=Math.max(1,Math.floor(r.width*ratio));c.height=Math.max(1,Math.floor(r.height*ratio));ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,r.width,r.height);
+ let d;try{d=read()}catch{return}const pad=32,scale=Math.min((r.width-pad*2)/d.L,(r.height-pad*2)/d.W);const ox=(r.width-d.L*scale)/2,oy=(r.height-d.W*scale)/2;
+ ctx.strokeStyle="#91a8c0";ctx.lineWidth=2;ctx.strokeRect(ox,oy,d.L*scale,d.W*scale);
+ const colors=["#55dbc8","#82b5ff","#ffcb77","#df9cff","#ff9099","#83d39b"];
+ rooms.filter(q=>q.floor===Math.min(d.F,1)).forEach((q,i)=>{ctx.fillStyle=colors[i%colors.length]+"55";ctx.fillRect(ox+q.x*scale,oy+(d.W-q.y-q.width)*scale,q.length*scale,q.width*scale);ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=1.5;ctx.strokeRect(ox+q.x*scale,oy+(d.W-q.y-q.width)*scale,q.length*scale,q.width*scale);ctx.fillStyle="#edf4ff";ctx.font="11px system-ui";ctx.fillText(q.name.slice(0,18),ox+q.x*scale+4,oy+(d.W-q.y-q.width)*scale+15);});
+ ctx.fillStyle="#9fb1c8";ctx.font="11px system-ui";ctx.fillText("Floor 1 · dimensions in meters · schematic",8,17);
+}
+function roomCsv(){const keys=["name","floor","x","y","length","width","use","people","sockets","lux"];return "\ufeff"+[keys.join(","),...rooms.map(r=>keys.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(","))].join("\r\n")}
+function parseCsv(text){const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());if(lines.length<2)throw Error("CSV باید حداقل یک ردیف داده داشته باشد.");const parseLine=line=>{const out=[];let cur="",q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'&&q){cur+='"';i++}else if(ch==='"')q=!q;else if(ch===","&&!q){out.push(cur);cur=""}else cur+=ch}out.push(cur);return out};const headers=parseLine(lines[0]).map(x=>x.trim().toLowerCase());const required=["name","floor","x","y","length","width","use","people","sockets","lux"];const ix={};required.forEach(k=>{ix[k]=headers.indexOf(k);if(ix[k]<0)throw Error("ستون ضروری در CSV نیست: "+k)});return lines.slice(1).map(line=>{const a=parseLine(line),o={};required.forEach(k=>o[k]=a[ix[k]]);return {name:String(o.name),floor:Number(o.floor),x:Number(o.x),y:Number(o.y),length:Number(o.length),width:Number(o.width),use:String(o.use),people:Number(o.people),sockets:Number(o.sockets),lux:Number(o.lux)}})}
+$("addRoom").onclick=()=>{const d=read();rooms.push({name:"فضای جدید "+(rooms.length+1),floor:1,x:0,y:0,length:Math.min(4,d.L),width:Math.min(4,d.W),use:"other",people:0,sockets:0,lux:300});renderRooms()};
+$("roomCsvOut").onclick=()=>download("gridpulse-room-schedule.csv",roomCsv(),"text/csv;charset=utf-8");
+$("roomJsonOut").onclick=()=>download("gridpulse-room-schedule.json",JSON.stringify({schema_version:"1.0",units:"m",coordinate_origin:"south_west_building_corner",rooms:rooms.map(roomCalc)},null,2),"application/json");
+$("roomCsvIn").onclick=()=>$("roomFile").click();
+$("roomFile").onchange=async e=>{try{rooms=parseCsv(await e.target.files[0].text());renderRooms()}catch(err){alert("ورود CSV ناموفق بود: "+err.message)}e.target.value=""};
+
 function geo(s){
 const {L,W,H,F,tray,pipe,duct}=s.d;const verts=[],faces=[],colors=[];
 function box(x,y,z,dx,dy,dz,kind){const base=verts.length;verts.push([x,y,z],[x+dx,y,z],[x+dx,y+dy,z],[x,y+dy,z],[x,y,z+dz],[x+dx,y,z+dz],[x+dx,y+dy,z+dz],[x,y+dy,z+dz]);const ff=[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];ff.forEach(f=>{faces.push(f.map(n=>n+base));colors.push(kind)})}
@@ -126,7 +183,7 @@ box name:"Concept_Duct_Main" length:${(s.d.L*.8).toFixed(3)} width:0.18 height:0
 -- Approximate bounding-box model only. No connectors, sizing, schedules or BIM metadata.
 `}
 function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-function packageData(){return {product:"GridPulse MEP Studio",schema_version:"0.1.0",generated_at:new Date().toISOString(),classification:"conceptual_estimate_not_for_construction",project:state.d,results:{gross_area_m2:state.gross,estimated_net_area_m2:state.net,connected_load_estimate_kw:state.connected,coincident_load_estimate_kw:state.demand,cooling_load_estimate_kw:state.cooling,fresh_air_estimate_m3h:state.air},quantity_estimate:state.boq,calculation_notes:state.rows,limitations:["Not a construction-ready design","No cable sizing, voltage-drop, fault-current, protection coordination or earthing calculation","No detailed heating/cooling load, duct/pipe sizing or pressure-drop calculation","No verified architectural drawing or BIM geometry","Review all inputs, local codes and quantities with licensed engineers"],source_data_status:"User-entered concept inputs; no external plant/building data used"}}
+function packageData(){return {product:"GridPulse MEP Studio",schema_version:"0.2.0",generated_at:new Date().toISOString(),classification:"conceptual_estimate_not_for_construction",project:state.d,room_schedule:rooms.map(roomCalc),results:{gross_area_m2:state.gross,estimated_net_area_m2:state.net,connected_load_estimate_kw:state.connected,coincident_load_estimate_kw:state.demand,cooling_load_estimate_kw:state.cooling,fresh_air_estimate_m3h:state.air},quantity_estimate:state.boq,calculation_notes:state.rows,limitations:["Not a construction-ready design","No cable sizing, voltage-drop, fault-current, protection coordination or earthing calculation","No detailed heating/cooling load, duct/pipe sizing or pressure-drop calculation","No verified architectural drawing or BIM geometry","Review all inputs, local codes and quantities with licensed engineers"],source_data_status:"User-entered concept inputs; no external plant/building data used"}}
 function update(){try{state=build(read());renderTables(state);draw();$("scriptPreview").hidden=true}catch(e){alert(e.message)}}
 $("calculate").onclick=update;$("reset").onclick=()=>{location.reload()};$("viewReset").onclick=()=>{rotation={x:-.48,y:.65};zoom=1;draw()};
 $("downloadObj").onclick=()=>download("gridpulse-mep-concept.obj",objText(),"text/plain");
@@ -137,6 +194,6 @@ $("json").onclick=()=>download("gridpulse-mep-project.json",JSON.stringify(packa
 $("model").addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};$("model").setPointerCapture(e.pointerId)});
 $("model").addEventListener("pointermove",e=>{if(!drag)return;rotation.y+=(e.clientX-drag.x)*.01;rotation.x=Math.max(-1.3,Math.min(1.3,rotation.x+(e.clientY-drag.y)*.01));drag={x:e.clientX,y:e.clientY};draw()});
 $("model").addEventListener("pointerup",()=>drag=null);$("model").addEventListener("pointercancel",()=>drag=null);$("model").addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.35,Math.min(2.5,zoom*(e.deltaY<0?1.08:.92)));draw()},{passive:false});
-window.addEventListener("resize",draw);inputIds.forEach(id=>$(id).addEventListener("change",update));update();
+window.addEventListener("resize",()=>{draw();drawPlan()});inputIds.forEach(id=>$(id).addEventListener("change",()=>{update();renderRooms()}));update();renderRooms();
 </script>
 </body></html>
