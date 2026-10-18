@@ -370,6 +370,113 @@ async function gpAiCheck(){const button=document.getElementById("gpAiCheck"),sta
 async function gpAiAsk(){const button=document.getElementById("gpAiAsk"),question=document.getElementById("gpAiQuestion").value.trim();if(!question){gpAiRender("Enter a question first.");return;}gpAiBusy(button,true);gpAiRender("Searching the supplied local documents for evidence…");try{let docs;try{docs=JSON.parse(gpAiDocsField.value);}catch(e){throw new Error("Knowledge documents must be valid JSON.");}if(!Array.isArray(docs)||!docs.length)throw new Error("Provide at least one document with title, source_id and text.");const search=await gpAiRequest("/api/v1/ai/knowledge/search",{query:question,documents:docs,limit:5});if(!search.results||!search.results.length){gpAiRender({answer:"No matching evidence found in the documents supplied. I will not ask the language model to answer without retrieved evidence.",retrieval:search});return;}const excerpts=search.results.map(r=>({source_id:r.source_id,title:r.title,start_line:r.start_line,end_line:r.end_line,excerpt:r.excerpt,score:r.score}));const answer=await gpAiRequest("/api/v1/ai/chat",{question:question+"\n\nUse only the retrieved evidence below. If it is insufficient, say so. Preserve source IDs and line references. Do not provide plant control instructions.",context_records:excerpts});gpAiRender({retrieved_evidence:excerpts,local_model_response:answer,notice:"Retrieved text is user-supplied and not automatically approved or verified."});}catch(e){gpAiRender("AI request failed: "+e.message+"\n\nNatural-language answers require a configured local GGUF model. Evidence search and deterministic analysis do not require one.");}finally{gpAiBusy(button,false);}}
 async function gpAiAnalyse(){const button=document.getElementById("gpAiAnalyse");gpAiBusy(button,true);try{const records=[];for(const m of (typeof METRICS!=="undefined"?METRICS:[]).concat(typeof importedMetrics!=="undefined"?importedMetrics:[])){const value=Number(m.value),id=String(m.record_id||m.id||"").trim(),source=String(m.source_id||m.source||"").trim(),start=String(m.period_start||"").slice(0,10),end=String(m.period_end||"").slice(0,10),scope=m.scope||"plant",status=m.verification_status||m.status||"unverified";if(!id||!source||!Number.isFinite(value)||!/^\d{4}-\d{2}-\d{2}$/.test(start)||!/^\d{4}-\d{2}-\d{2}$/.test(end)||!["unit","plant","multiple_plants","regional","national"].includes(scope)||!["unverified","reviewed","verified"].includes(status))continue;records.push({record_id:id,plant:String(m.plant||m.scope||"unspecified"),metric:String(m.metric||"unspecified"),value,unit:String(m.unit||"unspecified"),period_start:start,period_end:end,scope,source_id:source,verification_status:status});}if(!records.length)throw new Error("No dashboard observations meet the AI API schema. Import observations with dates, units, source IDs and verification status first.");const report=await gpAiRequest("/api/v1/ai/analyze",{records:records.slice(0,5000)});gpAiRender({analysed_records:Math.min(records.length,5000),analysis:report,notice:"Statistical candidates are not confirmed faults. Review provenance and operating context."});}catch(e){gpAiRender("Analysis failed: "+e.message);}finally{gpAiBusy(button,false);}}
 document.getElementById("gpAiLoadFiles").addEventListener("click",async function(){const input=document.getElementById("gpAiFiles");const files=Array.from(input.files||[]);if(!files.length){gpAiRender("Choose one or more text or Markdown files first.");return;}try{const current=JSON.parse(gpAiDocsField.value);if(!Array.isArray(current))throw new Error("Knowledge JSON must be an array.");const additions=[];for(const file of files){if(file.size>200000)throw new Error("File exceeds the 200000-character limit: "+file.name);const body=await file.text();if(body.trim())additions.push({title:file.name,source_id:"LOCAL-FILE-"+file.name.replace(/[^A-Za-z0-9._-]/g,"_"),text:body});}if(current.length+additions.length>40)throw new Error("At most 40 documents are supported.");gpAiDocsField.value=JSON.stringify(current.concat(additions),null,2);gpAiRender({loaded_count:additions.length,document_count:current.length+additions.length,notice:"Files are loaded in this browser only. PDF and scanned documents are not supported."});}catch(error){gpAiRender("Could not load documents: "+error.message);}});document.getElementById("gpAiCheck").addEventListener("click",gpAiCheck);document.getElementById("gpAiAsk").addEventListener("click",gpAiAsk);document.getElementById("gpAiAnalyse").addEventListener("click",gpAiAnalyse);document.getElementById("gpAiClear").addEventListener("click",()=>{document.getElementById("gpAiQuestion").value="";gpAiRender("Cleared. Your local knowledge JSON is unchanged.");});
+
+/* Smart Excel reporting: all sheets are generated in-browser from the currently available dashboard records. */
+let gpExcelLoader;
+function gpLoadExcelJS(){
+ if(window.ExcelJS)return Promise.resolve(window.ExcelJS);
+ if(gpExcelLoader)return gpExcelLoader;
+ gpExcelLoader=new Promise((resolve,reject)=>{
+  const script=document.createElement("script");
+  script.src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+  script.async=true;
+  script.onload=()=>window.ExcelJS?resolve(window.ExcelJS):reject(new Error("ExcelJS loaded without its browser API."));
+  script.onerror=()=>reject(new Error("Excel export library could not load. Check internet access and retry."));
+  document.head.appendChild(script);
+ });
+ return gpExcelLoader;
+}
+function gpWorkbookRows(headers,items,keys){return [headers,...items.map(item=>keys.map(key=>{const v=item[key];return v===undefined||v===null?"":v;}))];}
+function gpStyleSheet(ws,headerRow=1){
+ ws.views=[{state:"frozen",ySplit:headerRow,showGridLines:false,rightToLeft:document.documentElement.lang==="fa"}];
+ ws.getRow(headerRow).font={bold:true,color:{argb:"FFFFFFFF"}};
+ ws.getRow(headerRow).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF16324F"}};
+ ws.getRow(headerRow).alignment={vertical:"middle",wrapText:true};
+ ws.getRow(headerRow).height=30;
+ ws.eachRow((row,rowNumber)=>{if(rowNumber>headerRow){row.alignment={vertical:"top",wrapText:true};if(rowNumber%2===0)row.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF0F5FA"}};}});
+ if(ws.rowCount>headerRow)ws.autoFilter={from:{row:headerRow,column:1},to:{row:ws.rowCount,column:Math.max(1,ws.columnCount)}};
+ ws.columns.forEach(col=>{let max=10;col.eachCell?.({includeEmpty:true},cell=>{max=Math.max(max,String(cell.value??"").split("\n").reduce((a,b)=>Math.max(a,b.length),0));});col.width=Math.min(42,Math.max(12,max+2));});
+}
+function gpChartPng(title,labels,values){
+ const canvas=document.createElement("canvas");canvas.width=1200;canvas.height=560;
+ const ctx=canvas.getContext("2d");ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle="#10243b";ctx.font="bold 30px Arial";ctx.fillText(title,42,48);
+ if(!labels.length||!values.length){ctx.fillStyle="#667788";ctx.font="24px Arial";ctx.fillText("No data available for this chart",42,110);return canvas.toDataURL("image/png");}
+ const max=Math.max(...values.map(v=>Math.abs(Number(v)||0)),1),left=80,right=35,top=95,bottom=110,plotW=canvas.width-left-right,plotH=canvas.height-top-bottom;
+ ctx.strokeStyle="#d7e0ea";ctx.lineWidth=2;
+ for(let i=0;i<5;i++){const y=top+plotH*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(canvas.width-right,y);ctx.stroke();ctx.fillStyle="#526477";ctx.font="16px Arial";ctx.fillText((max*(1-i/4)).toLocaleString(undefined,{maximumFractionDigits:2}),8,y+5);}
+ const gap=plotW/labels.length,barW=Math.max(3,Math.min(90,gap*.62));
+ labels.forEach((label,i)=>{const v=Number(values[i])||0,h=Math.abs(v)/max*plotH,x=left+gap*i+(gap-barW)/2,y=top+plotH-h;ctx.fillStyle="#1b9c91";ctx.fillRect(x,y,barW,h);ctx.fillStyle="#24384d";ctx.font="15px Arial";ctx.save();ctx.translate(x+barW/2,top+plotH+15);ctx.rotate(-Math.PI/4);ctx.textAlign="right";ctx.fillText(String(label).slice(0,38),0,0);ctx.restore();});
+ return canvas.toDataURL("image/png");
+}
+function gpAddTableSheet(wb,name,title,headers,items,keys,notes=[]){
+ const ws=wb.addWorksheet(name,{views:[{state:"frozen",ySplit:1,showGridLines:false,rightToLeft:document.documentElement.lang==="fa"}]});
+ ws.addRow([title]);ws.mergeCells(1,1,1,Math.max(1,headers.length));ws.getCell(1,1).font={bold:true,size:16,color:{argb:"FF16324F"}};ws.addRow(headers);
+ items.forEach(item=>ws.addRow(keys.map(key=>{const v=item[key];return v===undefined||v===null?"":(typeof v==="object"?JSON.stringify(v):v);})));
+ if(!items.length)ws.addRow(["No records available in this section."]);
+ if(notes.length){ws.addRow([]);notes.forEach(note=>ws.addRow([note]));}
+ ws.views=[{state:"frozen",ySplit:2,showGridLines:false,rightToLeft:document.documentElement.lang==="fa"}];
+ ws.getRow(2).font={bold:true,color:{argb:"FFFFFFFF"}};ws.getRow(2).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF16324F"}};ws.getRow(2).alignment={wrapText:true,vertical:"middle"};ws.getRow(2).height=32;
+ for(let i=3;i<=ws.rowCount;i++){ws.getRow(i).alignment={wrapText:true,vertical:"top"};if(i%2===0)ws.getRow(i).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF0F5FA"}};}
+ if(items.length)ws.autoFilter={from:{row:2,column:1},to:{row:items.length+2,column:headers.length}};
+ ws.columns=headers.map((h,i)=>({header:h,key:String(i),width:Math.min(42,Math.max(13,String(h).length+4,...items.slice(0,100).map(item=>String(item[keys[i]]??"").length+2)))}));
+ return ws;
+}
+function gpEngineeringSnapshot(){
+ return [
+ ["Net electrical generation (MWh)",document.getElementById("engGeneration").value],
+ ["Fuel thermal input (MWh_th)",document.getElementById("engFuelInput").value],
+ ["Net rated capacity (MW)",document.getElementById("engCapacity").value],
+ ["Reporting interval (hours)",document.getElementById("engHours").value],
+ ["Net efficiency (%)",document.getElementById("engEfficiency").textContent],
+ ["Heat rate (kJ/kWh)",document.getElementById("engHeatRate").textContent],
+ ["Capacity factor (%)",document.getElementById("engCapacityFactor").textContent],
+ ["Calculation status",document.getElementById("engineeringResults").hidden?"Not calculated":"Calculated in browser"]
+ ];
+}
+function gpAddEngineeringSheet(wb){
+ const ws=wb.addWorksheet("Engineering",{views:[{state:"frozen",ySplit:1,showGridLines:false,rightToLeft:document.documentElement.lang==="fa"}]});
+ ws.addRow(["Engineering calculator export"]);ws.addRow(["Indicator","Value"]);
+ gpEngineeringSnapshot().forEach(r=>ws.addRow(r));
+ ws.addRow([]);ws.addRow(["Methodology / limitations"]);ws.addRow(["Efficiency = net generation / fuel thermal input × 100."]);ws.addRow(["Heat rate = thermal input / net generation × 3,600."]);ws.addRow(["Capacity factor = net generation / (net capacity × interval hours) × 100."]);ws.addRow(["Inputs are user-provided; calculations are not independently verified and are not operating instructions."]);
+ ws.getRow(1).font={bold:true,size:16,color:{argb:"FF16324F"}};ws.getRow(2).font={bold:true,color:{argb:"FFFFFFFF"}};ws.getRow(2).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF16324F"}};ws.columns=[{width:42},{width:58}];return ws;
+}
+async function exportGridPulseExcel(scope="all"){
+ const lang=document.documentElement.lang==="fa",button=document.querySelector('[data-xlsx-scope="'+scope+'"]')||document.getElementById("exportTop");
+ if(button){button.disabled=true;button.dataset.originalText=button.textContent;button.textContent=lang?"در حال ساخت فایل…":"Building workbook…";}
+ try{
+  const ExcelJS=await gpLoadExcelJS(),wb=new ExcelJS.Workbook();wb.creator="GridPulse AI";wb.subject="Source-aware power-plant research and engineering analytics";wb.title="GridPulse AI report";wb.created=new Date();wb.modified=new Date();wb.company="Independent research prototype";
+  const allMetrics=[...METRICS,...importedMetrics],allSources=SOURCES.slice(),events=importedMaintenance.slice(),filtered=typeof analyticsRecords==="function"?analyticsRecords():[],flags=typeof analyticsScreenFlags==="function"?analyticsScreenFlags(importedMetrics):new Set();
+  const sections=scope==="all"?["overview","data","analytics","engineering","maintenance","sources"]:[scope];
+  if(sections.includes("overview")){
+   const ws=wb.addWorksheet("Executive Summary",{views:[{showGridLines:false,rightToLeft:lang}]});
+   ws.addRow(["GRIDPULSE AI — REPORT"]);ws.addRow(["Generated at (UTC)",new Date().toISOString()]);ws.addRow(["Export scope","Current browser session; local imports included"]);ws.addRow(["Observations",allMetrics.length]);ws.addRow(["Imported observations",importedMetrics.length]);ws.addRow(["Sources",allSources.length]);ws.addRow(["Maintenance events",events.length]);ws.addRow(["Verified observations",allMetrics.filter(m=>(m.status||m.verification_status)==="verified").length]);ws.addRow(["Unverified observations",allMetrics.filter(m=>(m.status||m.verification_status)==="unverified").length]);ws.addRow(["Important limitation","This dashboard is not connected to SCADA, DCS, EMS or dispatch systems. Public values are not automatically verified."]);
+   ws.getRow(1).font={bold:true,size:18,color:{argb:"FF16324F"}};ws.columns=[{width:32},{width:95}];ws.getColumn(2).alignment={wrapText:true,vertical:"top"};
+   const metricChart=gpChartPng("Reported metrics (values retain their original units)",allMetrics.slice(0,12).map(m=>m.metric),allMetrics.slice(0,12).map(m=>Number(m.value)||0));const chartId=wb.addImage({base64:metricChart.split(",")[1],extension:"png"});ws.addImage(chartId,"A13:H29");
+   const typeCounts={};events.forEach(e=>typeCounts[e.event_type||"Unspecified"]=(typeCounts[e.event_type||"Unspecified"]||0)+1);
+   const maintChart=gpChartPng("Imported maintenance events by type",Object.keys(typeCounts),Object.values(typeCounts));const chart2=wb.addImage({base64:maintChart.split(",")[1],extension:"png"});ws.addImage(chart2,"I13:P29");
+  }
+  if(sections.includes("data"))gpAddTableSheet(wb,"Observations","Reported and imported observations",["Record ID","Metric","Value","Unit","Period","Scope","Verification","Source ID","Source URL","Note"],allMetrics,["id","metric","value","unit","period","scope","status","source","url","note"],["Values are preserved as entered; mixed units are not combined or normalized.","Source truth is not independently verified."]);
+  if(sections.includes("analytics")){
+   const rows=filtered.map(m=>({...m,review_flag:flags.has(m.id||m.record_id)?"review_required":"no_iqr_flag"}));
+   gpAddTableSheet(wb,"Analytics","Filtered analytics ledger",["Record ID","Metric","Value","Unit","Start","End","Scope","Status","Source ID","Statistical review flag","Note"],rows,["id","metric","value","unit","period_start","period_end","scope","verification_status","source_id","review_flag","note"],["Analytics uses the current dashboard filters.","IQR flags are statistical review candidates, not alarms, fault diagnoses, or safety assessments."]);
+   const aw=wb.getWorksheet("Analytics");const chart=gpChartPng("Filtered observations — value by record",rows.slice(0,30).map(m=>m.period_start||m.id||m.record_id||"record"),rows.slice(0,30).map(m=>Number(m.value)||0));const imageId=wb.addImage({base64:chart.split(",")[1],extension:"png"});aw.addImage(imageId,"M2:T19");
+  }
+  if(sections.includes("engineering"))gpAddEngineeringSheet(wb);
+  if(sections.includes("maintenance"))gpAddTableSheet(wb,"Maintenance","Imported maintenance event ledger",["Event ID","Plant","Equipment","Event type","Start time","End time","Timezone","Source ID","Verification","Notes","Duration hours"],events,["event_id","plant","equipment","event_type","start_time","end_time","timezone","source_id","verification_status","notes","duration_hours"],["Elapsed event hours are not necessarily equipment downtime.","No example events are fabricated."]);
+  if(sections.includes("sources"))gpAddTableSheet(wb,"Sources","Source registry",["Source ID","Title","Publisher","URL","Type","Scope","Verification","Notes"],allSources,["id","title","publisher","url","type","scope","status","notes"],["A reviewed domain does not automatically verify every fact on that site."]);
+  if(scope!=="all"&&!sections.includes("overview")&&wb.worksheets.length===0)throw new Error("No worksheet could be created.");
+  const buffer=await wb.xlsx.writeBuffer(),blob=new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="gridpulse-"+scope+"-report-"+new Date().toISOString().replace(/[:.]/g,"-").slice(0,19)+".xlsx";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast(lang?"فایل اکسل و نمودارها آماده شد.":"Excel workbook and chart images exported.");
+ }catch(error){console.error("GridPulse Excel export failed",error);toast((lang?"خروجی اکسل ناموفق بود: ":"Excel export failed: ")+error.message);}
+ finally{if(button){button.disabled=false;button.textContent=button.dataset.originalText|| (lang?"خروجی اکسل کامل":"Export full Excel");}}
+}
+function gpInstallExcelButtons(){
+ const scopes=["overview","data","analytics","engineering","maintenance","sources"];
+ scopes.forEach(scope=>{const section=document.getElementById("view-"+scope);if(!section||section.querySelector('[data-xlsx-scope="'+scope+'"]'))return;const btn=document.createElement("button");btn.type="button";btn.className="btn primary";btn.dataset.xlsxScope=scope;btn.textContent=document.documentElement.lang==="fa"?"خروجی اکسل + نمودار":"Excel + charts";btn.addEventListener("click",()=>exportGridPulseExcel(scope));const target=section.querySelector(".section-title")||section.querySelector(".hero .hero-actions")||section.querySelector(".card-head");if(target){if(target.classList.contains("section-title"))target.appendChild(btn);else target.appendChild(btn);}});
+ const top=document.getElementById("exportTop");if(top){top.textContent=document.documentElement.lang==="fa"?"گزارش اکسل کامل":"Full Excel report";top.setAttribute("aria-label","Export complete Excel workbook with charts");top.addEventListener("click",()=>exportGridPulseExcel("all"));}
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",gpInstallExcelButtons);else gpInstallExcelButtons();
+
 </script>
 </body>
 </html>
