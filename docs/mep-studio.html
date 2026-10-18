@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="GridPulse MEP Studio: parametric electrical and mechanical design concept, quantities, and 3D interchange export.">
+<title>GridPulse MEP Studio | طراحی تاسیسات</title>
+<style>
+:root{color-scheme:dark;--bg:#08111f;--panel:#101e30;--panel2:#14263b;--line:#2a4058;--text:#edf4ff;--muted:#9fb1c8;--cyan:#55dbc8;--blue:#82b5ff;--amber:#ffcb77;--red:#ff9099}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0,#183456,transparent 45%),var(--bg);color:var(--text);font:14px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}header{padding:22px clamp(14px,4vw,46px);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}header a{color:var(--cyan);text-decoration:none}.wrap{max-width:1450px;margin:auto;padding:24px clamp(12px,3vw,34px)}h1{margin:0;font-size:clamp(25px,4vw,38px)}h2{font-size:18px;margin:0 0 14px}p{color:var(--muted)}.eyebrow{color:var(--cyan);font-size:11px;letter-spacing:1.3px;font-weight:800}.notice{padding:14px 16px;background:#2c2418;border:1px solid #6a5331;border-radius:12px;margin:18px 0;color:#f5dfb9}.notice strong{color:var(--amber)}.layout{display:grid;grid-template-columns:minmax(290px,370px) minmax(0,1fr);gap:16px;align-items:start}.panel{background:linear-gradient(145deg,#122238,#0c1828);border:1px solid var(--line);border-radius:15px;padding:18px;min-width:0;margin-bottom:15px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}label{display:block;color:#bdcce0;font-size:12px}input,select{display:block;width:100%;margin-top:5px;padding:10px;border-radius:9px;border:1px solid #354e68;background:#091626;color:var(--text);min-width:0}button{border:1px solid #35516c;background:#172d43;color:var(--text);border-radius:9px;padding:10px 12px;font:inherit;cursor:pointer}button.primary{background:var(--cyan);color:#06211e;border-color:var(--cyan);font-weight:800}button:hover{filter:brightness(1.12)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.canvas{width:100%;height:410px;display:block;background:linear-gradient(#0b1a2b,#07111f);border-radius:12px;border:1px solid #263e57}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.metric{background:#0b192a;border:1px solid var(--line);padding:12px;border-radius:10px}.metric b{display:block;font-size:21px}.metric span{font-size:11px;color:var(--muted)}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;min-width:550px}th,td{text-align:right;padding:10px;border-bottom:1px solid #273b51;font-size:12px;vertical-align:top}th{color:var(--cyan);background:#12253a;position:sticky;top:0}.small{font-size:11px;color:var(--muted)}.pill{display:inline-block;padding:4px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:11px}.ok{color:var(--cyan)}.warning{color:var(--amber)}.span2{grid-column:1/-1}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#071321;border:1px solid var(--line);padding:12px;border-radius:9px;max-height:230px;overflow:auto;font-size:11px;direction:ltr;text-align:left}footer{color:var(--muted);font-size:11px;padding:20px 0 40px}@media(max-width:900px){.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.canvas{height:340px}}@media(max-width:480px){.fields{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header><div><div class="eyebrow">GRIDPULSE · ENGINEERING WORKBENCH</div><h1>MEP Studio — طراحی پارامتریک تاسیسات</h1></div><a href="../index.html">بازگشت به داشبورد ↗</a></header>
+<main class="wrap">
+<p>محیط اولیه برای تعریف پروژه، برآورد مقادیر، بررسی مقدماتی بار الکتریکی و بار حرارتی/هوادهی، و ساخت مدل حجمی سه‌بعدی قابل انتقال به ابزارهای CAD/DCC.</p>
+<div class="notice"><strong>محدودیت مهندسی مهم:</strong> این نسخه ابزار طراحی مفهومی و برآورد اولیه است؛ نقشه اجرایی، محاسبه نهایی کابل و حفاظت، اتصال کوتاه، افت فشار، انتخاب قطعی تجهیزات، انطباق مقررات یا مدل BIM تأییدشده تولید نمی‌کند. مقادیر واقعی فقط از ورودی‌های مستند پروژه حاصل می‌شوند؛ خروجی سه‌بعدی، مدل حجمی ساده است و جایگزین نقشه دقیق معماری/سازه نیست. پیش از اجرا، مهندس ذی‌صلاح باید تمام محاسبات و ضوابط محل پروژه را بررسی و تأیید کند.</div>
+<div class="layout">
+<aside>
+<section class="panel"><h2>۱. مشخصات پروژه</h2><div class="fields">
+<label>نام پروژه<input id="project" value="MEP Concept Project" maxlength="120"></label>
+<label>واحد طول<select id="units"><option value="m">متر (m)</option><option value="mm">میلی‌متر (mm)</option></select></label>
+<label>طول بنا (متر)<input id="length" type="number" min="1" max="500" step=".1" value="24"></label>
+<label>عرض بنا (متر)<input id="width" type="number" min="1" max="500" step=".1" value="16"></label>
+<label>ارتفاع طبقه (متر)<input id="height" type="number" min="2" max="12" step=".1" value="3.4"></label>
+<label>تعداد طبقات<input id="floors" type="number" min="1" max="100" step="1" value="2"></label>
+<label>درصد سطح مفید<input id="net" type="number" min="10" max="100" step="1" value="82"></label>
+<label>ضریب همزمانی بار الکتریکی<input id="diversity" type="number" min=".1" max="1" step=".01" value=".75"></label>
+<label>بار متصل روشنایی (W/m²)<input id="light" type="number" min="0" max="100" step=".1" value="8"></label>
+<label>بار پریز/عمومی (W/m²)<input id="plug" type="number" min="0" max="300" step=".1" value="25"></label>
+<label>بار مکانیکی تخمینی (W/m²)<input id="mech" type="number" min="0" max="500" step=".1" value="18"></label>
+<label>هوای تازه (m³/h·m²)<input id="fresh" type="number" min="0" max="20" step=".1" value="3"></label>
+<label>بار سرمایشی اولیه (W/m²)<input id="cool" type="number" min="0" max="500" step="1" value="110"></label>
+<label>ارتفاع مسیر کابل/سینی (متر)<input id="tray" type="number" min=".1" max="20" step=".1" value="2.8"></label>
+<label>طول مسیر لوله اصلی در هر طبقه (متر)<input id="pipe" type="number" min="0" max="1000" step=".5" value="35"></label>
+<label>طول مسیر کانال اصلی در هر طبقه (متر)<input id="duct" type="number" min="0" max="1000" step=".5" value="28"></label>
+</div><div class="actions"><button class="primary" id="calculate">محاسبه و بازسازی مدل</button><button id="reset">بازنشانی نمونه</button></div><p class="small">اعداد اولیه صرفاً داده نمونه برای آزمون رابط هستند؛ مشخصات ساختمان واقعی نیستند.</p></section>
+<section class="panel"><h2>۲. فرضیات و دامنه</h2><div class="fields">
+<label>نوع پروژه<select id="building"><option>ساختمان اداری</option><option>مسکونی</option><option>تجاری</option><option>کارگاهی</option><option>نیروگاه/صنعتی</option></select></label>
+<label>سطح اطمینان ورودی<select id="confidence"><option value="concept">مفهومی / برآورد</option><option value="survey">اندازه‌برداری شده</option><option value="approved">تأیید مهندسی مستند</option></select></label>
+</div><p class="small">برچسب «تأیید مهندسی مستند» فقط متادیتای انتخابی کاربر است و به‌تنهایی هیچ ورودی را تأیید نمی‌کند. این صفحه تمام مقادیر محاسباتی را به‌عنوان تخمینی برچسب می‌زند.</p></section>
+</aside>
+<div>
+<section class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h2>۳. مدل سه‌بعدی حجمی</h2><span class="pill">مدل پارامتریک · بدون هندسه اجرایی</span></div><div class="actions" style="margin:0"><button id="viewReset">نمای ایزومتریک</button><button id="downloadObj">خروجی OBJ</button><button id="downloadMax">اسکریپت 3ds Max (.ms)</button></div></div>
+<canvas id="model" class="canvas" aria-label="نمای سه‌بعدی حجمی ساختمان و مسیرهای مفهومی تاسیسات"></canvas>
+<div class="small">با کشیدن ماوس مدل را بچرخانید؛ با چرخ ماوس زوم کنید. رنگ‌ها صرفاً برای تمایز بصری‌اند: پوسته ساختمان، مسیر کابل، مسیر لوله و مسیر کانال. مدل، مدل BIM نیست.</div></section>
+<div class="metrics">
+<div class="metric"><b id="gross">—</b><span>زیربنای ناخالص (m²)</span></div><div class="metric"><b id="netArea">—</b><span>زیربنای مفید تخمینی (m²)</span></div><div class="metric"><b id="demand">—</b><span>بار الکتریکی تخمینی (kW)</span></div><div class="metric"><b id="cooling">—</b><span>بار سرمایشی تخمینی (kW)</span></div>
+</div>
+<section class="panel"><h2>۴. محاسبات اولیه و فرضیات</h2><div class="scroll"><table><thead><tr><th>شاخص</th><th>روش/فرض</th><th>نتیجه</th><th>وضعیت</th></tr></thead><tbody id="calcRows"></tbody></table></div></section>
+<section class="panel"><h2>۵. فهرست مقادیر اولیه (BOQ)</h2><div class="scroll"><table><thead><tr><th>سیستم</th><th>شرح</th><th>مقدار</th><th>واحد</th><th>مبنای برآورد</th></tr></thead><tbody id="boqRows"></tbody></table></div><div class="actions"><button class="primary" id="csv">دریافت BOQ به CSV</button><button id="json">دریافت بسته پروژه JSON</button></div></section>
+<section class="panel"><h2>۶. خروجی و گردش کار CAD / 3ds Max</h2><p>خروجی OBJ شامل پوسته حجمی و مسیرهای نمایشی ساده است. فایل MAX باینری تولید نمی‌شود؛ اسکریپت MAXScript برای اجرا در Autodesk 3ds Max ساخته می‌شود و هندسه مفهومی را ایجاد می‌کند. واحدها، مختصات و مقیاس را پس از واردسازی بررسی کنید.</p><div class="actions"><button id="showScript">نمایش پیش‌نمایش اسکریپت MAXScript</button></div><pre id="scriptPreview" hidden></pre><p class="small">این ابزار به Autodesk 3ds Max متصل نیست، فایل .max بومی را مستقیماً تولید نمی‌کند و از فایل‌های DWG/IFC/Revit یا نقشه معماری به‌طور خودکار اطلاعات استخراج نمی‌کند.</p></section>
+<section class="panel"><h2>۷. کنترل کیفیت پیش از طراحی اجرایی</h2><div id="qualityChecks"></div></section>
+</div>
+</div>
+<footer>GridPulse MEP Studio · ابزار مفهومی برای برنامه‌ریزی مهندسی · تمام محاسبات در مرورگر انجام می‌شود و داده‌ها به سرور ارسال نمی‌شوند. خروجی‌ها باید توسط متخصص مربوطه راستی‌آزمایی شوند.</footer>
+</main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const inputIds=["project","units","length","width","height","floors","net","diversity","light","plug","mech","fresh","cool","tray","pipe","duct","building","confidence"];
+const number=id=>{const v=Number($(id).value);if(!Number.isFinite(v))throw Error("ورودی نامعتبر: "+id);return v};
+let state=null,drag=null,rotation={x:-.48,y:.65},zoom=1;
+function read(){
+const d={project:$("project").value.trim()||"Untitled MEP Project",units:$("units").value,L:number("length"),W:number("width"),H:number("height"),F:number("floors"),net:number("net")/100,div:number("diversity"),light:number("light"),plug:number("plug"),mech:number("mech"),fresh:number("fresh"),cool:number("cool"),tray:number("tray"),pipe:number("pipe"),duct:number("duct"),building:$("building").value,confidence:$("confidence").value};
+if(d.L<=0||d.W<=0||d.H<2||d.F<1||!Number.isInteger(d.F)||d.net<=0||d.net>1||d.div<=0||d.div>1||[d.light,d.plug,d.mech,d.fresh,d.cool,d.tray,d.pipe,d.duct].some(v=>v<0))throw Error("مقادیر باید در محدوده معتبر و غیرمنفی باشند.");
+return d}
+function build(d){
+const gross=d.L*d.W*d.F,net=gross*d.net,light=net*d.light/1000,plug=net*d.plug/1000,mech=net*d.mech/1000,connected=light+plug+mech,demand=connected*d.div,cooling=net*d.cool/1000,air=net*d.fresh,run=d.F*d.L*1.15,cable=run*3,tray=d.F*d.L*1.1,pipe=d.pipe*d.F*1.1,duct=d.duct*d.F*1.1,lightingPoints=Math.ceil(net/12),socketPoints=Math.ceil(net/15),diffusers=Math.ceil(air/400);
+const boq=[
+["الکتریکی","روشنایی — تعداد نقطه تقریبی",lightingPoints,"عدد","یک نقطه به ازای هر 12 m²؛ فرض مفهومی، نه ضابطه طراحی"],
+["الکتریکی","پریز/نقطه عمومی تقریبی",socketPoints,"عدد","یک نقطه به ازای هر 15 m²؛ فرض مفهومی"],
+["الکتریکی","مسیر سینی کابل اصلی",tray.toFixed(1),"m","طول بنا × طبقات × 1.10؛ بدون مسیرهای شاخه"],
+["الکتریکی","طول مسیر کابل مفهومی سه‌رشته/سه‌مسیر",cable.toFixed(1),"m","طول مسیر × 3؛ سایز، نوع و تعداد واقعی هنوز تعیین نشده"],
+["مکانیکی","هوای تازه محاسباتی",air.toFixed(1),"m³/h","مساحت مفید × نرخ ورودی کاربر؛ باید بر مبنای کاربری/جمعیت تأیید شود"],
+["مکانیکی","پخش‌کننده هوا تقریبی",diffusers,"عدد","فرض 400 m³/h برای هر پخش‌کننده؛ فقط شمارش اولیه"],
+["مکانیکی","مسیر لوله اصلی",pipe.toFixed(1),"m","ورودی کاربر برای هر طبقه × طبقات × 1.10"],
+["مکانیکی","مسیر کانال اصلی",duct.toFixed(1),"m","ورودی کاربر برای هر طبقه × طبقات × 1.10"],
+["مکانیکی","ظرفیت سرمایش مفهومی",cooling.toFixed(2),"kW","بار سرمایشی ورودی W/m²؛ بدون محاسبه بار ساعتی"],
+["الکتریکی","بار متصل تخمینی",connected.toFixed(2),"kW","جمع بارهای ویژه واردشده؛ فاقد تفکیک بارهای واقعی تجهیزات"]
+];
+const rows=[
+["مساحت ناخالص", "طول × عرض × تعداد طبقات",gross.toFixed(2)+" m²","محاسبه هندسی"],
+["مساحت مفید", "زیربنای ناخالص × درصد مفید",net.toFixed(2)+" m²","وابسته به درصد فرض‌شده"],
+["بار روشنایی", "مساحت مفید × W/m² / 1000",light.toFixed(2)+" kW","تخمینی"],
+["بار پریز/عمومی", "مساحت مفید × W/m² / 1000",plug.toFixed(2)+" kW","تخمینی"],
+["بار مکانیکی الکتریکی", "مساحت مفید × W/m² / 1000",mech.toFixed(2)+" kW","تخمینی"],
+["بار متصل جمع", "جمع سه ردیف فوق",connected.toFixed(2)+" kW","بدون بارهای تجهیزات ویژه"],
+["بار همزمان تخمینی", "بار متصل × ضریب همزمانی",demand.toFixed(2)+" kW","برای تعیین کابل/کلید کافی نیست"],
+["بار سرمایشی اولیه", "مساحت مفید × W/m² / 1000",cooling.toFixed(2)+" kW","بدون روش بار ساعتی/اقلیم"],
+["هوای تازه", "مساحت مفید × نرخ ورودی",air.toFixed(1)+" m³/h","باید با کاربری و جمعیت تطبیق یابد"],
+["ظرفیت جریان 3فاز نمایشی", "kW × 1000 /(√3 × 400 × 0.9)",(demand*1000/(Math.sqrt(3)*400*.9)).toFixed(1)+" A","صرفاً تخمین؛ مبنای انتخاب کابل/حفاظت نیست"]];
+return {d,gross,net,light,plug,mech,connected,demand,cooling,air,run,cable,tray,pipe,duct,lightingPoints,socketPoints,diffusers,boq,rows}}
+function fmt(n){return Number(n).toLocaleString("fa-IR",{maximumFractionDigits:2})}
+function renderTables(s){
+$("gross").textContent=fmt(s.gross);$("netArea").textContent=fmt(s.net);$("demand").textContent=fmt(s.demand);$("cooling").textContent=fmt(s.cooling);
+$("calcRows").innerHTML=s.rows.map(r=>"<tr>"+r.map((x,i)=>"<td>"+(i===3?'<span class="warning">'+x+"</span>":escapeHtml(x))+"</td>").join("")+"</tr>").join("");
+$("boqRows").innerHTML=s.boq.map(r=>"<tr>"+r.map(x=>"<td>"+escapeHtml(x)+"</td>").join("")+"</tr>").join("");
+$("qualityChecks").innerHTML=["ابعاد و طبقات هنوز باید با نقشه معماری اندازه‌برداری‌شده تطبیق داده شوند.","انتخاب کابل، افت ولتاژ، جریان اتصال کوتاه، هماهنگی حفاظتی، ارت و صاعقه‌گیر در این نسخه محاسبه نشده‌اند.","بار سرمایش/گرمایش واقعی به داده اقلیم، پوسته، جهت، نفوذ هوا، افراد، روشنایی و تجهیزات نیاز دارد.","قطر لوله و کانال، افت فشار، سرعت، نویز و انتخاب فن/پمپ محاسبه نشده‌اند.","BOQ مسیرهای اصلی و شمارش تجهیزات، برآورد مفهومی با فرض‌های نمایان است؛ پیش از سفارش باید برداشت و طراحی تفصیلی شود."].map(x=>"<p>• "+escapeHtml(x)+"</p>").join("")}
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function geo(s){
+const {L,W,H,F,tray,pipe,duct}=s.d;const verts=[],faces=[],colors=[];
+function box(x,y,z,dx,dy,dz,kind){const base=verts.length;verts.push([x,y,z],[x+dx,y,z],[x+dx,y+dy,z],[x,y+dy,z],[x,y,z+dz],[x+dx,y,z+dz],[x+dx,y+dy,z+dz],[x,y+dy,z+dz]);const ff=[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];ff.forEach(f=>{faces.push(f.map(n=>n+base));colors.push(kind)})}
+box(0,0,0,L,W,F*H,"shell");
+for(let i=1;i<F;i++)box(0,0,i*H,L,W,.08,"floor");
+box(0,W*.16,tray,L,W*.025,.08,"cable");
+box(L*.08,W*.50,pipe,L*.84,.08,.08,"pipe");
+box(L*.10,W*.78,duct,L*.8,.18,.18,"duct");
+for(let i=0;i<F;i++){box(L*.18,W*.2,i*H+H*.25,.14,.14,.14,"elec");box(L*.48,W*.5,i*H+H*.25,.14,.14,.14,"mech")}
+return {verts,faces,colors}}
+function draw(){
+const c=$("model"),ctx=c.getContext("2d"),rect=c.getBoundingClientRect(),ratio=window.devicePixelRatio||1;c.width=Math.max(1,Math.floor(rect.width*ratio));c.height=Math.max(1,Math.floor(rect.height*ratio));ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,rect.width,rect.height);
+if(!state)return;const g=geo(state),{verts,faces,colors}=g;const rx=rotation.x,ry=rotation.y;const projected=verts.map(([x,y,z])=>{x-=state.d.L/2;y-=state.d.W/2;let yy=y*Math.cos(ry)-x*Math.sin(ry),xx=y*Math.sin(ry)+x*Math.cos(ry);let zz=z*Math.cos(rx)-yy*Math.sin(rx);yy=z*Math.sin(rx)+yy*Math.cos(rx);const scale=Math.min(rect.width/(state.d.L+state.d.W*1.5),rect.height/(state.d.F*state.d.H+state.d.L*.65))*zoom;return [rect.width/2+xx*scale,rect.height*.58-zz*scale]});
+const color={shell:"#6f8da8",floor:"#9db1c7",cable:"#52e0d0",pipe:"#ffbc68",duct:"#8ab4ff",elec:"#52e0d0",mech:"#ffbc68"};
+const sorted=faces.map((f,i)=>({f,i,depth:f.reduce((a,n)=>a+verts[n][2],0)/3})).sort((a,b)=>a.depth-b.depth);
+sorted.forEach(({f,i})=>{ctx.beginPath();f.forEach((n,j)=>{const p=projected[n];if(!j)ctx.moveTo(...p);else ctx.lineTo(...p)});ctx.closePath();ctx.fillStyle=color[colors[i]]||"#7e94ad";ctx.globalAlpha=colors[i]==="shell"?.12:colors[i]==="floor"?.2:.8;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=color[colors[i]]||"#7e94ad";ctx.lineWidth=.7;ctx.stroke()});
+ctx.fillStyle="#dce9f8";ctx.font="12px system-ui";ctx.fillText("Concept model · not BIM",12,22)}
+function objText(){const g=geo(state);let out="# GridPulse MEP Studio conceptual model\n# Not construction-ready geometry\n";g.verts.forEach(v=>out+="v "+v.map(n=>n.toFixed(4)).join(" ")+"\n");let active="",idx=0;g.faces.forEach((f,i)=>{if(g.colors[i]!==active){active=g.colors[i];out+="g "+active+"\n"}out+="f "+f.map(n=>n+1).join(" ")+"\n"});return out}
+function maxText(){const s=state;return `-- GridPulse MEP Studio - conceptual massing only
+-- Units: meters; review scale and coordinates before use.
+resetMaxFile #noPrompt
+global gridpulseShell = box name:"Building_Concept" length:${s.d.L} width:${s.d.W} height:${s.d.F*s.d.H} pos:[0,0,0]
+gridpulseShell.wirecolor = color 105 135 165
+${Array.from({length:s.d.F-1},(_,i)=>`box name:"Floor_Slab_${i+1}" length:${s.d.L} width:${s.d.W} height:0.08 pos:[0,0,${((i+1)*s.d.H).toFixed(3)}] wirecolor:(color 150 170 190)`).join("\n")}
+box name:"Concept_Cable_Tray" length:${s.d.L} width:${(s.d.W*.025).toFixed(3)} height:0.08 pos:[0,${(s.d.W*.16).toFixed(3)},${s.d.tray}] wirecolor:(color 50 220 205)
+box name:"Concept_Pipe_Main" length:${(s.d.L*.84).toFixed(3)} width:0.08 height:0.08 pos:[${(s.d.L*.08).toFixed(3)},${(s.d.W*.50).toFixed(3)},${s.d.pipe}] wirecolor:(color 255 185 90)
+box name:"Concept_Duct_Main" length:${(s.d.L*.8).toFixed(3)} width:0.18 height:0.18 pos:[${(s.d.L*.10).toFixed(3)},${(s.d.W*.78).toFixed(3)},${s.d.duct}] wirecolor:(color 125 175 255)
+-- Approximate bounding-box model only. No connectors, sizing, schedules or BIM metadata.
+`}
+function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function packageData(){return {product:"GridPulse MEP Studio",schema_version:"0.1.0",generated_at:new Date().toISOString(),classification:"conceptual_estimate_not_for_construction",project:state.d,results:{gross_area_m2:state.gross,estimated_net_area_m2:state.net,connected_load_estimate_kw:state.connected,coincident_load_estimate_kw:state.demand,cooling_load_estimate_kw:state.cooling,fresh_air_estimate_m3h:state.air},quantity_estimate:state.boq,calculation_notes:state.rows,limitations:["Not a construction-ready design","No cable sizing, voltage-drop, fault-current, protection coordination or earthing calculation","No detailed heating/cooling load, duct/pipe sizing or pressure-drop calculation","No verified architectural drawing or BIM geometry","Review all inputs, local codes and quantities with licensed engineers"],source_data_status:"User-entered concept inputs; no external plant/building data used"}}
+function update(){try{state=build(read());renderTables(state);draw();$("scriptPreview").hidden=true}catch(e){alert(e.message)}}
+$("calculate").onclick=update;$("reset").onclick=()=>{location.reload()};$("viewReset").onclick=()=>{rotation={x:-.48,y:.65};zoom=1;draw()};
+$("downloadObj").onclick=()=>download("gridpulse-mep-concept.obj",objText(),"text/plain");
+$("downloadMax").onclick=()=>download("gridpulse-mep-concept.ms",maxText(),"text/plain");
+$("showScript").onclick=()=>{$("scriptPreview").hidden=!$("scriptPreview").hidden;$("scriptPreview").textContent=maxText()};
+$("csv").onclick=()=>{const rows=[["System","Description","Quantity","Unit","Basis"],...state.boq];const csv="\ufeff"+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");download("gridpulse-mep-boq.csv",csv,"text/csv;charset=utf-8")};
+$("json").onclick=()=>download("gridpulse-mep-project.json",JSON.stringify(packageData(),null,2),"application/json");
+$("model").addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};$("model").setPointerCapture(e.pointerId)});
+$("model").addEventListener("pointermove",e=>{if(!drag)return;rotation.y+=(e.clientX-drag.x)*.01;rotation.x=Math.max(-1.3,Math.min(1.3,rotation.x+(e.clientY-drag.y)*.01));drag={x:e.clientX,y:e.clientY};draw()});
+$("model").addEventListener("pointerup",()=>drag=null);$("model").addEventListener("pointercancel",()=>drag=null);$("model").addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.35,Math.min(2.5,zoom*(e.deltaY<0?1.08:.92)));draw()},{passive:false});
+window.addEventListener("resize",draw);inputIds.forEach(id=>$(id).addEventListener("change",update));update();
+</script>
+</body></html>
