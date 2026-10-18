@@ -5,6 +5,7 @@ from gridpulse.cad_engine import (
     build_spec,
     review_spec,
     to_dxf,
+    to_freecad_macro,
     to_openscad,
     to_svg,
 )
@@ -26,6 +27,10 @@ def test_process_prompt_generates_editable_model_and_exports():
     assert "<svg" in to_svg(spec)
     assert "SECTION" in to_dxf(spec)
     assert "module box_at" in to_openscad(spec)
+    macro = to_freecad_macro(spec)
+    assert "import FreeCAD as App" in macro
+    assert "Part.export(export_objects, step_path)" in macro
+    assert "gridpulse_concept.FCStd" in macro
     assert "not for construction" in to_openscad(spec).lower()
 
 
