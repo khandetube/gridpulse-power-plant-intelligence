@@ -5,10 +5,10 @@ they do not establish physical plausibility, equipment faults, or safe operating
 """
 from __future__ import annotations
 
+import json
 from collections import Counter, defaultdict
 from datetime import date
 from hashlib import sha256
-import json
 from itertools import pairwise
 from math import isfinite
 from statistics import median
@@ -116,7 +116,7 @@ def assess_data_quality(records: list[dict[str, Any]]) -> dict[str, Any]:
         gap_days = []
         irregular = False
         if expected and expected > 0:
-            for a, b in zip(unique_starts, unique_starts[1:]):
+            for a, b in pairwise(unique_starts):
                 delta = (b - a).days
                 if delta >= expected * 2:
                     gap_days.append({"from": a.isoformat(), "to": b.isoformat(), "days": delta})
