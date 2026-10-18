@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from gridpulse.approved_limits import review_approved_limits
 from gridpulse.data_quality import assess_data_quality
+from gridpulse.diagnostic_ai import diagnose_observations
 from gridpulse.knowledge import search_documents
 from gridpulse.local_llm import LocalModelUnavailable, generate_local_answer, local_model_status
 from gridpulse.offline_ai import analyze_offline
@@ -83,7 +84,7 @@ def offline_ai_status() -> dict[str, Any]:
         "external_services_required": False,
         "trained_language_model_included": False,
         "optional_local_language_model": local_model_status(),
-        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "trend_sample_sufficiency", "descriptive_linear_fit_r_squared", "rolling_mean_3", "first_to_latest_change_pct", "data_quality_report", "evidence_backed_review_insights", "input_quality_checks", "data_quality_evidence_engine", "verified_engineering_limit_review", "local_lexical_document_retrieval"],
+        "capabilities": ["robust_outlier_candidates", "group_statistics", "linear_trend_estimates", "trend_sample_sufficiency", "descriptive_linear_fit_r_squared", "rolling_mean_3", "first_to_latest_change_pct", "data_quality_report", "evidence_backed_review_insights", "input_quality_checks", "data_quality_evidence_engine", "verified_engineering_limit_review", "local_lexical_document_retrieval", "robust_recent_shift_screening", "sustained_level_shift_screening", "observation_cadence_gap_detection", "exploratory_matched_date_metric_associations"],
         "not_capable_of": ["language_generation_without_a_configured_local_model", "failure_certification", "plant_control", "automatic_trip_or_dispatch"],
     }
 
@@ -150,5 +151,14 @@ def offline_knowledge_search(request: KnowledgeSearchRequest) -> dict[str, Any]:
             [document.model_dump() for document in request.documents],
             request.limit,
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/diagnose")
+def offline_ai_diagnose(request: OfflineAnalysisRequest) -> dict[str, Any]:
+    """Run advanced evidence-screening heuristics on bounded caller-supplied records."""
+    try:
+        return diagnose_observations([record.model_dump(mode="json") for record in request.records])
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
