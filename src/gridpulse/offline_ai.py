@@ -137,8 +137,22 @@ def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
                 }
                 group_anomalies.append(item)
                 candidates.append(item)
-        dated = sorted(points, key=lambda point: point[0])
+        dated = sorted(points, key=lambda point: (point[0], str(point[2]["record_id"])))
         slope = _linear_slope([(day, value) for day, value, _ in dated])
+        first_value = dated[0][1]
+        latest_value = dated[-1][1]
+        change_pct = (
+            round((latest_value - first_value) / abs(first_value) * 100, 4)
+            if first_value != 0
+            else None
+        )
+        rolling_window = [value for _, value, _ in dated[-3:]]
+        direction = (
+            "increasing" if slope is not None and slope > 0
+            else "decreasing" if slope is not None and slope < 0
+            else "flat_or_unresolved" if slope is not None
+            else "insufficient_distinct_dates"
+        )
         summaries.append({
             "plant": plant,
             "metric": metric,
@@ -150,12 +164,79 @@ def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
             "mean": round(sum(values) / len(values), 6),
             "median": center,
             "mad": mad,
+            "first_value": first_value,
+            "first_period_start": dated[0][0].isoformat(),
+            "latest_value": latest_value,
+            "latest_period_start": dated[-1][0].isoformat(),
+            "change_from_first_pct": change_pct,
+            "latest_rolling_mean_3": round(sum(rolling_window) / len(rolling_window), 6),
             "trend_per_day": round(slope, 8) if slope is not None else None,
             "trend_status": "estimate_only" if slope is not None else "insufficient_distinct_dates",
+            "trend_direction": direction,
             "anomaly_candidate_count": len(group_anomalies),
             "source_ids": sorted({str(point[2]["source_id"]) for point in points}),
             "verification_statuses": sorted({str(point[2]["verification_status"]) for point in points}),
         })
+
+    verification_counts: dict[str, int] = defaultdict(int)
+    source_ids: set[str] = set()
+    for row in records:
+        status = str(row.get("verification_status", "")).strip() or "missing"
+        verification_counts[status] += 1
+        source_id = str(row.get("source_id", "")).strip()
+        if source_id:
+            source_ids.add(source_id)
+    quality = {
+        "input_records": len(records),
+        "analyzed_records": sum(item["count"] for item in summaries),
+        "invalid_or_skipped_records": len(invalid),
+        "analysis_coverage_pct": round(sum(item["count"] for item in summaries) / len(records) * 100, 2),
+        "verification_status_counts": dict(sorted(verification_counts.items())),
+        "distinct_source_count": len(source_ids),
+        "records_missing_source_id": sum(1 for row in records if not str(row.get("source_id", "")).strip()),
+        "invalid_reason_counts": {
+            reason: sum(1 for item in invalid if item.get("reason") == reason)
+            for reason in sorted({item.get("reason", "unknown") for item in invalid})
+        },
+    }
+    insights: list[dict[str, Any]] = []
+    if invalid:
+        insights.append({
+            "id": "data_quality_review",
+            "severity": "high" if len(invalid) / len(records) >= 0.1 else "medium",
+            "title": "Review skipped or invalid records",
+            "evidence": f"{len(invalid)} of {len(records)} input records were not analyzed.",
+            "recommended_review": "Correct the reported validation issues and rerun analysis before relying on trends.",
+            "evidence_record_ids": [item.get("record_id", item.get("index", "")) for item in invalid[:20]],
+        })
+    if any(row.get("verification_status") != "verified" for row in records):
+        insights.append({
+            "id": "source_verification_review",
+            "severity": "medium",
+            "title": "Confirm source and verification status",
+            "evidence": "At least one input record is not marked verified.",
+            "recommended_review": "Check each record against its original authorised source and record the reviewer and verification status.",
+            "evidence_record_ids": [str(row.get("record_id", "")) for row in records if row.get("verification_status") != "verified"][:20],
+        })
+    for item in candidates[:50]:
+        insights.append({
+            "id": "outlier:" + item["record_id"],
+            "severity": "review",
+            "title": f"Potential statistical outlier: {item['metric']}",
+            "evidence": f"Record {item['record_id']} value {item['value']} {item['unit']}; group median {item['group_median']}.",
+            "recommended_review": "Verify units, time window, operating context, data quality and approved engineering limits; do not treat this flag as a confirmed fault.",
+            "evidence_record_ids": [item["record_id"]],
+        })
+    for item in summaries:
+        if item["count"] >= 3 and item["trend_direction"] in ("increasing", "decreasing"):
+            insights.append({
+                "id": f"trend:{item['plant']}:{item['metric']}:{item['scope']}",
+                "severity": "review",
+                "title": f"Observed {item['trend_direction']} trend: {item['metric']}",
+                "evidence": f"{item['count']} records; estimated slope {item['trend_per_day']} {item['unit']}/day; first-to-latest change {item['change_from_first_pct']}%.",
+                "recommended_review": "Check data comparability, operating regime and approved performance baselines before drawing an engineering conclusion.",
+                "evidence_record_ids": [],
+            })
 
     return {
         "engine": ENGINE_ID,
@@ -167,6 +248,8 @@ def analyze_offline(records: list[dict[str, Any]]) -> dict[str, Any]:
         "group_count": len(summaries),
         "invalid_or_skipped_count": len(invalid),
         "groups": summaries,
+        "data_quality": quality,
+        "insights": insights[:100],
         "anomaly_candidates": candidates,
         "invalid_or_skipped_records": invalid,
         "limitations": LIMITATIONS,
