@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import os
 import secrets
 import sqlite3
@@ -11,7 +12,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from gridpulse.analytics import analyze_observations
@@ -294,6 +295,58 @@ def create_maintenance_events(batch: MaintenanceEventBatch) -> dict[str, object]
     except sqlite3.IntegrityError as exc:
         raise HTTPException(status_code=409, detail="At least one event_id already exists; no events from this batch were stored.") from exc
     return {"inserted_count": count, "event_ids": [record["event_id"] for record in records], "storage": "sqlite", "duration_semantics": "Elapsed event duration; not necessarily equipment downtime."}
+
+
+@app.get("/api/v1/observations/export.csv")
+def export_observations_csv(
+    plant: str | None = Query(default=None, min_length=1, max_length=200),
+    metric: str | None = Query(default=None, min_length=1, max_length=160),
+    status: Literal["unverified", "reviewed", "verified"] | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    limit: int = Query(default=1000, ge=1, le=10000),
+    offset: int = Query(default=0, ge=0),
+) -> Response:
+    """Export a bounded, filtered observation page without changing verification labels."""
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date must be on or before end_date")
+    records, total = get_observation_store().list_records(
+        plant=plant,
+        metric=metric,
+        status=status,
+        start_date=start_date.isoformat() if start_date else None,
+        end_date=end_date.isoformat() if end_date else None,
+        limit=limit,
+        offset=offset,
+    )
+    fields = [
+        "record_id", "plant", "metric", "value", "unit", "period_start",
+        "period_end", "scope", "source_id", "verification_status",
+    ]
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore", lineterminator="\\n")
+    writer.writeheader()
+    formula_prefixes = ("=", "+", "-", "@", "\\t", "\\r")
+    for record in records:
+        row = {field: record.get(field, "") for field in fields}
+        # Prevent spreadsheet formula execution for untrusted textual fields.
+        for field in fields:
+            if field == "value":
+                continue
+            value = str(row[field] if row[field] is not None else "")
+            if value.startswith(formula_prefixes):
+                row[field] = "'" + value
+        writer.writerow(row)
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="gridpulse-observations.csv"',
+            "X-GridPulse-Export-Total": str(total),
+            "X-GridPulse-Export-Returned": str(len(records)),
+            "X-GridPulse-Verification": "source labels preserved; values not independently verified",
+        },
+    )
 
 
 @app.get("/api/v1/maintenance/events")
