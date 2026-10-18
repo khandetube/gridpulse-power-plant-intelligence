@@ -46,8 +46,9 @@ def test_revit_script_is_valid_python_syntax_and_discloses_limits():
 def test_3ds_max_script_has_assets_and_routes():
     spec, _ = build_spec("process plant", 80, 55, ["Mechanical", "Piping"], "process", False)
     script = export_3ds_max_script(spec)
-    assert "for asset in spec[\"assets\"]" in script
-    assert "for route in spec[\"routes\"]" in script
+    assert "gpObj.name =" in script
+    assert "gpRoute.name =" in script
+    assert "units.systemType = #meters" in script
     assert "Conceptual model only" in script
 
 
