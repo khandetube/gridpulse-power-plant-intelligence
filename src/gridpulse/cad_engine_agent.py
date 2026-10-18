@@ -7,6 +7,7 @@ from gridpulse.cad_engine import Discipline, EngineeringSpec, build_spec, review
 from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine_calculations import parse_explicit_parameters, run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
+from gridpulse.cad_engine_parameter_parser import parse_advanced_parameters
 
 
 DISCIPLINE_KEYWORDS: dict[str, tuple[str, ...]] = {
@@ -39,6 +40,7 @@ def extract_requirements(prompt: str, selected: list[Discipline] | None = None) 
         if any(w in text for w in words):
             plant_types.append(label)
     explicit_parameters = parse_explicit_parameters(prompt)
+    explicit_parameters.update(parse_advanced_parameters(prompt))
     return {
         "objective": prompt.strip(),
         "inferred_plant_types": plant_types or ["process"],
