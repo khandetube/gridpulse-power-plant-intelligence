@@ -120,15 +120,15 @@ try:
         wy = float(asset.get("width", 2)) * scale
         hz = float(asset.get("height", 2)) * scale
         # Revit DirectShape requires closed valid solids; these are bounding envelopes.
-        p0 = DB.XYZ(x, y, z)
-        p1 = DB.XYZ(x + lx, y, z)
-        p2 = DB.XYZ(x + lx, y + wy, z)
-        p3 = DB.XYZ(x, y + wy, z)
+        shape_type = str(asset.get("shape", "box"))
+        if shape_type in ("cylinder", "tank", "vessel", "fan"):
+            radius = max(float(asset.get("diameter") or min(float(asset.get("length", 2)), float(asset.get("width", 2)))) * scale / 2, 0.01)
+            profile = [DB.XYZ(x + lx/2 + radius*math.cos(2*math.pi*i/24), y + wy/2 + radius*math.sin(2*math.pi*i/24), z) for i in range(24)]
+        else:
+            profile = [DB.XYZ(x, y, z), DB.XYZ(x + lx, y, z), DB.XYZ(x + lx, y + wy, z), DB.XYZ(x, y + wy, z)]
         loop = DB.CurveLoop()
-        loop.Append(DB.Line.CreateBound(p0, p1))
-        loop.Append(DB.Line.CreateBound(p1, p2))
-        loop.Append(DB.Line.CreateBound(p2, p3))
-        loop.Append(DB.Line.CreateBound(p3, p0))
+        for i in range(len(profile)):
+            loop.Append(DB.Line.CreateBound(profile[i], profile[(i+1) % len(profile)]))
         solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
             [loop], DB.XYZ.BasisZ, max(hz, 0.01)
         )
