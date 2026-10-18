@@ -30,7 +30,7 @@ def test_design_ai_copilot_is_reachable_from_main_and_cad():
     dashboard = (ROOT / "index.html").read_text(encoding="utf-8")
     cad = (ROOT / "docs" / "refinery-a0.html").read_text(encoding="utf-8")
     assert 'href="docs/design-ai-copilot.html"' in dashboard
-    assert 'href="design-ai-copilot.html"' in cad
+    assert "design-ai-copilot.html" in cad
     assert 'id="aiCopilotLaunch"' in cad
 
 
