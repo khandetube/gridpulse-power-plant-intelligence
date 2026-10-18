@@ -7,7 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
-from gridpulse.cad_engine import (
+from gridpulse.cad_engine_multiformat import export_multi_application_bundle\nfrom gridpulse.cad_engine import (
     Discipline,
     EngineeringSpec,
     build_spec,
@@ -98,3 +98,28 @@ def export_cad(format_name: Literal["json", "svg", "dxf", "scad", "FCMacro"], sp
     else:
         content, media, name = to_freecad_macro(spec), "text/plain; charset=utf-8", "model.FCMacro"
     return Response(content=content, media_type=media, headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+
+@router.post("/export-bundle")
+def export_multi_application(spec: EngineeringSpec) -> dict:
+    """Export the same validated EngineeringSpec for AutoCAD, 3ds Max and Revit."""
+    bundle = export_multi_application_bundle(spec)
+    return {
+        "engine": "gridpulse-multi-application-export-v1",
+        "model_id": spec.project_name,
+        "formats": {
+            "autocad": {"filename": "autocad_model.dxf", "type": "DXF", "status": "generated"},
+            "3ds_max": {"filename": "3dsmax_generator.ms", "type": "MaxScript", "status": "generated_script"},
+            "revit": {"filename": "revit_dynamo_generator.py", "type": "Dynamo Python", "status": "generated_script"},
+            "source": {"filename": "engineering_spec.json", "type": "GridPulse EngineeringSpec", "status": "generated"},
+        },
+        "exports": bundle,
+        "limitations": [
+            "DXF contains editable conceptual plan geometry.",
+            "The 3ds Max MaxScript must be run inside a compatible 3ds Max installation.",
+            "The Revit Python script must be run in Dynamo inside an open Revit project; it creates approximate DirectShape envelopes, not a native RVT file by itself.",
+            "This shared model does not yet create native Revit MEP systems or manufacturer-level 3D assemblies.",
+            "All outputs are conceptual and require qualified engineering review.",
+        ],
+    }
