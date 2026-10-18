@@ -24,3 +24,8 @@ For repeatable operational reporting, save the authorized source files and retai
 The [Plant Intelligence Suite](plant-intelligence-suite.html) also provides a full Excel + charts button and section exports for Assets, Work Orders, Production Losses, RCA Cases, and the R&D Portfolio. The full workbook includes a summary and all five data sheets. Charts are embedded images. The suite persists records in browser localStorage; its initial seed includes explicitly synthetic demo records, which must not be treated as real plant evidence. Exported sheets preserve the records currently held in that browser only.
 
 The dashboard and suite load ExcelJS from jsDelivr on first export, so the first run requires internet access. If the library cannot load, the UI reports an export error; existing JSON/CSV exports remain available where implemented.
+
+
+## Automated quality review sheets
+
+The full main-dashboard workbook and the full operations-suite workbook now include a **Quality Review** sheet. It flags missing identifiers, units, reporting periods, provenance references, non-verified status labels, and explicitly synthetic demo records where applicable. These are metadata/governance checks only: they do not validate physical plausibility, prove source accuracy, or diagnose equipment faults. A flag requires human review; it is not an alarm or an instruction to change plant operation.
