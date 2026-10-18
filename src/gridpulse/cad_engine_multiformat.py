@@ -164,10 +164,10 @@ OUT = {{
 '''
 
 
-def export_multi_application_bundle(spec: EngineeringSpec) -> dict[str, str]:
+def export_multi_application_bundle(spec: EngineeringSpec, calculations: dict | None = None, advanced_calculations: dict | None = None) -> dict[str, str]:
     """Return one synchronized set of outputs from the same validated model."""
     payload = json.dumps(spec.model_dump(mode="json"), ensure_ascii=False, indent=2)
-    workbook = export_engineering_workbook(spec, review_spec(spec))
+    workbook = export_engineering_workbook(spec, review_spec(spec), calculations, advanced_calculations)
     return {
         "autocad_model.dxf": export_autocad_dxf(spec),
         "3dsmax_generator.ms": export_3ds_max_script(spec),
@@ -177,7 +177,7 @@ def export_multi_application_bundle(spec: EngineeringSpec) -> dict[str, str]:
     }
 
 
-def export_engineering_workbook(spec: EngineeringSpec, review: dict | None = None) -> bytes:
+def export_engineering_workbook(spec: EngineeringSpec, review: dict | None = None, calculations: dict | None = None, advanced_calculations: dict | None = None) -> bytes:
     """Create a real multi-sheet XLSX handoff with equipment, routes, coordinates and checks."""
     report = review or {"status": "concept_review_only", "engineering_approval": False,
                         "geometric_findings": []}
@@ -189,6 +189,8 @@ def export_engineering_workbook(spec: EngineeringSpec, review: dict | None = Non
     points = wb.create_sheet("Route Points")
     checks = wb.create_sheet("Design Checks")
     basis = wb.create_sheet("Design Basis")
+    calc_sheet = wb.create_sheet("Calculations")
+    rules_sheet = wb.create_sheet("Rule Checks")
 
     navy = "17365D"
     header_fill = PatternFill("solid", fgColor=navy)
@@ -237,6 +239,28 @@ def export_engineering_workbook(spec: EngineeringSpec, review: dict | None = Non
                        ", ".join(item.get("items", [])), item.get("message", "")])
     if checks.max_row == 1:
         checks.append(["info", "NO_FINDINGS_RETURNED", "", "No review findings were provided."])
+    calc_sheet.append(["Calculation ID", "Discipline", "Name", "Status", "Value", "Unit", "Formula", "Inputs", "Assumptions", "Warnings"])
+    all_calcs = []
+    for source in (calculations or {}, advanced_calculations or {}):
+        all_calcs.extend(source.get("calculations", []))
+    for item in all_calcs:
+        calc_sheet.append([item.get("id"), item.get("discipline"), item.get("name"), item.get("status"),
+                           item.get("value"), item.get("unit"), item.get("formula"),
+                           json.dumps(item.get("inputs", {}), ensure_ascii=False),
+                           json.dumps(item.get("assumptions", []), ensure_ascii=False),
+                           json.dumps(item.get("warnings", []), ensure_ascii=False)])
+    rules_sheet.append(["Rule ID", "Discipline", "Severity", "Status", "Message", "Basis", "Inputs"])
+    all_rules = []
+    for source in (calculations or {}, advanced_calculations or {}):
+        all_rules.extend(source.get("rule_checks", []))
+    for item in all_rules:
+        rules_sheet.append([item.get("id"), item.get("discipline"), item.get("severity"), item.get("status"),
+                            item.get("message"), item.get("basis"),
+                            json.dumps(item.get("inputs", {}), ensure_ascii=False)])
+    if calc_sheet.max_row == 1:
+        calc_sheet.append(["", "", "No calculation report supplied", "not_run"])
+    if rules_sheet.max_row == 1:
+        rules_sheet.append(["", "", "", "not_run", "No rule-check report supplied"])
     basis.append(["Design Basis / Assumptions"])
     for entry in spec.design_basis:
         basis.append([entry])
