@@ -80,6 +80,8 @@ The backend includes a local SQLite backup utility with online consistent snapsh
 
 ## Offline AI decision support
 
+- [Main dashboard AI operating guide](docs/main-dashboard-ai-runbook.md) — local API startup, document loading, troubleshooting, and safety limits.
+
 - [Offline AI Console](https://khandetube.github.io/gridpulse-power-plant-intelligence/docs/offline-ai-console.html) — browser interface for local analytics and optional local-model chat. It requires the API running on your computer; it does not connect to live plant systems.
 
 A network-free deterministic analytics engine and lexical document retrieval endpoint are available for group statistics, robust outlier candidates, trend estimates, input-quality checks, and source/line-cited local text search. An optional local GGUF language-model adapter can generate natural-language answers when the operator supplies compatible model weights and installs the optional runtime; there is no hosted service or remote fallback. Model weights are not bundled. Statistical flags are not alarms or failure predictions. See [the offline AI guide](docs/offline-ai.md) for setup, limits, and offline deployment notes.
