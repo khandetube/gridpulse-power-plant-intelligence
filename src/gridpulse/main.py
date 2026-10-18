@@ -168,7 +168,27 @@ def ensure_registered_sources(records: list[ObservationInput | MaintenanceEventI
 
 @app.get("/health")
 def health() -> dict[str, str]:
+    """Liveness probe: confirms the web process can answer requests."""
     return {"status": "ok", "service": "gridpulse-api", "version": "0.1.0"}
+
+
+@app.get("/ready")
+def readiness() -> JSONResponse | dict[str, object]:
+    """Readiness probe checks the source registry and configured SQLite storage."""
+    checks: dict[str, str] = {
+        "source_registry": "ok" if SOURCE_REGISTRY.is_file() else "unavailable",
+        "database": "unknown",
+    }
+    try:
+        store = get_observation_store()
+        with sqlite3.connect(store.database_path, timeout=3) as connection:
+            connection.execute("SELECT 1").fetchone()
+        checks["database"] = "ok"
+    except (OSError, sqlite3.Error, RuntimeError):
+        checks["database"] = "unavailable"
+    ready = all(value == "ok" for value in checks.values())
+    payload = {"status": "ready" if ready else "not_ready", "service": "gridpulse-api", "checks": checks}
+    return payload if ready else JSONResponse(status_code=503, content=payload)
 
 
 @app.get("/api/v1/project")
