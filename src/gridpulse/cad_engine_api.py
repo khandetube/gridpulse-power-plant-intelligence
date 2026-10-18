@@ -7,7 +7,8 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
-from gridpulse.cad_engine_multiformat import export_multi_application_bundle\nfrom gridpulse.cad_engine import (
+from gridpulse.cad_engine_multiformat import export_multi_application_bundle
+from gridpulse.cad_engine import (
     Discipline,
     EngineeringSpec,
     build_spec,
