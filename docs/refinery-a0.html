@@ -13,11 +13,12 @@
 <header><div><strong>GRIDPULSE · INDUSTRIAL ENGINEERING</strong><div class="muted">Refinery General Arrangement · Vector CAD-style concept drawing</div></div><a class="btn" href="mep-studio.html">بازگشت به MEP Studio</a></header>
 <main class="wrap">
 <section class="panel">
-<h2 style="margin:0 0 6px">پلان دوبعدی سایت پالایشگاه — نقشه وکتور قابل چاپ A0</h2>
+<h2 style="margin:0 0 6px">پلان دوبعدی سایت پالایشگاه — انتخاب اندازه چاپ A0 تا A5</h2>
 <div class="notice">این نسخه عمداً یک نقشه کلیِ متراکم‌تر است، نه سه مستطیل ساده. اما هنوز «پلان واقعی یک پالایشگاه مشخص» نیست: جانمایی و ابعاد تجهیزات مفهومی‌اند و تا دریافت نقشه‌برداری/مدارک واقعی، برای اجرا یا ایمنی فرایندی قابل استفاده نیستند.</div>
 <div class="tools">
-<button class="primary" id="svgDownload">دریافت SVG وکتور A0</button><button id="print">چاپ A0 افقی</button>
+<button class="primary" id="svgDownload">دریافت SVG وکتور (A0)</button><label>اندازه چاپ <select id="paperSize" style="background:#091626;color:#edf4ff;border:1px solid #35516c;border-radius:8px;padding:8px"><option value="A0">A0 — 1189×841 mm</option><option value="A1">A1 — 841×594 mm</option><option value="A2">A2 — 594×420 mm</option><option value="A3">A3 — 420×297 mm</option><option value="A4" selected>A4 — 297×210 mm</option><option value="A5">A5 — 210×148 mm</option><option value="Letter">Letter — 279×216 mm</option></select></label><button id="print">چاپ با اندازه انتخابی</button>
 <label><input type="checkbox" data-layer="process" checked> واحدهای فرایندی</label>
+<label><input type="checkbox" data-layer="equipment" checked> تجهیزات و تگ‌ها</label>
 <label><input type="checkbox" data-layer="tanks" checked> مخازن و حوضچه‌ها</label>
 <label><input type="checkbox" data-layer="piping" checked> پایپ‌رک و خطوط</label>
 <label><input type="checkbox" data-layer="utilities" checked> یوتیلیتی</label>
@@ -25,7 +26,7 @@
 <label><input type="checkbox" data-layer="roads" checked> راه‌ها</label>
 <label><input type="checkbox" data-layer="labels" checked> برچسب‌ها</label>
 </div>
-<p class="muted">کاغذ A0 افقی: 1189 × 841 mm · پوسته مفهومی: 1000 × 650 m · مقیاس اسمی 1:1000 فقط در چاپ 100% و بدون «Fit to page». فایل SVG را می‌توان در Inkscape، Illustrator یا نرم‌افزار CAD سازگار باز کرد.</p>
+<p class="muted">اندازه کاغذ را پیش از چاپ انتخاب کنید. A0 برای جزئیات خواناتر است؛ در A3/A4 نقشه کوچک‌تر می‌شود و برچسب‌ها ممکن است ریز شوند. در پنجره چاپ، حالت افقی (Landscape) و حاشیه صفر/حداقل را انتخاب کنید؛ برای مقیاس دقیق 1:1000 فقط A0 و چاپ 100% بدون Fit to page معتبر است. SVG خروجی همچنان وکتور A0 است.</p>
 </section>
 <div class="sheet" id="sheet"></div>
 </main>
@@ -103,8 +104,16 @@ document.getElementById("zoomIn").addEventListener("click",()=>{zoom=Math.min(3,
 document.getElementById("zoomOut").addEventListener("click",()=>{zoom=Math.max(.6,zoom-.2);applyView()});
 document.getElementById("zoomReset").addEventListener("click",()=>{zoom=1;svg.style.transform="";svg.style.width="100%";document.getElementById("zoomReadout").textContent="بزرگ‌نمایی 100%"});
 
-document.querySelectorAll("[data-layer]").forEach(cb=>cb.addEventListener("change",()=>{if(cb.dataset.layer==="labels"){root.querySelectorAll("text").forEach(t=>t.style.display=cb.checked?"":"none");return}const g=root.querySelector('[data-layer-group="'+cb.dataset.layer+'"]');if(g)g.style.display=cb.checked?"":"none"}));
+document.querySelectorAll("[data-layer]").forEach(cb=>cb.addEventListener("change",()=>{if(cb.dataset.layer==="labels"){root.querySelectorAll("text").forEach(t=>t.style.display=cb.checked?"":"none");return}root.querySelectorAll('[data-layer-group="'+cb.dataset.layer+'"]').forEach(g=>g.style.display=cb.checked?"":"none")}));
 function downloadSvg(){const clone=svg.cloneNode(true);clone.setAttribute("xmlns",NS);const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone)],{type:"image/svg+xml;charset=utf-8"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="GridPulse_Refinery_GA_A0_1-1000.svg";a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
-document.getElementById("svgDownload").addEventListener("click",downloadSvg);document.getElementById("print").addEventListener("click",()=>window.print());
+document.getElementById("svgDownload").addEventListener("click",downloadSvg);
+const paperDims={A0:[1189,841],A1:[841,594],A2:[594,420],A3:[420,297],A4:[297,210],A5:[210,148],Letter:[279,216]};
+document.getElementById("print").addEventListener("click",()=>{
+ const paper=document.getElementById("paperSize").value,d=paperDims[paper]||paperDims.A4;
+ let style=document.getElementById("dynamicPrintPaper");
+ if(!style){style=document.createElement("style");style.id="dynamicPrintPaper";document.head.appendChild(style)}
+ style.textContent='@media print{@page{size:'+paper+' landscape;margin:0}html,body{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;margin:0!important;padding:0!important}.wrap{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;max-width:none!important;margin:0!important;padding:0!important}.sheet{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;overflow:hidden!important}.sheet svg{width:'+d[0]+'mm!important;height:'+d[1]+'mm!important;min-width:0!important;max-width:none!important}}';
+ window.print();
+});
 </script>
 </body></html>
