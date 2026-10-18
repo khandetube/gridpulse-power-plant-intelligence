@@ -42,7 +42,17 @@ The retrieval engine normalizes common Persian/Arabic letter variants and zero-w
 - **Natural-language chat:** requires a compatible GGUF model file and the optional `llama-cpp-python` runtime. The repository does not include model weights and does not fall back to a hosted model. If the model is not configured, chat may return HTTP 503 even when search and statistical analysis work.
 - **No plant connectivity:** no SCADA/DCS/EMS/disptach connection or live telemetry is included. The dashboard must not be used to issue control, trip, dispatch, or return-to-service decisions.
 
-## 5. Troubleshooting
+## 5. Expanded AI review output
+
+When the local API analyzes eligible dashboard observations, the result includes:
+- a data-quality summary with analysis coverage, skipped-record reasons, verification-status counts and distinct source count;
+- per-metric first/latest values, first-to-latest percentage change (undefined when the first value is zero), a rolling mean over up to the latest three dated records, and a linear trend estimate;
+- evidence-linked review prompts for invalid records, unverified source records, statistical outlier candidates and observed trends;
+- downloadable full JSON and trend-summary CSV reports from the rendered dashboard result.
+
+These are transparent statistical/rule-based features, not a trained predictive model. Trend direction is descriptive and can be misleading when operating regimes, sampling intervals, units or data quality differ. A generated review prompt is not an instruction to adjust or operate equipment.
+
+## 6. Troubleshooting
 
 - **API unavailable:** run `docker compose -f compose.yaml ps` and `docker compose -f compose.yaml logs --tail=100 gridpulse-api`.
 - **401 response:** set the matching API key in the dashboard, or check the local environment configuration.
