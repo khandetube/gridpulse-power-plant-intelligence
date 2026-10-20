@@ -32,6 +32,23 @@ def _endpoint_set(route: dict[str, Any]) -> set[str]:
     return {str(route[k]).strip() for k in ("from", "to", "source", "target", "from_tag", "to_tag") if route.get(k) not in (None, "")}
 
 
+def _route_near_asset(route: dict[str, Any], asset: dict[str, Any], tolerance: float = 0.5) -> bool:
+    """Approximate 2D plan proximity; intentionally not a clash/clearance check."""
+    try:
+        x, y = float(asset["x"]), float(asset["y"])
+        width, length = float(asset["width"]), float(asset["length"])
+        buffer = max(tolerance, float(route.get("width", 0) or 0))
+        for point in route.get("points", []) or []:
+            if not isinstance(point, (list, tuple)) or len(point) < 2:
+                continue
+            px, py = float(point[0]), float(point[1])
+            if x - buffer <= px <= x + length + buffer and y - buffer <= py <= y + width + buffer:
+                return True
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+    return False
+
+
 def analyze_change_impact(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
     """Return deterministic added/removed/modified objects and connected review scope."""
     old_assets = _index(before.get("assets", []) or [], ("id", "tag"))
@@ -52,11 +69,20 @@ def analyze_change_impact(before: dict[str, Any], after: dict[str, Any]) -> dict
     changed_routes = set(route_changes["added"] + route_changes["removed"] + route_changes["modified"])
 
     affected_routes = []
+    changed_asset_models = [
+        asset for key, asset in old_assets.items() if key in changed_assets and not asset.get("__duplicate_key__")
+    ] + [
+        asset for key, asset in new_assets.items() if key in changed_assets and not asset.get("__duplicate_key__")
+    ]
     for tag, route in new_routes.items():
-        if tag in changed_routes or _endpoint_set(route) & changed_assets:
+        explicit_link = bool(_endpoint_set(route) & changed_assets)
+        geometric_proximity = any(_route_near_asset(route, asset) for asset in changed_asset_models)
+        if tag in changed_routes or explicit_link or geometric_proximity:
             affected_routes.append(tag)
     for tag, route in old_routes.items():
-        if tag not in new_routes and _endpoint_set(route) & changed_assets:
+        explicit_link = bool(_endpoint_set(route) & changed_assets)
+        geometric_proximity = any(_route_near_asset(route, asset) for asset in changed_asset_models)
+        if tag not in new_routes and (explicit_link or geometric_proximity):
             affected_routes.append(tag)
     affected_routes = sorted(set(affected_routes))
 
@@ -64,7 +90,7 @@ def analyze_change_impact(before: dict[str, Any], after: dict[str, Any]) -> dict
     if asset_changes["ambiguous_keys"] or route_changes["ambiguous_keys"]:
         warnings.append("Duplicate stable identifiers make some comparisons ambiguous; resolve identifiers before relying on this report.")
     if changed_assets or changed_routes:
-        warnings.append("Impact is based on object diffs and explicit route endpoints only; physical, hydraulic, electrical and control dependencies may extend beyond this graph.")
+        warnings.append("Impact is based on object diffs, explicit endpoints and approximate 2D proximity of route points to changed asset footprints; this is not a clash/clearance check and hidden dependencies may be missed.")
     if not changed_assets and not changed_routes:
         warnings.append("No differences were detected for indexed assets/routes; unindexed objects and external dependencies are not assessed.")
 
@@ -93,7 +119,7 @@ def analyze_change_impact(before: dict[str, Any], after: dict[str, Any]) -> dict
         ],
         "warnings": warnings,
         "limitations": [
-            "The analyzer reports explicit model changes; it does not infer unstored physical dependencies.",
+            "Route-to-asset proximity uses a simple 2D footprint buffer; it is not a clash, clearance, elevation or physical dependency solver.",
             "No engineering value, approval, or code-compliance claim is generated.",
             "A qualified discipline review remains required for safety-critical changes.",
         ],
