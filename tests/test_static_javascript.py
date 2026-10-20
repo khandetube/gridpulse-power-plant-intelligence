@@ -81,3 +81,13 @@ def test_new_analytics_tools_have_persian_translations() -> None:
     assert '"Machine-learning anomaly screening":"غربالگری ناهنجاری با یادگیری ماشین"' in html
     assert '"Engineering unit converter":"مبدل واحدهای مهندسی"' in html
     assert '"Convert units":"تبدیل واحدها"' in html
+
+
+def test_dashboard_exposes_stl_time_series_analysis() -> None:
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert 'id="gpTimeSeriesPeriod"' in html
+    assert 'id="gpTimeSeriesRun"' in html
+    assert 'id="gpTimeSeriesChart"' in html
+    assert 'gpAiRequest("/api/v1/analytics/time-series?period="+period' in html
+    assert "trend_strength" in html
+    assert '"Time-series decomposition (STL)":"تجزیه سری زمانی (STL)"' in html
