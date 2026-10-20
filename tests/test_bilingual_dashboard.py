@@ -137,3 +137,5 @@ def test_backend_sync_error_path_is_safe_before_api_configuration_and_status_sta
     assert 'document.querySelectorAll("[data-gp-en][data-gp-fa]")' in html
     assert 'gpSetBilingualText(status,summaryEn,summaryFa)' in sync
     assert 'gpSetBilingualText(button,"Sync all backend data","همگام‌سازی کامل")' in sync
+    assert 'gpSetBilingualText(connectionStatus,"Backend connection failed","اتصال بک‌اند ناموفق بود")' in sync
+    assert 'if(connectionStatus)connectionStatus.className="tag amber"' in sync
