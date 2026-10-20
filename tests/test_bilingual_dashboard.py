@@ -94,3 +94,14 @@ def test_excel_exports_include_metadata_quality_review_sheets() -> None:
     assert "These checks evaluate metadata completeness" in main
     assert 'gpSuiteSheet(wb,"Quality Review"' in suite
     assert "Synthetic demo data" in suite
+
+
+def test_main_dashboard_checks_backend_readiness_and_persists_connection_url() -> None:
+    html = read_page("index.html")
+    assert 'localStorage.setItem("gridpulse-api-base",base)' in html
+    assert 'sessionStorage.setItem("gridpulse-api-key",key)' in html
+    assert 'gpAiRequest("/ready")' in html
+    assert 'gpAiRequest("/api/v1/system/diagnostics")' in html
+    assert 'AbortController()' in html
+    assert "Check backend health" in html
+    assert "Backend unavailable" in html
