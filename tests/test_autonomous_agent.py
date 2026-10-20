@@ -26,10 +26,11 @@ def test_autonomous_cycle_stops_when_llm_is_not_configured(monkeypatch):
 
 
 def test_autonomous_cycle_keeps_best_candidate_and_stops_on_repeat(monkeypatch):
-    sequence = iter([candidate("A"), candidate("B", findings=[]), candidate("B", findings=[])])
+    sequence = iter([candidate("A", mode="llm_structured_spec"), candidate("B", findings=[], mode="llm_structured_spec"), candidate("B", findings=[], mode="llm_structured_spec")])
     monkeypatch.setattr(autonomous_agent, "run_design_agent", lambda *args: next(sequence))
     result = autonomous_agent.run_autonomous_design_cycle("design a plant", max_iterations=3)
     assert result["iterations_executed"] == 2
+    assert {item["tool"] for item in result["execution_trace"][0]["tool_audit"]} == {"validate_model", "audit_quality_evidence", "audit_finite_geometry"}
     assert result["stop_reason"] == "no_model_change_detected"
     assert result["best_candidate"]["model"]["assets"][0]["tag"] == "B"
 
