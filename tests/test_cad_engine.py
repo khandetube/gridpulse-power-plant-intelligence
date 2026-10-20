@@ -9,7 +9,12 @@ from gridpulse.cad_engine import (
     to_openscad,
     to_svg,
 )
-from gridpulse.cad_engine_api import GenerateCadRequest, export_cad, generate_cad
+from gridpulse.cad_engine_api import (
+    GenerateCadRequest,
+    cad_engine_llm_status,
+    export_cad,
+    generate_cad,
+)
 
 
 def test_process_prompt_generates_editable_model_and_exports():
@@ -200,3 +205,51 @@ def test_llm_adapter_stays_disabled_without_explicit_model(monkeypatch):
     assert cad_engine._try_llm(
         "conceptual pump layout", 20, 20, {"Mechanical"}, "process"
     ) is None
+
+
+
+def test_llm_status_reports_local_model_readiness(monkeypatch):
+    import json
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self, _limit):
+            return json.dumps({
+                "data": [{"id": "qwen2.5:7b"}, {"id": "llama3.2:3b"}]
+            }).encode()
+
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setenv("GRIDPULSE_LLM_MODEL", "qwen2.5:7b")
+    monkeypatch.delenv("GRIDPULSE_LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("GRIDPULSE_LLM_API_KEY", raising=False)
+    monkeypatch.setattr(
+        "urllib.request.urlopen", fake_urlopen
+    )
+
+    result = cad_engine_llm_status()
+
+    assert result["status"] == "ready"
+    assert result["model_available"] is True
+    assert captured["url"] == "http://localhost:11434/v1/models"
+    assert captured["timeout"] == 3
+
+
+def test_llm_status_does_not_probe_when_model_is_unconfigured(monkeypatch):
+    monkeypatch.delenv("GRIDPULSE_LLM_MODEL", raising=False)
+    monkeypatch.delenv("GRIDPULSE_LLM_BASE_URL", raising=False)
+
+    result = cad_engine_llm_status()
+
+    assert result["status"] == "not_configured"
+    assert result["reachable"] is False
