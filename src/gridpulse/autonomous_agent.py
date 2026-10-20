@@ -165,7 +165,8 @@ def _tool_audit_asset_envelopes(candidate: dict[str, Any]) -> dict[str, Any]:
     ]
     return {
         "tool": "audit_asset_envelopes",
-        "ok": not issues,
+        "ok": not issues and not unassessed,
+        "status": "clear" if not issues and not unassessed else ("incomplete" if not issues else "issues_found"),
         "overlap_count": len(overlaps),
         "overlaps": overlaps[:50],
         "invalid_geometry": invalid[:20],
@@ -284,6 +285,11 @@ def run_autonomous_design_cycle(
                 audit_feedback.append(f"- [independent audit] {tool_name}: {issue}")
             for issue in audit.get("invalid_geometry", [])[:12]:
                 audit_feedback.append(f"- [independent audit] {tool_name}: {issue}")
+            for item in audit.get("unassessed_assets", [])[:12]:
+                audit_feedback.append(
+                    f"- [independent audit] {tool_name}: geometry not assessed ({item}); "
+                    "request authoritative dimensions or explicitly keep the issue unresolved."
+                )
             if not any(key in audit for key in ("overlaps", "issues", "invalid_geometry")):
                 audit_feedback.append(
                     f"- [independent audit] {tool_name}: {audit.get('error', 'audit failed')}"
@@ -315,7 +321,7 @@ def run_autonomous_design_cycle(
             "The loop is bounded to at most three iterations and stops on repeated model fingerprints.",
             "Revision requires a configured OpenAI-compatible LLM; without it, only deterministic screening runs.",
             "A screening result is not engineering approval, code compliance, or authorization for construction or plant control.",
-            "The internal allowlisted tool registry validates the typed model, audits quality evidence, screens finite geometry, and flags axis-aligned 3D envelope overlaps; tools are read-only.",
+            "The internal allowlisted tool registry validates the typed model, audits quality evidence, screens finite geometry, and flags axis-aligned 3D envelope overlaps; incomplete asset envelopes fail closed; tools are read-only.",
             "External tools, live telemetry, SCADA/dispatch, procurement, and file-system actions are not autonomously connected by this controller.",
         ],
     }
