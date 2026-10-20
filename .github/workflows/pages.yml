@@ -31,6 +31,22 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Inject advanced 3D renderer
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/prompt-to-engineering-cad.html')
+          text = p.read_text(encoding='utf-8')
+          tag = '<script src="assets/gridpulse-advanced-3d.js"></script>'
+          if tag not in text:
+              marker = '</body>'
+              if marker not in text:
+                  raise SystemExit('CAD page has no </body> marker; refusing unsafe injection')
+              text = text.replace(marker, tag + marker, 1)
+              p.write_text(text, encoding='utf-8')
+          print('Advanced 3D renderer injected:', tag in text)
+          PY
       - name: Upload dashboard artifact
         uses: actions/upload-pages-artifact@v3
         with:
