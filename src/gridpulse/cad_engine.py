@@ -205,10 +205,12 @@ def _template_spec(prompt: str, w: float, h: float, selected: set[str], template
 
 def _try_llm(prompt: str, w: float, h: float, selected: set[str], template: str) -> EngineeringSpec | None:
     """Optional OpenAI-compatible JSON-spec adapter; fail safely to deterministic mode."""
-    base = os.environ.get("GRIDPULSE_LLM_BASE_URL", "").strip().rstrip("/")
+    # Ollama's OpenAI-compatible local endpoint is the default provider. A model must
+    # be explicitly configured so an unconfigured install never waits on localhost.
+    base = os.environ.get("GRIDPULSE_LLM_BASE_URL", "http://localhost:11434/v1").strip().rstrip("/")
     key = os.environ.get("GRIDPULSE_LLM_API_KEY", "").strip()
     model = os.environ.get("GRIDPULSE_LLM_MODEL", "").strip()
-    if not (base and key and model):
+    if not (base and model):
         return None
     schema_hint = {
         "project_name": "string", "site_width": w, "site_length": h, "units": "m",
@@ -225,9 +227,11 @@ def _try_llm(prompt: str, w: float, h: float, selected: set[str], template: str)
         {"role":"system","content":system},
         {"role":"user","content":f"Template={template}; site={w}x{h} m. Prompt: {prompt}"}
     ], "response_format":{"type":"json_object"}}).encode()
-    req = urllib.request.Request(base + "/chat/completions", data=body, headers={
-        "Authorization": "Bearer " + key, "Content-Type":"application/json"
-    }, method="POST")
+    headers = {"Content-Type": "application/json"}
+    # Local Ollama needs no API key; remote OpenAI-compatible providers may require one.
+    if key:
+        headers["Authorization"] = "Bearer " + key
+    req = urllib.request.Request(base + "/chat/completions", data=body, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=18) as response:
             result = json.loads(response.read(1_000_000))
