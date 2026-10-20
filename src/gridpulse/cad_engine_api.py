@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
 from gridpulse.ai_design_reasoning import run_engineering_reasoning
+from gridpulse.autonomous_agent import run_autonomous_design_cycle
 from gridpulse.cad_change_impact import analyze_change_impact
 from gridpulse.cad_engine import (
     Discipline,
@@ -37,6 +38,10 @@ class GenerateCadRequest(BaseModel):
     template: Literal["process", "power", "substation", "building", "water"] = "process"
     disciplines: list[Discipline] = Field(default_factory=lambda: ["Mechanical", "Piping", "Electrical", "Instrumentation", "Architecture"], min_length=1, max_length=10)
     use_llm: bool = True
+
+
+class AutonomousAgentRequest(GenerateCadRequest):
+    max_iterations: int = Field(default=3, ge=1, le=3)
 
 
 class CalculationRequest(BaseModel):
@@ -105,6 +110,23 @@ def generate_cad(request: GenerateCadRequest) -> dict:
         },
         "notice": "Conceptual engineering assistance only. Numeric calculations are traceable deterministic calculations, but project-specific codes, design basis, manufacturer data and qualified engineering review remain mandatory.",
     }
+
+
+@router.post("/autonomous-run")
+def run_autonomous_agent(request: AutonomousAgentRequest) -> dict:
+    """Run bounded propose-review-revise orchestration; revisions require configured LLM."""
+    try:
+        return run_autonomous_design_cycle(
+            request.prompt,
+            request.site_width,
+            request.site_length,
+            request.disciplines,
+            request.template,
+            request.use_llm,
+            request.max_iterations,
+        )
+    except (ValueError, ValidationError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.post("/agent")
