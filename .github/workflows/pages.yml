@@ -7,6 +7,7 @@ on:
       - "index.html"
       - ".github/workflows/pages.yml"
       - "docs/**"
+
   workflow_dispatch:
 
 permissions:
@@ -31,21 +32,27 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Inject advanced 3D renderer
+      - name: Inject advanced 3D renderer safely
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('docs/prompt-to-engineering-cad.html')
           text = p.read_text(encoding='utf-8')
-          tags = '<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script><script src="assets/gridpulse-advanced-3d.js"></script>'
+          tags = (
+              '<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>'
+              '<script src="assets/gridpulse-advanced-3d.js"></script>'
+              '<script src="assets/gridpulse-3d-overlay-guard.js"></script>'
+          )
+          marker = '</body>'
+          if marker not in text:
+              raise SystemExit('CAD page has no </body> marker; refusing unsafe injection')
           if 'assets/gridpulse-advanced-3d.js' not in text:
-              marker = '</body>'
-              if marker not in text:
-                  raise SystemExit('CAD page has no </body> marker; refusing unsafe injection')
               text = text.replace(marker, tags + marker, 1)
-              p.write_text(text, encoding='utf-8')
-          print('Advanced 3D renderer injected:', 'assets/gridpulse-advanced-3d.js' in text)
+          elif 'assets/gridpulse-3d-overlay-guard.js' not in text:
+              text = text.replace(marker, '<script src="assets/gridpulse-3d-overlay-guard.js"></script>' + marker, 1)
+          p.write_text(text, encoding='utf-8')
+          print('Advanced 3D renderer and overlay guard prepared.')
           PY
       - name: Upload dashboard artifact
         uses: actions/upload-pages-artifact@v3
