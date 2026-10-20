@@ -8,15 +8,13 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 
-from typing import Any
-
 
 MINIMUM_RECORDS = 8
 
 
 def detect_anomalies(
-    records: list[dict[str, Any]], *, contamination: float = 0.05
-) -> dict[str, Any]:
+    records: list[dict[str, object]], *, contamination: float = 0.05
+) -> dict[str, object]:
     """Sort one comparable metric series and flag IsolationForest outliers."""
     if not 0.01 <= contamination <= 0.20:
         raise ValueError("contamination must be between 0.01 and 0.20")
