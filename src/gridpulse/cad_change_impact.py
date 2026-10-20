@@ -32,21 +32,68 @@ def _endpoint_set(route: dict[str, Any]) -> set[str]:
     return {str(route[k]).strip() for k in ("from", "to", "source", "target", "from_tag", "to_tag") if route.get(k) not in (None, "")}
 
 
-def _route_near_asset(route: dict[str, Any], asset: dict[str, Any], tolerance: float = 0.5) -> bool:
-    """Approximate 2D plan proximity; intentionally not a clash/clearance check."""
+def _finite(value: Any) -> float | None:
+    """Parse a finite numeric value; reject booleans, NaN and infinities."""
+    if isinstance(value, bool):
+        return None
     try:
-        x, y = float(asset["x"]), float(asset["y"])
-        width, length = float(asset["width"]), float(asset["length"])
-        buffer = max(tolerance, float(route.get("width", 0) or 0))
-        for point in route.get("points", []) or []:
-            if not isinstance(point, (list, tuple)) or len(point) < 2:
-                continue
-            px, py = float(point[0]), float(point[1])
-            if x - buffer <= px <= x + length + buffer and y - buffer <= py <= y + width + buffer:
-                return True
-    except (KeyError, TypeError, ValueError, OverflowError):
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if number == number and abs(number) != float("inf") else None
+
+
+def _segment_intersects_rect(
+    x1: float, y1: float, x2: float, y2: float,
+    xmin: float, ymin: float, xmax: float, ymax: float,
+) -> bool:
+    """Liang–Barsky segment/rectangle test, including boundary contact."""
+    dx, dy = x2 - x1, y2 - y1
+    p = (-dx, dx, -dy, dy)
+    q = (x1 - xmin, xmax - x1, y1 - ymin, ymax - y1)
+    low, high = 0.0, 1.0
+    for pi, qi in zip(p, q):
+        if pi == 0:
+            if qi < 0:
+                return False
+            continue
+        ratio = qi / pi
+        if pi < 0:
+            low = max(low, ratio)
+        else:
+            high = min(high, ratio)
+        if low > high:
+            return False
+    return True
+
+
+def _route_near_asset(route: dict[str, Any], asset: dict[str, Any], tolerance: float = 0.5) -> bool:
+    """Approximate 2D plan proximity, including line segments crossing a footprint.
+
+    This is a screening aid only, not a 3D clash, clearance or routing solver.
+    """
+    x, y = _finite(asset.get("x")), _finite(asset.get("y"))
+    width, length = _finite(asset.get("width")), _finite(asset.get("length"))
+    if None in (x, y, width, length) or width < 0 or length < 0:
         return False
-    return False
+    route_width = _finite(route.get("width", 0))
+    buffer = max(tolerance, route_width or 0.0)
+    xmin, ymin = x - buffer, y - buffer
+    xmax, ymax = x + length + buffer, y + width + buffer
+
+    points = []
+    for point in route.get("points", []) or route.get("pts", []) or []:
+        if not isinstance(point, (list, tuple)) or len(point) < 2:
+            continue
+        px, py = _finite(point[0]), _finite(point[1])
+        if px is not None and py is not None:
+            points.append((px, py))
+    if any(xmin <= px <= xmax and ymin <= py <= ymax for px, py in points):
+        return True
+    return any(
+        _segment_intersects_rect(a[0], a[1], b[0], b[1], xmin, ymin, xmax, ymax)
+        for a, b in zip(points, points[1:])
+    )
 
 
 def analyze_change_impact(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
