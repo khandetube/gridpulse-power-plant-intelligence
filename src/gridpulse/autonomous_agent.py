@@ -183,21 +183,21 @@ def run_autonomous_design_cycle(
             break
 
         # Feed only traceable review evidence into the next bounded model proposal.
-        feedback = "\\n".join(
+        feedback = "\n".join(
             f"- [{item.get('severity', 'medium')}] {item.get('code', 'REVIEW')}: "
             f"{item.get('message', '')}"
             for item in findings[:12]
         )
-        requested_actions = "\\n".join(
+        requested_actions = "\n".join(
             f"- {item.get('code', 'ACTION')}: {item.get('action', '')}"
             for item in actions[:12]
         )
         working_prompt = (
-            f"{prompt.strip()}\\n\\nAUTONOMOUS REVIEW ITERATION {iteration + 1}: "
+            f"{prompt.strip()}\n\nAUTONOMOUS REVIEW ITERATION {iteration + 1}: "
             "Revise the proposed conceptual EngineeringSpec only where evidence supports a change. "
             "Do not invent missing design-basis, vendor, code, survey, or process values. "
-            "Preserve all explicit user constraints. Reported issues to address:\\n"
-            f"{feedback}\\nAction queue:\\n{requested_actions}\\n"
+            "Preserve all explicit user constraints. Reported issues to address:\n"
+            f"{feedback}\nAction queue:\n{requested_actions}\n"
             "If a finding cannot be resolved without authoritative input, leave it unresolved and explicit."
         )
 
