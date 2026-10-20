@@ -288,7 +288,9 @@ def system_diagnostics() -> dict[str, object]:
         "registered_source_count": source_count,
         "stored_record_counts": table_counts,
         "capabilities": {
-            "persistent_storage": database_status == "ok",
+            "storage_backend": "sqlite",
+            "storage_path_explicitly_configured": bool(os.environ.get("GRIDPULSE_DB_PATH", "").strip()),
+            "storage_durability": ("deployment_volume_unverified" if os.environ.get("GRIDPULSE_DB_PATH", "").strip() else "ephemeral_default_path"),
             "source_registry": source_registry_status == "ok",
             "live_plant_telemetry": False,
             "dispatch_connection": False,
