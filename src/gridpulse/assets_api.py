@@ -15,9 +15,9 @@ from gridpulse.assets import AssetStore
 
 router = APIRouter(prefix="/api/v1/assets", tags=["assets"])
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = Path(os.environ.get("GRIDPULSE_DATA_DIR", ROOT_DIR / "data"))
-SOURCE_REGISTRY = DATA_DIR / "source_registry.csv"
+from gridpulse.config import source_registry_path
+
+SOURCE_REGISTRY = source_registry_path()
 
 AssetCriticality = Literal["low", "medium", "high", "critical"]
 LifecycleState = Literal["planned", "active", "standby", "maintenance", "retired"]
