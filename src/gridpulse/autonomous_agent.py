@@ -204,6 +204,7 @@ def run_autonomous_design_cycle(
     trace: list[dict[str, Any]] = []
     best: dict[str, Any] | None = None
     best_key: tuple[int, int, int] | None = None
+    best_tool_failures = 0
     seen: set[str] = set()
     working_prompt = prompt.strip()
     stop_reason = "iteration_limit_reached"
@@ -221,6 +222,7 @@ def run_autonomous_design_cycle(
         improved = best_key is None or key < best_key
         if improved:
             best, best_key = candidate, key
+            best_tool_failures = tool_failures
 
         gate = candidate.get("quality_gate", {})
         findings = gate.get("findings", []) or []
@@ -267,12 +269,34 @@ def run_autonomous_design_cycle(
             f"- {item.get('code', 'ACTION')}: {item.get('action', '')}"
             for item in actions[:12]
         )
+        audit_feedback: list[str] = []
+        for audit in tool_results:
+            if audit.get("ok", False):
+                continue
+            tool_name = str(audit.get("tool", "review_tool"))
+            for overlap in audit.get("overlaps", [])[:12]:
+                audit_feedback.append(
+                    f"- [independent audit] {tool_name}: potential 3D envelope overlap "
+                    f"between {overlap.get('asset_a')} and {overlap.get('asset_b')}; "
+                    "revise only if verified geometry supports a safe change."
+                )
+            for issue in audit.get("issues", [])[:12]:
+                audit_feedback.append(f"- [independent audit] {tool_name}: {issue}")
+            for issue in audit.get("invalid_geometry", [])[:12]:
+                audit_feedback.append(f"- [independent audit] {tool_name}: {issue}")
+            if not any(key in audit for key in ("overlaps", "issues", "invalid_geometry")):
+                audit_feedback.append(
+                    f"- [independent audit] {tool_name}: {audit.get('error', 'audit failed')}"
+                )
+        combined_feedback = "\\n".join(
+            part for part in (feedback, "\\n".join(audit_feedback)) if part
+        )
         working_prompt = (
             f"{prompt.strip()}\n\nAUTONOMOUS REVIEW ITERATION {iteration + 1}: "
             "Revise the proposed conceptual EngineeringSpec only where evidence supports a change. "
             "Do not invent missing design-basis, vendor, code, survey, or process values. "
             "Preserve all explicit user constraints. Reported issues to address:\n"
-            f"{feedback}\nAction queue:\n{requested_actions}\n"
+            f"{combined_feedback}\nAction queue:\n{requested_actions}\n"
             "If a finding cannot be resolved without authoritative input, leave it unresolved and explicit."
         )
 
@@ -280,7 +304,7 @@ def run_autonomous_design_cycle(
     return {
         "agent": "GridPulse Bounded Autonomous Engineering Supervisor v0.1",
         "execution_mode": "bounded-plan-propose-review-revise-with-read-only-tool-registry",
-        "status": "completed_with_findings" if best.get("quality_gate", {}).get("gate") != "screening_passed" else "screening_passed",
+        "status": "screening_passed" if stop_reason == "all_available_screening_checks_passed" and best_tool_failures == 0 else "completed_with_findings",
         "iterations_requested": max_iterations,
         "iterations_executed": len(trace),
         "stop_reason": stop_reason,
@@ -291,7 +315,7 @@ def run_autonomous_design_cycle(
             "The loop is bounded to at most three iterations and stops on repeated model fingerprints.",
             "Revision requires a configured OpenAI-compatible LLM; without it, only deterministic screening runs.",
             "A screening result is not engineering approval, code compliance, or authorization for construction or plant control.",
-            "The internal allowlisted tool registry validates the typed model, audits quality evidence, and screens finite geometry; tools are read-only.",
+            "The internal allowlisted tool registry validates the typed model, audits quality evidence, screens finite geometry, and flags axis-aligned 3D envelope overlaps; tools are read-only.",
             "External tools, live telemetry, SCADA/dispatch, procurement, and file-system actions are not autonomously connected by this controller.",
         ],
     }
