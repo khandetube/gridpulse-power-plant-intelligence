@@ -77,6 +77,62 @@ def cad_engine_status() -> dict:
     }
 
 
+@router.get("/llm-status")
+def cad_engine_llm_status() -> dict:
+    """Probe a configured OpenAI-compatible model endpoint without exposing secrets."""
+    import os
+    import urllib.error
+    import urllib.request
+
+    base = os.environ.get(
+        "GRIDPULSE_LLM_BASE_URL", "http://localhost:11434/v1"
+    ).strip().rstrip("/")
+    model = os.environ.get("GRIDPULSE_LLM_MODEL", "").strip()
+    key = os.environ.get("GRIDPULSE_LLM_API_KEY", "").strip()
+    if not model:
+        return {
+            "configured": False,
+            "reachable": False,
+            "model_available": False,
+            "status": "not_configured",
+            "message": "Set GRIDPULSE_LLM_MODEL to enable model inference.",
+        }
+
+    headers = {"Accept": "application/json"}
+    if key:
+        headers["Authorization"] = "Bearer " + key
+    request = urllib.request.Request(base + "/models", headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=3) as response:
+            payload = json.loads(response.read(500_000))
+        models = payload.get("data", [])
+        model_ids = {
+            item.get("id") for item in models if isinstance(item, dict)
+        }
+        available = model in model_ids
+        return {
+            "configured": True,
+            "reachable": True,
+            "model_available": available,
+            "status": "ready" if available else "model_not_listed",
+            "model": model,
+            "message": (
+                "Configured model is listed by the endpoint."
+                if available
+                else "Endpoint is reachable, but the configured model was not listed. Check the exact model identifier."
+            ),
+        }
+    except (OSError, urllib.error.URLError, TimeoutError, ValueError, TypeError):
+        return {
+            "configured": True,
+            "reachable": False,
+            "model_available": False,
+            "status": "endpoint_unreachable",
+            "model": model,
+            "message": "The configured model endpoint could not be reached or returned invalid JSON. Check backend network and model-server configuration.",
+        }
+
+
 @router.post("/generate")
 def generate_cad(request: GenerateCadRequest) -> dict:
     """Generate one bounded, editable geometry model plus reasoning, calculations and exports."""
