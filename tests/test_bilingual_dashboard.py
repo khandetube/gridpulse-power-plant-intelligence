@@ -125,3 +125,15 @@ def test_main_dashboard_syncs_sources_observations_and_maintenance_without_losin
     assert 'importedMaintenance.filter(event=>!event.backend_origin)' in html
     assert 'SOURCES.splice(0,SOURCES.length,...mergedSources.values())' in html
     assert 'renderOverviewSources();renderSources();renderMetrics();renderTrend();renderAnalytics();renderMaintenance();' in html
+
+def test_backend_sync_error_path_is_safe_before_api_configuration_and_status_stays_bilingual() -> None:
+    html = read_page("index.html")
+    start = html.index("async function syncBackendObservations(){")
+    end = html.index("\\nfunction parseCSV", start)
+    sync = html[start:end]
+    assert sync.index('const label=document.documentElement.lang==="fa";') < sync.index('if(typeof gpAiBase!=="function"||!gpAiBase())')
+    assert sync.index('const connectionStatus=document.getElementById("gpAiStatus");') < sync.index('if(typeof gpAiBase!=="function"||!gpAiBase())')
+    assert "function gpSetBilingualText(el,en,fa)" in html
+    assert 'document.querySelectorAll("[data-gp-en][data-gp-fa]")' in html
+    assert 'gpSetBilingualText(status,summaryEn,summaryFa)' in sync
+    assert 'gpSetBilingualText(button,"Sync all backend data","همگام‌سازی کامل")' in sync
