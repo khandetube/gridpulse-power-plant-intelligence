@@ -52,7 +52,24 @@ Important boundaries:
 - A passed software screening gate is not code compliance, safety approval, or permission to construct or operate equipment. Qualified engineers must verify all design inputs and outputs.
 
 
-### Persistent agent run ledger
+### Open-source LLM inference (Ollama)
+
+GridPulse can use a locally hosted open-weight model for structured design proposals through Ollama's OpenAI-compatible endpoint. This avoids requiring a paid API key for local inference; the model runs on the machine or server where Ollama is installed. See the [Ollama API guide](https://github.com/ollama/ollama/blob/main/docs/api/openai-compatibility.mdx).
+
+1. Install Ollama on the backend host and pull a model that your hardware can run, for example `ollama pull qwen2.5:7b` (choose a smaller quantized model if RAM/VRAM is limited).
+2. Configure the backend environment:
+
+```bash
+GRIDPULSE_LLM_BASE_URL=http://localhost:11434/v1
+GRIDPULSE_LLM_MODEL=qwen2.5:7b
+# GRIDPULSE_LLM_API_KEY is optional for local Ollama; set it only if your endpoint requires it.
+```
+
+3. Restart the API process and inspect `GET /api/v1/cad/status`. Then call CAD generation or the bounded autonomous endpoint with `use_llm: true`.
+
+For a separately hosted OpenAI-compatible provider, set `GRIDPULSE_LLM_BASE_URL`, `GRIDPULSE_LLM_MODEL`, and (if required) `GRIDPULSE_LLM_API_KEY` to that provider's values. Do not expose an unauthenticated Ollama port to the public internet. Model-generated geometry is an untrusted proposal: Pydantic bounds and deterministic audits still validate it, and it is not an engineering approval. If inference fails or returns invalid output, the CAD engine falls back to deterministic generation. GitHub Pages cannot run the model; this requires the Python backend and compute resources.
+
+## Persistent agent run ledger
 
 Completed autonomous runs are recorded in a local SQLite ledger. The API returns a `run_record.run_id` after a successful run, and provides:
 
