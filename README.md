@@ -49,6 +49,10 @@ Example request body:
 
 The example above illustrates the record schema only; a valid request needs at least eight observations and a registered source. ML flags are review candidates—not alarm thresholds, failure probabilities, fault diagnoses, or control instructions. Both methods use values only and do not model seasonality, load, ambient conditions, or equipment context. Statistical flags are candidates for human review, not confirmed anomalies. The algorithms do not independently verify the underlying data.
 
+### STL time-series decomposition
+
+The API exposes `POST /api/v1/analytics/time-series?period=7` using statsmodels STL with robust fitting. It decomposes one source-labelled, comparable metric/unit series into observed values, trend, seasonal component, and residuals; it also reports trend/seasonal strength and robust residual review candidates. The period is a number of observations, not calendar days, and the API requires at least two periods. Irregular sampling, short histories, regime changes, and an incorrectly selected cycle length can make results misleading. Results are statistical review aids, not alarms or fault diagnoses. The dashboard includes an interactive component chart and JSON report.
+
 ### Unit-aware engineering conversions
 
 The API exposes `POST /api/v1/analytics/units/convert`, powered by Pint. Example body: `{"value": 1.5, "from_unit": "MW", "to_unit": "kW"}`. The response includes the converted value and dimensionality. Incompatible dimensions (for example MW to MWh), unknown units, and non-finite values are rejected. The dashboard includes a unit-converter panel for common power, energy, temperature, and mass-flow units. A mathematically valid conversion does not verify the measurement's source or engineering context.
