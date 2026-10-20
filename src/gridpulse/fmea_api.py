@@ -44,7 +44,8 @@ def store() -> FMEAStore:
     return FMEAStore(os.environ.get("GRIDPULSE_DB_PATH", "/tmp/gridpulse-observations.sqlite3"))
 
 def require_source(source_id: str) -> None:
-    registry = Path(os.environ.get("GRIDPULSE_DATA_DIR", Path(__file__).resolve().parents[2] / "data")) / "source_registry.csv"
+    from gridpulse.config import source_registry_path
+    registry = source_registry_path()
     if not registry.is_file():
         raise HTTPException(status_code=503, detail="Source registry is unavailable")
     with registry.open("r", encoding="utf-8", newline="") as handle:
