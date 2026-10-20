@@ -71,3 +71,17 @@ def test_malformed_or_non_finite_geometry_does_not_crash_impact_analysis():
     result = analyze_change_impact(before, after)
     assert result["changed"] is True
     assert isinstance(result["routes_requiring_review"], list)
+
+
+
+def test_workbench_schema_uses_w_h_and_pts_fields():
+    before = {
+        "assets": [{"id": "P-501", "tag": "P-501", "x": 0, "y": 0, "w": 2, "h": 2}],
+        "routes": [{"id": "L-501", "tag": "L-501", "pts": [[-2, 1], [5, 1]]}],
+    }
+    after = {
+        "assets": [{"id": "P-501", "tag": "P-501", "x": 10, "y": 0, "w": 2, "h": 2}],
+        "routes": [{"id": "L-501", "tag": "L-501", "pts": [[-2, 1], [5, 1]]}],
+    }
+    result = analyze_change_impact(before, after)
+    assert "L-501" in result["routes_requiring_review"]
