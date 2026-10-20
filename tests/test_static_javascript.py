@@ -34,3 +34,14 @@ def test_inline_javascript_syntax(relative_path: str) -> None:
             check=False,
         )
     assert result.returncode == 0, result.stderr
+
+def test_main_dashboard_has_integrated_system_diagnostics() -> None:
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert 'id="gpAiDiagnostics"' in html
+    assert 'id="gpAiDiagnosticsOutput"' in html
+    assert 'gpAiRequest("/ready")' in html
+    assert 'gpAiRequest("/api/v1/system/diagnostics")' in html
+    assert 'gpAiRequest("/api/v1/cad/llm-status")' in html
+    assert 'Export diagnostics JSON' in html
+    # The API key is session-only; only the API base may be stored.
+    assert 'localStorage.setItem("gridpulse-api-key"' not in html
