@@ -114,6 +114,11 @@ def test_main_dashboard_syncs_sources_observations_and_maintenance_without_losin
     assert 'gpAiRequest("/api/v1/sources")' in html
     assert 'gpAiFetchAllPages("/api/v1/observations",10000)' in html
     assert 'gpAiFetchAllPages("/api/v1/maintenance/events",10000)' in html
+    assert 'const readiness=await gpAiRequest("/ready")' in html
+    assert 'new URL(base)' in html
+    assert 'credentials:"omit",cache:"no-store"' in html
+    assert "An HTTPS dashboard requires an HTTPS remote API URL." in html
+    assert 'connectionStatus.className="tag green"' in html
     assert 'backend_origin:true' in html
     assert 'Caller-supplied record; source truth is not independently verified.' in html
     assert 'importedMetrics.filter(record=>!record.backend_origin)' in html
