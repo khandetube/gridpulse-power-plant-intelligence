@@ -16,12 +16,12 @@ from gridpulse.cad_engine import (
     to_openscad,
     to_svg,
 )
+from gridpulse.ai_design_reasoning import run_engineering_reasoning
+from gridpulse.cad_change_impact import analyze_change_impact
 from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine_agent import run_design_agent
 from gridpulse.cad_engine_calculations import run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
-from gridpulse.ai_design_reasoning import run_engineering_reasoning
-from gridpulse.cad_change_impact import analyze_change_impact
 from gridpulse.cad_engine_multiformat import (
     export_engineering_workbook,
     export_multi_application_bundle,
