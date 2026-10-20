@@ -171,7 +171,11 @@ def run_autonomous_design_cycle(
             ],
         })
 
-        if gate.get("gate") == "screening_passed" and not candidate.get("ai_reasoning", {}).get("finding_count"):
+        if (
+            gate.get("gate") == "screening_passed"
+            and not candidate.get("ai_reasoning", {}).get("finding_count")
+            and tool_failures == 0
+        ):
             stop_reason = "all_available_screening_checks_passed"
             break
         if repeated:
