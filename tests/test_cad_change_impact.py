@@ -29,3 +29,19 @@ def test_identical_models_have_stable_fingerprints_and_no_changes():
     b = analyze_change_impact(model, model)
     assert a["changed"] is False
     assert a["before_fingerprint"] == a["after_fingerprint"] == b["after_fingerprint"]
+
+
+
+def test_changed_asset_marks_route_near_its_old_or_new_footprint():
+    before = {
+        "assets": [asset("P-101", 0)],
+        "routes": [{"id": "L-201", "tag": "L-201", "points": [[2, 0.5, 0], [8, 0.5, 0]], "width": 0.2}],
+    }
+    after = {
+        "assets": [asset("P-101", 12)],
+        "routes": [{"id": "L-201", "tag": "L-201", "points": [[2, 0.5, 0], [8, 0.5, 0]], "width": 0.2}],
+    }
+    result = analyze_change_impact(before, after)
+    assert result["asset_changes"]["modified"] == ["P-101"]
+    assert result["routes_requiring_review"] == ["L-201"]
+    assert any("2D proximity" in warning for warning in result["warnings"])
