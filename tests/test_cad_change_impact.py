@@ -35,7 +35,7 @@ def test_identical_models_have_stable_fingerprints_and_no_changes():
 def test_changed_asset_marks_route_near_its_old_or_new_footprint():
     before = {
         "assets": [asset("P-101", 0)],
-        "routes": [{"id": "L-201", "tag": "L-201", "points": [[2, 0.5, 0], [8, 0.5, 0]], "width": 0.2}],
+        "routes": [{"id": "L-201", "tag": "L-201", "points": [[1.2, 0.5, 0], [8, 0.5, 0]], "width": 0.2}],
     }
     after = {
         "assets": [asset("P-101", 12)],
