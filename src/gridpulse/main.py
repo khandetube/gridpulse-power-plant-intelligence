@@ -469,6 +469,27 @@ def analyze_observation_anomalies(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
+@app.post("/api/v1/analytics/time-series")
+def analyze_time_series(
+    batch: ObservationBatch,
+    period: int = Query(default=7, ge=2, le=365),
+) -> dict[str, object]:
+    """Decompose a comparable series into trend, seasonal and residual components."""
+    ensure_registered_sources(batch.records)
+    try:
+        from gridpulse.time_series import decompose_time_series
+
+        payload = [record.model_dump(mode="json") for record in batch.records]
+        return decompose_time_series(payload, period=period)
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Time-series dependencies are unavailable; install the project runtime requirements.",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 @app.post("/api/v1/analytics/units/convert")
 def convert_engineering_units(request: UnitConversionInput) -> dict[str, object]:
     """Convert finite engineering values between dimensionally compatible units."""
