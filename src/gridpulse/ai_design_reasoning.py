@@ -2,10 +2,22 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import math
 from typing import Any
 
 RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 CORE = {"mechanical", "piping", "electrical", "instrumentation"}
+
+
+def _finite_number(value: Any) -> float | None:
+    """Parse numeric geometry defensively; invalid values never crash an audit."""
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if math.isfinite(number) else None
 
 @dataclass(frozen=True)
 class ReasoningFinding:
@@ -66,18 +78,26 @@ class EngineeringReasoner:
             if d in present and d not in route_discs:
                 self.add("AI-012", "medium", d, "Discipline has no route representation", f"{d} assets exist without a {d} route network.", "Confirm connectivity or add the appropriate route network.", .91)
 
-        sw, sl = self.model.get("site_width"), self.model.get("site_length")
+        sw = _finite_number(self.model.get("site_width"))
+        sl = _finite_number(self.model.get("site_length"))
         for a in self.assets:
             tag = str(a.get("tag", a.get("id", "unknown")))
+            values = {key: _finite_number(a.get(key)) for key in ("x", "y", "width", "length", "height", "z")}
             for f in ("x", "y"):
                 if a.get(f) is None:
                     self.add("AI-006", "medium", str(a.get("discipline", "general")), "Asset position is incomplete", f"{tag} has no {f} coordinate.", "Provide an explicit coordinate or run the placement solver.", .99)
+                elif values[f] is None:
+                    self.add("AI-018", "high", str(a.get("discipline", "general")), "Asset coordinate is not a finite number", f"{tag} has invalid {f}={a.get(f)!r}.", "Replace malformed, infinite or non-numeric coordinates with verified numeric values.", 1.0)
             for f in ("width", "length", "height"):
                 if a.get(f) is None:
                     self.add("AI-007", "medium", str(a.get("discipline", "general")), "Asset geometry is incomplete", f"{tag} has no {f}.", "Provide manufacturer/project geometry before execution-grade export.", .99)
-            if sw is not None and a.get("x") is not None and a.get("length") is not None and float(a["x"])+float(a["length"]) > float(sw):
+                elif values[f] is None:
+                    self.add("AI-018", "high", str(a.get("discipline", "general")), "Asset geometry is not a finite number", f"{tag} has invalid {f}={a.get(f)!r}.", "Replace malformed, infinite or non-numeric geometry with verified numeric values.", 1.0)
+                elif values[f] < 0:
+                    self.add("AI-019", "high", str(a.get("discipline", "general")), "Asset geometry is negative", f"{tag} has {f}={values[f]}.", "Correct negative dimensions before export or calculation.", 1.0)
+            if sw is not None and values["x"] is not None and values["length"] is not None and values["x"] + values["length"] > sw:
                 self.add("AI-013", "high", str(a.get("discipline", "general")), "Asset exceeds site width", f"{tag} extends beyond the declared site width.", "Move or resize using approved project geometry.", .99)
-            if sl is not None and a.get("y") is not None and a.get("width") is not None and float(a["y"])+float(a["width"]) > float(sl):
+            if sl is not None and values["y"] is not None and values["width"] is not None and values["y"] + values["width"] > sl:
                 self.add("AI-014", "high", str(a.get("discipline", "general")), "Asset exceeds site length", f"{tag} extends beyond the declared site length.", "Move or resize using approved project geometry.", .99)
 
         for r in self.routes:
