@@ -73,7 +73,8 @@ def _route_near_asset(route: dict[str, Any], asset: dict[str, Any], tolerance: f
     This is a screening aid only, not a 3D clash, clearance or routing solver.
     """
     x, y = _finite(asset.get("x")), _finite(asset.get("y"))
-    width, length = _finite(asset.get("width")), _finite(asset.get("length"))
+    width = _finite(asset.get("width", asset.get("h")))
+    length = _finite(asset.get("length", asset.get("w")))
     if None in (x, y, width, length) or width < 0 or length < 0:
         return False
     route_width = _finite(route.get("width", 0))
