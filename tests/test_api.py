@@ -380,6 +380,10 @@ def test_system_diagnostics_reports_safe_dependency_and_record_counts(tmp_path, 
     assert payload["stored_record_counts"]["audit_events"] == 2
     assert payload["registered_source_count"] >= 1
     assert payload["capabilities"]["live_plant_telemetry"] is False
+    assert payload["capabilities"]["storage_backend"] == "sqlite"
+    assert payload["capabilities"]["storage_path_explicitly_configured"] is True
+    assert payload["capabilities"]["storage_durability"] == "deployment_volume_unverified"
+    assert "persistent_storage" not in payload["capabilities"]
     assert "database_path" not in payload
 
 
