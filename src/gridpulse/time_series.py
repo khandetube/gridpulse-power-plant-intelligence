@@ -71,7 +71,6 @@ def decompose_time_series(
 
     residual_variance = float(np.var(residual))
     combined_variance = float(np.var(seasonal + residual))
-    trend_variance = float(np.var(trend))
     trend_residual_variance = float(np.var(trend + residual))
     seasonal_strength = (
         max(0.0, min(1.0, 1.0 - residual_variance / combined_variance))
