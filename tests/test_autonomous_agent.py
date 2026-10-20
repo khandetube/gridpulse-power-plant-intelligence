@@ -2,7 +2,8 @@ from gridpulse import autonomous_agent
 
 
 def candidate(fingerprint, gate="review_required", findings=None, mode="deterministic_prompt_parser"):
-    if findings is None:\n        findings = [{"code": "ROUTES_MISSING", "severity": "high", "message": "No routes."}]
+    if findings is None:
+        findings = [{"code": "ROUTES_MISSING", "severity": "high", "message": "No routes."}]
     return {
         "model": {"assets": [{"tag": fingerprint}], "routes": []},
         "interpretation_mode": mode,
