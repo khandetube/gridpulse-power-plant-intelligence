@@ -42,3 +42,13 @@ def test_autonomous_cycle_rejects_unbounded_iterations():
         assert "between 1 and 3" in str(exc)
     else:
         raise AssertionError("expected bounded iteration validation")
+
+
+def test_autonomous_cycle_does_not_pass_when_independent_model_validation_fails(monkeypatch):
+    invalid = candidate("A", gate="screening_passed", findings=[])
+    monkeypatch.setattr(autonomous_agent, "run_design_agent", lambda *args: invalid)
+
+    result = autonomous_agent.run_autonomous_design_cycle("design a plant", use_llm=False)
+
+    assert result["stop_reason"] != "all_available_screening_checks_passed"
+    assert result["execution_trace"][0]["tool_failure_count"] >= 1
