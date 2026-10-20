@@ -64,3 +64,13 @@ def test_dashboard_renders_anomaly_candidates_with_chartjs() -> None:
     assert 'new Chart(document.getElementById("gpAiAnomalyChart")' in html
     assert "MAD candidate" in html
     assert "Chart.js could not load" in html
+
+
+def test_dashboard_exposes_engineering_unit_converter() -> None:
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert 'id="gpUnitValue"' in html
+    assert 'id="gpUnitFrom"' in html
+    assert 'id="gpUnitTo"' in html
+    assert 'id="gpUnitConvert"' in html
+    assert 'gpAiRequest("/api/v1/analytics/units/convert"' in html
+    assert "dimensional compatibility" in html
