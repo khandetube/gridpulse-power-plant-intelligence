@@ -2,6 +2,7 @@
 
 This endpoint produces review candidates only; it is not a plant alarm or diagnosis.
 """
+# isort: skip_file
 from __future__ import annotations
 
 import numpy as np
@@ -52,7 +53,7 @@ def detect_anomalies(
     predictions = model.fit_predict(matrix)
     scores = model.decision_function(matrix)
 
-    flagged: list[dict[str, Any]] = []
+    flagged: list[dict[str, object]] = []
     for index, prediction in enumerate(predictions):
         if prediction == -1:
             row = frame.iloc[index]
