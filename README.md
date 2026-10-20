@@ -28,6 +28,29 @@ Every imported record should include its source, publication date (when known), 
 No credentials, private records, network addresses, control-system configurations, or confidential dispatch data belong in this repository.
 
 
+## Bounded autonomous engineering supervisor
+
+The backend includes a bounded propose–review–revise supervisor at `POST /api/v1/cad/autonomous-run`. It reuses the validated CAD/design pipeline, retains the best candidate by the quality-gate ranking, fingerprints each candidate to detect repeated models, and emits an iteration trace with read-only tool audits. The allowlisted review tools currently validate the typed `EngineeringSpec`, inspect quality-report structure, and screen model geometry for non-finite numeric values.
+
+Example request:
+
+```json
+{
+  "prompt": "Create a conceptual combined-cycle plant layout; identify unknown design-basis inputs instead of guessing.",
+  "site_width": 80,
+  "site_length": 55,
+  "template": "power",
+  "use_llm": true,
+  "max_iterations": 3
+}
+```
+
+Important boundaries:
+- The API requires the Python backend to be deployed; GitHub Pages is static and does not host this endpoint.
+- Revision iterations require the configured OpenAI-compatible model environment variables (`GRIDPULSE_LLM_BASE_URL`, `GRIDPULSE_LLM_API_KEY`, and `GRIDPULSE_LLM_MODEL`). Without these, the endpoint performs one deterministic screening pass and reports that it cannot revise autonomously.
+- This is not yet a general-purpose autonomous agent: there is no persistent run memory, background job manager, external-tool execution, or live plant/SCADA/dispatch connection.
+- A passed software screening gate is not code compliance, safety approval, or permission to construct or operate equipment. Qualified engineers must verify all design inputs and outputs.
+
 ## MEP Studio — preliminary electrical/mechanical design and 3D concept export
 
 Open the static [MEP Studio](docs/mep-studio.html) from GitHub Pages to enter building dimensions, floor count, net-area ratio, and explicit preliminary electrical/mechanical assumptions. The browser computes geometric areas, rough connected/coincident electrical loads, a first-pass cooling estimate, fresh-air volume, and a concept BOQ. It supports CSV/JSON export, a lightweight rotatable conceptual massing view, OBJ export, and a MAXScript (.ms) script that can be run inside Autodesk 3ds Max to generate simple boxes representing the building and main conceptual routes.
