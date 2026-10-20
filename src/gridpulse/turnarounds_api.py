@@ -21,8 +21,8 @@ def db_path() -> Path:
 
 
 def source_is_registered(source_id: str) -> bool:
-    root = Path(os.environ.get("GRIDPULSE_DATA_DIR", Path(__file__).resolve().parents[2] / "data"))
-    registry = root / "source_registry.csv"
+    from gridpulse.config import source_registry_path
+    registry = source_registry_path()
     if not registry.is_file():
         raise HTTPException(status_code=503, detail="Source registry is unavailable")
     try:
