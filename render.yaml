@@ -1,0 +1,22 @@
+# Render Blueprint for the GridPulse API.
+# Review the selected plan and pricing before deploying; persistent disks may incur charges.
+services:
+  - type: web
+    name: gridpulse-api
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /ready
+    autoDeploy: true
+    envVars:
+      - key: GRIDPULSE_ENV
+        value: production
+      - key: GRIDPULSE_DB_PATH
+        value: /data/gridpulse.sqlite3
+      - key: GRIDPULSE_API_KEY
+        generateValue: true
+    disk:
+      name: gridpulse-data
+      mountPath: /data
+      sizeGB: 1
