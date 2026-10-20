@@ -7,6 +7,8 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
+from gridpulse.ai_design_reasoning import run_engineering_reasoning
+from gridpulse.cad_change_impact import analyze_change_impact
 from gridpulse.cad_engine import (
     Discipline,
     EngineeringSpec,
@@ -16,8 +18,6 @@ from gridpulse.cad_engine import (
     to_openscad,
     to_svg,
 )
-from gridpulse.ai_design_reasoning import run_engineering_reasoning
-from gridpulse.cad_change_impact import analyze_change_impact
 from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine_agent import run_design_agent
 from gridpulse.cad_engine_calculations import run_engineering_calculations
