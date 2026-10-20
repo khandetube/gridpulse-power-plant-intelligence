@@ -489,3 +489,24 @@ def test_api_rejects_oversized_declared_request_body(monkeypatch):
         },
     )
     assert response.status_code == 413
+
+
+
+def test_unit_conversion_api_converts_compatible_engineering_units():
+    response = client.post(
+        "/api/v1/analytics/units/convert",
+        json={"value": 1.25, "from_unit": "MW", "to_unit": "kW"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["converted_value"] == pytest.approx(1250.0)
+    assert payload["library"] == "Pint"
+
+
+def test_unit_conversion_api_rejects_incompatible_dimensions():
+    response = client.post(
+        "/api/v1/analytics/units/convert",
+        json={"value": 1, "from_unit": "MW", "to_unit": "MWh"},
+    )
+    assert response.status_code == 422
+    assert "dimensionally incompatible" in response.json()["detail"]
