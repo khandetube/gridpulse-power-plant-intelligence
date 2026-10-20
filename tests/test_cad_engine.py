@@ -137,6 +137,7 @@ def test_xlsx_export_endpoint_returns_real_excel_file():
 
 def test_local_ollama_llm_does_not_require_api_key(monkeypatch):
     import json
+
     from gridpulse import cad_engine
 
     payload = {
