@@ -20,6 +20,7 @@ from gridpulse.cad_engine_advanced_calculations import run_advanced_calculations
 from gridpulse.cad_engine_agent import run_design_agent
 from gridpulse.cad_engine_calculations import run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
+from gridpulse.ai_design_reasoning import run_engineering_reasoning
 from gridpulse.cad_engine_multiformat import (
     export_engineering_workbook,
     export_multi_application_bundle,
@@ -55,7 +56,7 @@ def cad_engine_status() -> dict:
         "calculation_backend": "first-principles deterministic equations with explicit-input gating, traceability and project-limit rule checks",
         "llm_configured": configured,
         "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser + multi-stage reasoning",
-        "agent_stages": ["requirements", "discipline coordination", "parametric geometry", "topology/clash heuristics", "engineering calculations/rules", "advanced sizing/network calculations", "design critique", "multi-application handoff"],
+        "agent_stages": ["requirements", "discipline coordination", "parametric geometry", "topology/clash heuristics", "engineering calculations/rules", "advanced sizing/network calculations", "evidence-first AI reasoning", "design critique and quality gate", "multi-application handoff"],
         "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx", "engineering_intelligence.json", "design_agent_report.json", "calculation_report.json", "advanced_calculation_report.json"],
         "limitations": ["Calculations require explicit design-basis inputs and do not invent missing values", "Project/code-specific limits and manufacturer data are not inferred", "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment", "No construction/safety approval", "Not connected to plant telemetry or dispatch systems"],
     }
@@ -78,11 +79,15 @@ def generate_cad(request: GenerateCadRequest) -> dict:
         "spec": payload,
         "review": review_spec(spec),
         "engineering_intelligence": intelligence,
+        "ai_reasoning": agent["ai_reasoning"],
+        "quality_gate": agent["quality_gate"],
         "calculations": agent["calculations"],
         "advanced_calculations": agent["advanced_calculations"],
         "exports": {
             "engineering_spec.json": json.dumps(payload, ensure_ascii=False, indent=2),
             "engineering_intelligence.json": json.dumps(intelligence, ensure_ascii=False, indent=2),
+            "ai_reasoning_report.json": json.dumps(agent["ai_reasoning"], ensure_ascii=False, indent=2),
+            "quality_gate_report.json": json.dumps(agent["quality_gate"], ensure_ascii=False, indent=2),
             "calculation_report.json": json.dumps(agent["calculations"], ensure_ascii=False, indent=2),
             "advanced_calculation_report.json": json.dumps(agent["advanced_calculations"], ensure_ascii=False, indent=2),
             "design_agent_report.json": json.dumps(agent, ensure_ascii=False, indent=2),
@@ -126,8 +131,10 @@ def calculate_engineering(request: CalculationRequest) -> dict:
 
 @router.post("/analyze")
 def analyze_cad(spec: EngineeringSpec) -> dict:
-    """Run the engineering reasoning layer on an existing validated EngineeringSpec."""
-    return analyze_design_intelligence(spec)
+    """Run engineering intelligence and evidence-first reasoning on an existing model."""
+    intelligence = analyze_design_intelligence(spec)
+    reasoning = run_engineering_reasoning(spec.model_dump(mode="json"), {"required_disciplines": sorted({a.discipline for a in spec.assets}), "explicit_parameters": {}})
+    return {"engineering_intelligence": intelligence, "ai_reasoning": reasoning}
 
 
 @router.post("/export/{format_name}")
