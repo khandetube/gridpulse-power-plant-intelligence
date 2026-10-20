@@ -106,10 +106,80 @@ def _tool_audit_finite_geometry(candidate: dict[str, Any]) -> dict[str, Any]:
     return {"tool": "audit_finite_geometry", "ok": not invalid, "issues": invalid[:20], "issue_count": len(invalid)}
 
 
+def _tool_audit_asset_envelopes(candidate: dict[str, Any]) -> dict[str, Any]:
+    """Independently detect positive-volume overlaps between axis-aligned asset envelopes.
+
+    This is a screening heuristic, not a substitute for discipline-specific 3D clash detection.
+    Assets missing any required coordinate/dimension are reported as unassessed, not assumed clear.
+    """
+    model = candidate.get("model", {})
+    assets = model.get("assets", [])
+    if not isinstance(assets, list):
+        return {"tool": "audit_asset_envelopes", "ok": False, "error": "assets must be a list"}
+
+    boxes: list[dict[str, Any]] = []
+    unassessed: list[str] = []
+    invalid: list[str] = []
+    for index, asset in enumerate(assets):
+        if not isinstance(asset, dict):
+            invalid.append(f"assets[{index}] is not an object")
+            continue
+        tag = str(asset.get("tag", asset.get("id", f"asset-{index}")))
+        fields = ("x", "y", "z", "length", "width", "height")
+        values: dict[str, float] = {}
+        missing = []
+        for field in fields:
+            value = asset.get(field)
+            if value is None:
+                missing.append(field)
+            elif isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                invalid.append(f"{tag}.{field} is not finite numeric geometry")
+            else:
+                values[field] = float(value)
+        if missing:
+            unassessed.append(f"{tag}: missing {', '.join(missing)}")
+            continue
+        if any(values[field] < 0 for field in ("length", "width", "height")):
+            invalid.append(f"{tag}: negative envelope dimension")
+            continue
+        boxes.append({
+            "tag": tag,
+            "x0": values["x"], "x1": values["x"] + values["length"],
+            "y0": values["y"], "y1": values["y"] + values["width"],
+            "z0": values["z"], "z1": values["z"] + values["height"],
+        })
+
+    overlaps: list[dict[str, str]] = []
+    for index, first in enumerate(boxes):
+        for second in boxes[index + 1:]:
+            intersects = all(
+                min(first[upper], second[upper]) - max(first[lower], second[lower]) > 1e-9
+                for lower, upper in (("x0", "x1"), ("y0", "y1"), ("z0", "z1"))
+            )
+            if intersects:
+                overlaps.append({"asset_a": first["tag"], "asset_b": second["tag"]})
+
+    issues = invalid + [
+        f"Potential 3D envelope overlap: {item['asset_a']} / {item['asset_b']}"
+        for item in overlaps
+    ]
+    return {
+        "tool": "audit_asset_envelopes",
+        "ok": not issues,
+        "overlap_count": len(overlaps),
+        "overlaps": overlaps[:50],
+        "invalid_geometry": invalid[:20],
+        "unassessed_assets": unassessed[:50],
+        "unassessed_count": len(unassessed),
+        "note": "Axis-aligned bounding-box screening only; rotation, access clearances, insulation, maintenance envelopes and discipline-specific rules are not modeled.",
+    }
+
+
 _TOOL_REGISTRY: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "validate_model": _tool_validate_model,
     "audit_quality_evidence": _tool_audit_quality_evidence,
     "audit_finite_geometry": _tool_audit_finite_geometry,
+    "audit_asset_envelopes": _tool_audit_asset_envelopes,
 }
 
 
