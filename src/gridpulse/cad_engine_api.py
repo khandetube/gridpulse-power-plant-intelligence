@@ -21,6 +21,7 @@ from gridpulse.cad_engine_agent import run_design_agent
 from gridpulse.cad_engine_calculations import run_engineering_calculations
 from gridpulse.cad_engine_intelligence import analyze_design_intelligence
 from gridpulse.ai_design_reasoning import run_engineering_reasoning
+from gridpulse.cad_change_impact import analyze_change_impact
 from gridpulse.cad_engine_multiformat import (
     export_engineering_workbook,
     export_multi_application_bundle,
@@ -41,6 +42,11 @@ class GenerateCadRequest(BaseModel):
 class CalculationRequest(BaseModel):
     spec: EngineeringSpec
     parameters: dict[str, float | int | str | None] = Field(default_factory=dict, max_length=100)
+
+
+class ChangeImpactRequest(BaseModel):
+    before: EngineeringSpec
+    after: EngineeringSpec
 
 
 @router.get("/status")
@@ -108,6 +114,12 @@ def run_agent(request: GenerateCadRequest) -> dict:
         return run_design_agent(request.prompt, request.site_width, request.site_length, request.disciplines, request.template, request.use_llm)
     except (ValueError, ValidationError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/impact-analysis")
+def analyze_change(request: ChangeImpactRequest) -> dict:
+    """Compare two model versions and identify changed objects and connected routes for review."""
+    return analyze_change_impact(request.before.model_dump(mode="json"), request.after.model_dump(mode="json"))
 
 
 @router.post("/calculations")
