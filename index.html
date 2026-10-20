@@ -416,6 +416,8 @@ async function syncBackendObservations(){
  }catch(error){
   const message=(label?"همگام‌سازی ناموفق بود: ":"Backend sync failed: ")+error.message;
   gpSetBilingualText(status,"Backend sync failed: "+error.message,"همگام‌سازی ناموفق بود: "+error.message);
+  gpSetBilingualText(connectionStatus,"Backend connection failed","اتصال بک‌اند ناموفق بود");
+  if(connectionStatus)connectionStatus.className="tag amber";
   toast(message);
  }finally{
   button.disabled=false;
