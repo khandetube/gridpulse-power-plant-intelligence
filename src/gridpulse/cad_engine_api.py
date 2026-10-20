@@ -1,12 +1,14 @@
 """HTTP API for the parametric prompt-to-CAD engine."""
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 
+from gridpulse.agent_run_store import get_run, list_runs, record_completed_run
 from gridpulse.ai_design_reasoning import run_engineering_reasoning
 from gridpulse.autonomous_agent import run_autonomous_design_cycle
 from gridpulse.cad_change_impact import analyze_change_impact
@@ -116,7 +118,7 @@ def generate_cad(request: GenerateCadRequest) -> dict:
 def run_autonomous_agent(request: AutonomousAgentRequest) -> dict:
     """Run bounded propose-review-revise orchestration; revisions require configured LLM."""
     try:
-        return run_autonomous_design_cycle(
+        result = run_autonomous_design_cycle(
             request.prompt,
             request.site_width,
             request.site_length,
@@ -125,8 +127,39 @@ def run_autonomous_agent(request: AutonomousAgentRequest) -> dict:
             request.use_llm,
             request.max_iterations,
         )
+        run_metadata = record_completed_run(
+            {
+                "site_width": request.site_width,
+                "site_length": request.site_length,
+                "disciplines": request.disciplines,
+                "template": request.template,
+                "use_llm": request.use_llm,
+                "max_iterations": request.max_iterations,
+                "prompt_sha256": hashlib.sha256(request.prompt.encode("utf-8")).hexdigest(),
+            },
+            result,
+        )
+        return {**result, "run_record": run_metadata}
     except (ValueError, ValidationError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/autonomous-runs")
+def autonomous_run_history(limit: int = 20) -> dict:
+    """List recent autonomous run metadata without returning full prompts or results."""
+    try:
+        return {"runs": list_runs(limit)}
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/autonomous-runs/{run_id}")
+def autonomous_run_detail(run_id: str) -> dict:
+    """Retrieve a stored autonomous run result and its execution trace."""
+    record = get_run(run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Autonomous run not found")
+    return record
 
 
 @router.post("/agent")
