@@ -30,7 +30,7 @@ def test_autonomous_cycle_keeps_best_candidate_and_stops_on_repeat(monkeypatch):
     monkeypatch.setattr(autonomous_agent, "run_design_agent", lambda *args: next(sequence))
     result = autonomous_agent.run_autonomous_design_cycle("design a plant", max_iterations=3)
     assert result["iterations_executed"] == 3
-    assert {item["tool"] for item in result["execution_trace"][0]["tool_audit"]} == {"validate_model", "audit_quality_evidence", "audit_finite_geometry"}
+    assert {item["tool"] for item in result["execution_trace"][0]["tool_audit"]} == {"validate_model", "audit_quality_evidence", "audit_finite_geometry", "audit_asset_envelopes"}
     assert result["stop_reason"] == "no_model_change_detected"
     assert result["best_candidate"]["model"]["assets"][0]["tag"] == "B"
 
@@ -52,3 +52,40 @@ def test_autonomous_cycle_does_not_pass_when_independent_model_validation_fails(
 
     assert result["stop_reason"] != "all_available_screening_checks_passed"
     assert result["execution_trace"][0]["tool_failure_count"] >= 1
+
+
+
+def test_asset_envelope_audit_detects_positive_volume_overlap():
+    candidate_data = {
+        "model": {
+            "assets": [
+                {"tag": "P-101", "x": 0, "y": 0, "z": 0, "length": 4, "width": 3, "height": 2},
+                {"tag": "M-101", "x": 3, "y": 2, "z": 1, "length": 3, "width": 3, "height": 2},
+            ]
+        }
+    }
+
+    result = autonomous_agent._tool_audit_asset_envelopes(candidate_data)
+
+    assert result["ok"] is False
+    assert result["overlap_count"] == 1
+    assert result["overlaps"][0] == {"asset_a": "P-101", "asset_b": "M-101"}
+
+
+def test_asset_envelope_audit_allows_touching_faces_and_marks_missing_geometry():
+    candidate_data = {
+        "model": {
+            "assets": [
+                {"tag": "P-101", "x": 0, "y": 0, "z": 0, "length": 2, "width": 2, "height": 2},
+                {"tag": "T-101", "x": 2, "y": 0, "z": 0, "length": 2, "width": 2, "height": 2},
+                {"tag": "U-101", "x": 8, "y": 8},
+            ]
+        }
+    }
+
+    result = autonomous_agent._tool_audit_asset_envelopes(candidate_data)
+
+    assert result["overlap_count"] == 0
+    assert result["unassessed_count"] == 1
+    assert "U-101" in result["unassessed_assets"][0]
+    assert result["ok"] is True
