@@ -6,11 +6,11 @@ be overridden with GRIDPULSE_AGENT_DB_PATH; deployers should place it on a persi
 from __future__ import annotations
 
 import hashlib
-from contextlib import closing
 import json
 import os
 import sqlite3
 import uuid
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
