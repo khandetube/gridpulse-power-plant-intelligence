@@ -16,3 +16,29 @@ def test_reasoner_does_not_invent_geometry():
     )
     assert any(f["code"] == "AI-007" for f in result["findings"])
     assert any("manufacturer" in x.lower() for x in result["limitations"])
+
+
+
+def test_reasoner_handles_malformed_and_non_finite_geometry_without_crashing():
+    result = run_engineering_reasoning(
+        {
+            "site_width": 20,
+            "site_length": 20,
+            "assets": [
+                {
+                    "id": "P-101",
+                    "tag": "P-101",
+                    "discipline": "Mechanical",
+                    "x": "not-a-number",
+                    "y": float("nan"),
+                    "width": -2,
+                    "length": float("inf"),
+                    "height": 1,
+                }
+            ],
+            "routes": [],
+        }
+    )
+    codes = {finding["code"] for finding in result["findings"]}
+    assert "AI-018" in codes
+    assert "AI-019" in codes
