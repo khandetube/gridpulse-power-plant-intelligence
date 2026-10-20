@@ -51,6 +51,17 @@ Important boundaries:
 - This is not yet a general-purpose autonomous agent: there is no persistent run memory, background job manager, external-tool execution, or live plant/SCADA/dispatch connection.
 - A passed software screening gate is not code compliance, safety approval, or permission to construct or operate equipment. Qualified engineers must verify all design inputs and outputs.
 
+
+### Persistent agent run ledger
+
+Completed autonomous runs are recorded in a local SQLite ledger. The API returns a `run_record.run_id` after a successful run, and provides:
+
+- `GET /api/v1/cad/autonomous-runs?limit=20` — bounded recent-run metadata.
+- `GET /api/v1/cad/autonomous-runs/{run_id}` — stored result and iteration/tool audit trace.
+- `GRIDPULSE_AGENT_DB_PATH` — optional database path override. In container deployments, point this at a persistent mounted volume; ephemeral filesystems do not provide durable history across redeploys.
+
+The ledger stores a fingerprint of request metadata and the result, not the original prompt or model credentials. Stored engineering results may still contain project details, so deployers must protect the database and API with appropriate access controls and backups. This is durable history, not yet a resumable background job queue.
+
 ## MEP Studio — preliminary electrical/mechanical design and 3D concept export
 
 Open the static [MEP Studio](docs/mep-studio.html) from GitHub Pages to enter building dimensions, floor count, net-area ratio, and explicit preliminary electrical/mechanical assumptions. The browser computes geometric areas, rough connected/coincident electrical loads, a first-pass cooling estimate, fresh-air volume, and a concept BOQ. It supports CSV/JSON export, a lightweight rotatable conceptual massing view, OBJ export, and a MAXScript (.ms) script that can be run inside Autodesk 3ds Max to generate simple boxes representing the building and main conceptual routes.
