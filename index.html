@@ -66,6 +66,18 @@ html[dir="rtl"] body{font-family:Tahoma,Arial,sans-serif}html[dir="rtl"] .shell{
           <div id="gpAiAnomalyChartWrap" style="display:none;margin-top:16px;background:#0a1422;border:1px solid var(--line);border-radius:12px;padding:14px"><h3 style="margin:0 0 12px">Observation timeline</h3><canvas id="gpAiAnomalyChart" role="img" aria-label="Observation values over time; highlighted points are model review candidates"></canvas><p style="color:var(--muted);font-size:12px">Highlighted points are statistical screening candidates, not confirmed faults.</p></div>
         </div>
       </section>
+      <section class="card" style="margin-top:14px;background:#0b1727" aria-labelledby="gpUnitConvertTitle">
+        <div class="card-head"><div><h2 id="gpUnitConvertTitle">Engineering unit converter</h2><p>Convert compatible units with dimensional validation powered by Pint.</p></div><span class="tag blue">Pint</span></div>
+        <div class="card-body">
+          <div class="gp-ai-toolbar">
+            <label for="gpUnitValue">Value<input id="gpUnitValue" type="number" step="any" value="1" inputmode="decimal"></label>
+            <label for="gpUnitFrom">From<select id="gpUnitFrom"><option value="MW">MW</option><option value="kW">kW</option><option value="W">W</option><option value="MWh">MWh</option><option value="kWh">kWh</option><option value="J">J</option><option value="degC">°C</option><option value="degF">°F</option><option value="kg/s">kg/s</option><option value="kg/h">kg/h</option></select></label>
+            <label for="gpUnitTo">To<select id="gpUnitTo"><option value="kW">kW</option><option value="MW">MW</option><option value="W">W</option><option value="kWh">kWh</option><option value="MWh">MWh</option><option value="J">J</option><option value="degF">°F</option><option value="degC">°C</option><option value="kg/h">kg/h</option><option value="kg/s">kg/s</option></select></label>
+            <button class="btn primary" id="gpUnitConvert" type="button">Convert units</button>
+          </div>
+          <div class="gp-ai-output" id="gpUnitConvertOutput" aria-live="polite"><strong>Ready.</strong><p>Conversions require dimensionally compatible units; the result does not validate the source measurement.</p></div>
+        </div>
+      </section>
       <div class="gp-ai-foot">Safety boundary: research support only · no live SCADA/DCS data · no control, trip, dispatch or return-to-service commands.</div>
     </div>
   </article>
@@ -642,6 +654,21 @@ async function gpAiRunAnomaly(){
  }catch(error){out.textContent="Anomaly screening failed: "+error.message;}
  finally{gpAiBusy(button,false);}
 }
+async function gpUnitConvert(){
+ const button=document.getElementById("gpUnitConvert"),out=document.getElementById("gpUnitConvertOutput");
+ const value=Number(document.getElementById("gpUnitValue").value),from_unit=document.getElementById("gpUnitFrom").value,to_unit=document.getElementById("gpUnitTo").value;
+ if(!Number.isFinite(value)){out.textContent="Enter a finite numeric value.";return;}
+ gpAiBusy(button,true);out.textContent="Converting and checking dimensional compatibility…";
+ try{
+  const result=await gpAiRequest("/api/v1/analytics/units/convert",{value,from_unit,to_unit});
+  out.textContent="";
+  const strong=document.createElement("strong");strong.textContent=String(result.input_value)+" "+result.from_unit+" = "+Number(result.converted_value.toPrecision(10))+" "+result.to_unit;out.appendChild(strong);
+  const details=document.createElement("p");details.textContent="Dimension: "+result.dimension+" · Library: "+result.library;out.appendChild(details);
+  const note=document.createElement("p");note.textContent=result.note;out.appendChild(note);
+ }catch(error){out.textContent="Conversion failed: "+error.message+" Check that both units are valid and dimensionally compatible.";}
+ finally{gpAiBusy(button,false);}
+}
+document.getElementById("gpUnitConvert").addEventListener("click",gpUnitConvert);
 document.getElementById("gpAiLoadAnomalySeries").addEventListener("click",gpAiLoadAnomalySeries);document.getElementById("gpAiRunAnomaly").addEventListener("click",gpAiRunAnomaly);
 document.getElementById("gpAiCheck").addEventListener("click",gpAiCheck);document.getElementById("gpAiAsk").addEventListener("click",gpAiAsk);document.getElementById("gpAiAnalyse").addEventListener("click",gpAiAnalyse);document.getElementById("gpAiClear").addEventListener("click",()=>{document.getElementById("gpAiQuestion").value="";gpAiRender("Cleared. Your local knowledge JSON is unchanged.");});
 
