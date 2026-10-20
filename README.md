@@ -57,6 +57,29 @@ The API exposes `POST /api/v1/analytics/time-series?period=7` using statsmodels 
 
 The API exposes `POST /api/v1/analytics/units/convert`, powered by Pint. Example body: `{"value": 1.5, "from_unit": "MW", "to_unit": "kW"}`. The response includes the converted value and dimensionality. Incompatible dimensions (for example MW to MWh), unknown units, and non-finite values are rejected. The dashboard includes a unit-converter panel for common power, energy, temperature, and mass-flow units. A mathematically valid conversion does not verify the measurement's source or engineering context.
 
+## Frontend–backend integration and troubleshooting
+
+The main dashboard now has a **Sync all backend data** action. It checks `/ready`, then fetches the registered sources, paginated observations, and paginated maintenance events from the configured API. API-backed rows are refreshed on each sync while browser-only CSV imports are preserved. A sync error is displayed in the dashboard; it does not silently replace local records.
+
+### Local development
+
+1. Set a strong API key in the shell before starting the API:
+   ```bash
+   export GRIDPULSE_API_KEY="replace-with-a-long-random-secret"
+   docker compose up --build -d
+   ```
+2. Open the public dashboard and enter `http://127.0.0.1:8000` as the API base URL. Enter the same API key in the password field; the key is kept in the page session and is not written to local storage.
+3. Click **Check backend health**, then **Sync all backend data**. The connection badge should report that the backend is connected and ready.
+4. To inspect API routes and schemas, open `http://127.0.0.1:8000/docs` on the same computer.
+
+### Deployment and browser limits
+
+- GitHub Pages hosts only static frontend files. **There is no publicly deployed backend URL configured by this repository**, so a visitor cannot access the API merely by opening the Pages link. The default loopback URL refers to that visitor's own computer.
+- A remote backend must have an HTTPS URL, persistent storage, a strong `GRIDPULSE_API_KEY`, and CORS configured to allow `https://khandetube.github.io`. Do not expose a production API without authentication.
+- Browser mixed-content and CORS rules can block invalid API URLs; the frontend validates the URL and shows a diagnostic error rather than treating a failed request as an empty dataset.
+- The sync endpoint is read-only from the frontend: it fetches sources, observations and maintenance events. CSV import remains local in the browser and is not automatically uploaded to the API.
+- Backend health proves only application readiness. It does not prove access to plant telemetry, SCADA, or dispatch systems; those connections remain unconfigured.
+
 ## Data policy
 Every imported record should include its source, publication date (when known), observation period, unit, scope (unit/plant/multiple plants), and verification status. Aggregated values must not be attributed to an individual plant unless the source explicitly supports that attribution.
 
