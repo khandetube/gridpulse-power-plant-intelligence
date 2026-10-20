@@ -90,6 +90,38 @@ def test_observation_analytics_rejects_non_finite_value():
     assert response.status_code == 422
 
 
+def test_ml_anomaly_endpoint_flags_candidates_and_preserves_limitations():
+    from datetime import date, timedelta
+
+    start = date(2026, 1, 1)
+    values = [100, 101, 99, 102, 100, 98, 101, 99, 100, 1000]
+    records = []
+    for index, value in enumerate(values):
+        row = _observation(f"ml-{index}", value)
+        row["period_start"] = (start + timedelta(days=index)).isoformat()
+        row["period_end"] = row["period_start"]
+        records.append(row)
+
+    response = client.post(
+        "/api/v1/analytics/anomalies?contamination=0.1",
+        json={"records": records},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["algorithm"] == "scikit-learn IsolationForest"
+    assert payload["observation_count"] == 10
+    assert payload["flagged_count"] >= 1
+    assert "not alarms" in payload["limitations"][0]
+
+
+def test_ml_anomaly_endpoint_rejects_too_few_observations():
+    response = client.post(
+        "/api/v1/analytics/anomalies",
+        json={"records": [_observation(str(index), index + 1) for index in range(7)]},
+    )
+    assert response.status_code == 422
+
+
 
 def test_persisted_observation_ingest_and_query(tmp_path, monkeypatch):
     monkeypatch.setenv("GRIDPULSE_DB_PATH", str(tmp_path / "api.db"))
