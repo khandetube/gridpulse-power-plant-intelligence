@@ -129,7 +129,7 @@ def test_main_dashboard_syncs_sources_observations_and_maintenance_without_losin
 def test_backend_sync_error_path_is_safe_before_api_configuration_and_status_stays_bilingual() -> None:
     html = read_page("index.html")
     start = html.index("async function syncBackendObservations(){")
-    end = html.index("\\nfunction parseCSV", start)
+    end = html.index("\nfunction parseCSV", start)
     sync = html[start:end]
     assert sync.index('const label=document.documentElement.lang==="fa";') < sync.index('if(typeof gpAiBase!=="function"||!gpAiBase())')
     assert sync.index('const connectionStatus=document.getElementById("gpAiStatus");') < sync.index('if(typeof gpAiBase!=="function"||!gpAiBase())')
