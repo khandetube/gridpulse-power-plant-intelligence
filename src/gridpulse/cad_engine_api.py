@@ -60,7 +60,9 @@ class ChangeImpactRequest(BaseModel):
 def cad_engine_status() -> dict:
     """Report actual runtime capabilities and whether the optional model is configured."""
     import os
-    configured = all(os.environ.get(key, "").strip() for key in ("GRIDPULSE_LLM_BASE_URL", "GRIDPULSE_LLM_API_KEY", "GRIDPULSE_LLM_MODEL"))
+    configured = bool(os.environ.get("GRIDPULSE_LLM_MODEL", "").strip()) and bool(
+        os.environ.get("GRIDPULSE_LLM_BASE_URL", "http://localhost:11434/v1").strip()
+    )
     return {
         "engine": "GridPulse Parametric CAD Engine",
         "version": "0.6.0",
@@ -68,7 +70,7 @@ def cad_engine_status() -> dict:
         "geometry_backend": "parametric-spec + multi-stage design agent + deterministic engineering calculations + advanced sizing/network calculations + OpenSCAD + FreeCAD macro source + SVG + DXF R12",
         "calculation_backend": "first-principles deterministic equations with explicit-input gating, traceability and project-limit rule checks",
         "llm_configured": configured,
-        "llm_mode": "OpenAI-compatible JSON spec" if configured else "deterministic prompt parser + multi-stage reasoning",
+        "llm_mode": ("OpenAI-compatible JSON spec via configured model (local Ollama supported; API key optional)" if configured else "deterministic prompt parser + multi-stage reasoning"),
         "agent_stages": ["requirements", "discipline coordination", "parametric geometry", "topology/clash heuristics", "engineering calculations/rules", "advanced sizing/network calculations", "evidence-first AI reasoning", "design critique and quality gate", "multi-application handoff"],
         "outputs": ["engineering_spec.json", "plan.svg", "plan.dxf", "model.scad", "model.FCMacro", "autocad_model.dxf", "3dsmax_generator.ms", "revit_dynamo_generator.py", "gridpulse_engineering_handoff.xlsx", "engineering_intelligence.json", "design_agent_report.json", "calculation_report.json", "advanced_calculation_report.json"],
         "limitations": ["Calculations require explicit design-basis inputs and do not invent missing values", "Project/code-specific limits and manufacturer data are not inferred", "STEP/FCStd files are generated only when the exported macro is run in an installed FreeCAD environment", "No construction/safety approval", "Not connected to plant telemetry or dispatch systems"],
