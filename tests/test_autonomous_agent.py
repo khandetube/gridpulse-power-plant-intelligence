@@ -89,3 +89,45 @@ def test_asset_envelope_audit_allows_touching_faces_and_marks_missing_geometry()
     assert result["unassessed_count"] == 1
     assert "U-101" in result["unassessed_assets"][0]
     assert result["ok"] is True
+
+
+
+def test_independent_audit_findings_are_fed_into_next_revision(monkeypatch):
+    prompts = []
+
+    def make_candidate(overlap):
+        result = candidate("overlap" if overlap else "clear", mode="llm_structured_spec")
+        first = {
+            "tag": "P-101", "name": "Pump", "discipline": "Mechanical", "shape": "pump",
+            "x": 0, "y": 0, "z": 0, "length": 4, "width": 3, "height": 2,
+        }
+        second = {
+            "tag": "M-101", "name": "Motor", "discipline": "Mechanical", "shape": "motor",
+            "x": 3 if overlap else 5, "y": 2, "z": 1, "length": 3, "width": 3, "height": 2,
+        }
+        result["model"] = {"site_width": 20, "site_length": 20, "units": "m", "assets": [first, second], "routes": []}
+        return result
+
+    sequence = iter([make_candidate(True), make_candidate(False)])
+
+    def fake_agent(prompt, *_args):
+        prompts.append(prompt)
+        return next(sequence)
+
+    monkeypatch.setattr(autonomous_agent, "run_design_agent", fake_agent)
+
+    result = autonomous_agent.run_autonomous_design_cycle("layout two pieces of equipment", max_iterations=2)
+
+    assert len(prompts) == 2
+    assert "potential 3D envelope overlap between P-101 and M-101" in prompts[1]
+    assert result["status"] == "completed_with_findings"
+
+
+def test_screening_status_cannot_pass_when_independent_tools_fail(monkeypatch):
+    invalid = candidate("invalid", gate="screening_passed", findings=[])
+    monkeypatch.setattr(autonomous_agent, "run_design_agent", lambda *_args: invalid)
+
+    result = autonomous_agent.run_autonomous_design_cycle("design a plant", use_llm=False)
+
+    assert result["status"] == "completed_with_findings"
+    assert result["stop_reason"] != "all_available_screening_checks_passed"
