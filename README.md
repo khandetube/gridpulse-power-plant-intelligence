@@ -54,7 +54,7 @@ Important boundaries:
 
 ### Independent 3D envelope screening
 
-The autonomous review registry now includes an independent axis-aligned 3D bounding-box overlap audit for assets that provide finite `x/y/z` coordinates and `length/width/height` dimensions. Positive-volume intersections are reported as potential clashes and count as failed review-tool evidence, preventing a false clean screening result. Face-to-face contact alone is not counted as overlap. Missing dimensions are explicitly listed as unassessed rather than assumed clash-free.
+The autonomous review registry now includes an independent axis-aligned 3D bounding-box overlap audit for assets that provide finite `x/y/z` coordinates and `length/width/height` dimensions. Positive-volume intersections are reported as potential clashes, count as failed review-tool evidence, and are fed into the next bounded LLM revision prompt. A run cannot report `screening_passed` unless the available independent checks pass. Face-to-face contact alone is not counted as overlap. Missing dimensions are explicitly listed as unassessed rather than assumed clash-free.
 
 This is a conservative first-pass heuristic, not a full CAD/BIM clash solver: it does not yet account for rotated geometry, nozzle projections, pipe insulation, electrical clearances, access/maintenance zones, fire separation or discipline-specific standards. It must not be treated as engineering approval.
 
