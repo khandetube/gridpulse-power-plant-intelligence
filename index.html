@@ -493,11 +493,11 @@ function gpAiHeaders(){const h={"Content-Type":"application/json"};const key=doc
 function gpAiSaveConnectionSettings(){
  const base=gpAiBase();
  try{if(base)localStorage.setItem("gridpulse-api-base",base);else localStorage.removeItem("gridpulse-api-base");}catch(e){}
- try{const key=document.getElementById("gpAiApiKey").value.trim();if(key)sessionStorage.setItem("gridpulse-api-key",key);else sessionStorage.removeItem("gridpulse-api-key");}catch(e){}
+
 }
 function gpAiRestoreConnectionSettings(){
  try{const base=localStorage.getItem("gridpulse-api-base");if(base)document.getElementById("gpAiApiBase").value=base;}catch(e){}
- try{const key=sessionStorage.getItem("gridpulse-api-key");if(key)document.getElementById("gpAiApiKey").value=key;}catch(e){}
+
 }
 gpAiRestoreConnectionSettings();
 document.getElementById("gpAiApiBase").addEventListener("change",gpAiSaveConnectionSettings);
