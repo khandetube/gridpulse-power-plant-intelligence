@@ -69,6 +69,11 @@ GRIDPULSE_LLM_MODEL=qwen2.5:7b
 
 For a separately hosted OpenAI-compatible provider, set `GRIDPULSE_LLM_BASE_URL`, `GRIDPULSE_LLM_MODEL`, and (if required) `GRIDPULSE_LLM_API_KEY` to that provider's values. Do not expose an unauthenticated Ollama port to the public internet. Model-generated geometry is an untrusted proposal: Pydantic bounds and deterministic audits still validate it, and it is not an engineering approval. If inference fails or returns invalid output, the CAD engine falls back to deterministic generation. GitHub Pages cannot run the model; this requires the Python backend and compute resources.
 
+
+### Model readiness check
+
+After setting the environment variables and starting the Python API, call `GET /api/v1/cad/llm-status`. This performs a bounded three-second request to the configured `/v1/models` endpoint and reports whether the endpoint is reachable and the exact configured model ID is listed. It does not return the endpoint URL, API key, or other credentials. A reachable endpoint is not proof that generation quality is adequate; run a test generation and review its validation report as well.
+
 ## Persistent agent run ledger
 
 Completed autonomous runs are recorded in a local SQLite ledger. The API returns a `run_record.run_id` after a successful run, and provides:
