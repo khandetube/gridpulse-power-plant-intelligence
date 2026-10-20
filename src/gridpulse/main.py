@@ -442,6 +442,27 @@ def analyze_observation_batch(batch: ObservationBatch) -> dict[str, object]:
     return analyze_observations(payload)
 
 
+@app.post("/api/v1/analytics/anomalies")
+def analyze_observation_anomalies(
+    batch: ObservationBatch,
+    contamination: float = Query(default=0.05, ge=0.01, le=0.20),
+) -> dict[str, object]:
+    """Screen comparable caller-supplied records with optional ML dependencies."""
+    ensure_registered_sources(batch.records)
+    try:
+        from gridpulse.advanced_analytics import detect_anomalies
+
+        payload = [record.model_dump(mode="json") for record in batch.records]
+        return detect_anomalies(payload, contamination=contamination)
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Advanced analytics dependencies are not installed; install the advanced-analytics extra.",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 @app.get("/api/v1/sources", response_model=list[SourceRecord])
 def list_sources(status: Literal["unverified", "reviewed", "verified"] | None = None) -> list[SourceRecord]:
     if not SOURCE_REGISTRY.exists():
