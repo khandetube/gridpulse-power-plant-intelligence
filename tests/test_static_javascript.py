@@ -74,3 +74,10 @@ def test_dashboard_exposes_engineering_unit_converter() -> None:
     assert 'id="gpUnitConvert"' in html
     assert 'gpAiRequest("/api/v1/analytics/units/convert"' in html
     assert "dimensional compatibility" in html
+
+
+def test_new_analytics_tools_have_persian_translations() -> None:
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert '"Machine-learning anomaly screening":"غربالگری ناهنجاری با یادگیری ماشین"' in html
+    assert '"Engineering unit converter":"مبدل واحدهای مهندسی"' in html
+    assert '"Convert units":"تبدیل واحدها"' in html
