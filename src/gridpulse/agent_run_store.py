@@ -6,6 +6,7 @@ be overridden with GRIDPULSE_AGENT_DB_PATH; deployers should place it on a persi
 from __future__ import annotations
 
 import hashlib
+from contextlib import closing
 import json
 import os
 import sqlite3
@@ -56,7 +57,7 @@ def record_completed_run(request_metadata: dict[str, Any], result: dict[str, Any
     result_json = json.dumps(result, ensure_ascii=False, separators=(",", ":"), default=str)
     run_id = str(uuid.uuid4())
     created_at = datetime.now(UTC).isoformat()
-    with _connect() as connection:
+    with closing(_connect()) as connection, connection:
         connection.execute(
             """
             INSERT INTO agent_runs
@@ -77,7 +78,7 @@ def list_runs(limit: int = 20) -> list[dict[str, Any]]:
     """Return metadata only, bounded to 1–100 records."""
     if not 1 <= limit <= 100:
         raise ValueError("limit must be between 1 and 100")
-    with _connect() as connection:
+    with closing(_connect()) as connection, connection:
         rows = connection.execute(
             """
             SELECT run_id, created_at, status, request_fingerprint
@@ -94,7 +95,7 @@ def get_run(run_id: str) -> dict[str, Any] | None:
         normalized_id = str(uuid.UUID(run_id))
     except (ValueError, TypeError, AttributeError):
         return None
-    with _connect() as connection:
+    with closing(_connect()) as connection, connection:
         row = connection.execute(
             """
             SELECT run_id, created_at, status, request_fingerprint, result_json, error_summary
