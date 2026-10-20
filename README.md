@@ -80,6 +80,10 @@ The main dashboard now has a **Sync all backend data** action. It checks `/ready
 - The sync endpoint is read-only from the frontend: it fetches sources, observations and maintenance events. CSV import remains local in the browser and is not automatically uploaded to the API.
 - Backend health proves only application readiness. It does not prove access to plant telemetry, SCADA, or dispatch systems; those connections remain unconfigured.
 
+## Optional public API deployment
+
+A reviewed Render Blueprint is provided in `render.yaml`; deployment steps, persistence, authentication, and limitations are documented in [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md). Deployment is not automatic, and the selected Starter service plus persistent disk may incur charges. Review the current price before confirming any deployment.
+
 ## Data policy
 Every imported record should include its source, publication date (when known), observation period, unit, scope (unit/plant/multiple plants), and verification status. Aggregated values must not be attributed to an individual plant unless the source explicitly supports that attribution.
 
