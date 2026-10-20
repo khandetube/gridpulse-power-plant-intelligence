@@ -45,3 +45,13 @@ def test_main_dashboard_has_integrated_system_diagnostics() -> None:
     assert 'Export diagnostics JSON' in html
     # The API key is session-only; only the API base may be stored.
     assert 'localStorage.setItem("gridpulse-api-key"' not in html
+
+
+def test_dashboard_exposes_stored_series_ml_screening() -> None:
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert 'id="gpAiLoadAnomalySeries"' in html
+    assert 'id="gpAiAnomalySeries"' in html
+    assert 'id="gpAiRunAnomaly"' in html
+    assert 'gpAiRequest("/api/v1/observations?limit=1000")' in html
+    assert 'gpAiRequest("/api/v1/analytics/anomalies?contamination=0.05"' in html
+    assert "not alarms, fault diagnoses, or failure probabilities" in html
