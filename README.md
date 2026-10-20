@@ -24,7 +24,7 @@ GridPulse AI is an open-source analytics platform for power-generation reporting
 
 ## Advanced statistical and ML screening
 
-The runtime includes NumPy, pandas, and scikit-learn for reproducible numerical and tabular analysis. The endpoint `POST /api/v1/analytics/anomalies?contamination=0.05` accepts a source-labelled observation batch and applies a deterministic `IsolationForest` configuration to one comparable metric/unit series. It requires at least eight observations and returns flagged record IDs, dates, values, anomaly scores, and provenance labels. The contamination parameter is bounded to 0.01–0.20.
+The runtime includes NumPy, pandas, SciPy, and scikit-learn for numerical processing, robust statistics, and machine learning. The dashboard uses Chart.js for interactive observation timelines; the chart library is loaded from a public CDN and the report remains available if the CDN cannot be reached. The endpoint `POST /api/v1/analytics/anomalies?contamination=0.05` accepts a source-labelled observation batch and applies a deterministic `IsolationForest` configuration to one comparable metric/unit series. It requires at least eight observations and returns flagged record IDs, dates, values, anomaly scores, robust median-absolute-deviation (MAD) candidates, and provenance labels. The contamination parameter is bounded to 0.01–0.20.
 
 Example request body:
 
@@ -47,7 +47,7 @@ Example request body:
 }
 ```
 
-The example above illustrates the record schema only; a valid request needs at least eight observations and a registered source. ML flags are review candidates—not alarm thresholds, failure probabilities, fault diagnoses, or control instructions. The first version uses values only and does not model seasonality, load, ambient conditions, or equipment context. The algorithm does not independently verify the underlying data.
+The example above illustrates the record schema only; a valid request needs at least eight observations and a registered source. ML flags are review candidates—not alarm thresholds, failure probabilities, fault diagnoses, or control instructions. Both methods use values only and do not model seasonality, load, ambient conditions, or equipment context. Statistical flags are candidates for human review, not confirmed anomalies. The algorithms do not independently verify the underlying data.
 
 ## Data policy
 Every imported record should include its source, publication date (when known), observation period, unit, scope (unit/plant/multiple plants), and verification status. Aggregated values must not be attributed to an individual plant unless the source explicitly supports that attribution.
