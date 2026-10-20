@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from gridpulse.config import source_registry_path
 
 
