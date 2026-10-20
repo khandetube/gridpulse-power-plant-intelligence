@@ -28,9 +28,9 @@ from gridpulse.turnarounds_api import router as turnarounds_router
 from gridpulse.work_orders_api import router as work_orders_router
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-_CONFIGURED_DATA_DIR = Path(os.environ.get("GRIDPULSE_DATA_DIR", ROOT_DIR / "data"))
-_DATA_DIR_CANDIDATES = (_CONFIGURED_DATA_DIR, Path("/app/data"))
-SOURCE_REGISTRY = next((directory / "source_registry.csv" for directory in _DATA_DIR_CANDIDATES if (directory / "source_registry.csv").is_file()), _CONFIGURED_DATA_DIR / "source_registry.csv")
+from gridpulse.config import source_registry_path
+
+SOURCE_REGISTRY = source_registry_path()
 
 app = FastAPI(title="GridPulse AI API", version="0.1.0", description="Source-aware power plant analytics and engineering decision-support API. No live telemetry or dispatch connection is configured.")
 app.include_router(assets_router)
