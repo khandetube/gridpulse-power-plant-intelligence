@@ -66,6 +66,17 @@ html[dir="rtl"] body{font-family:Tahoma,Arial,sans-serif}html[dir="rtl"] .shell{
           <div id="gpAiAnomalyChartWrap" style="display:none;margin-top:16px;background:#0a1422;border:1px solid var(--line);border-radius:12px;padding:14px"><h3 style="margin:0 0 12px">Observation timeline</h3><canvas id="gpAiAnomalyChart" role="img" aria-label="Observation values over time; highlighted points are model review candidates"></canvas><p style="color:var(--muted);font-size:12px">Highlighted points are statistical screening candidates, not confirmed faults.</p></div>
         </div>
       </section>
+      <section class="card" style="margin-top:14px;background:#0b1727" aria-labelledby="gpTimeSeriesTitle">
+        <div class="card-head"><div><h2 id="gpTimeSeriesTitle">Time-series decomposition (STL)</h2><p>Separate trend, seasonal pattern, and residuals with statsmodels.</p></div><span class="tag blue">statsmodels</span></div>
+        <div class="card-body">
+          <div class="gp-ai-toolbar">
+            <label for="gpTimeSeriesPeriod">Cycle length (observations)<input id="gpTimeSeriesPeriod" type="number" min="2" max="365" step="1" value="7"></label>
+            <button class="btn primary" id="gpTimeSeriesRun" type="button">Analyze selected series</button>
+          </div>
+          <div class="gp-ai-output" id="gpTimeSeriesOutput" aria-live="polite"><strong>Ready.</strong><p>Load metric series above, select a series with at least two complete cycles, then run decomposition. Cycle length is measured in observations, not days.</p></div>
+          <div id="gpTimeSeriesChartWrap" style="display:none;margin-top:16px;background:#0a1422;border:1px solid var(--line);border-radius:12px;padding:14px"><h3 style="margin:0 0 12px">Trend and seasonal components</h3><canvas id="gpTimeSeriesChart" role="img" aria-label="Observed values, trend and seasonal decomposition"></canvas></div>
+        </div>
+      </section>
       <section class="card" style="margin-top:14px;background:#0b1727" aria-labelledby="gpUnitConvertTitle">
         <div class="card-head"><div><h2 id="gpUnitConvertTitle">Engineering unit converter</h2><p>Convert compatible units with dimensional validation powered by Pint.</p></div><span class="tag blue">Pint</span></div>
         <div class="card-body">
@@ -669,6 +680,34 @@ async function gpUnitConvert(){
  finally{gpAiBusy(button,false);}
 }
 document.getElementById("gpUnitConvert").addEventListener("click",gpUnitConvert);
+let gpTimeSeriesChart=null;
+async function gpTimeSeriesRun(){
+ const button=document.getElementById("gpTimeSeriesRun"),out=document.getElementById("gpTimeSeriesOutput"),key=document.getElementById("gpAiAnomalySeries").value;
+ const group=gpAiAnomalyGroups.find(item=>item.key===key);
+ const period=Number(document.getElementById("gpTimeSeriesPeriod").value);
+ if(!group){out.textContent="Load and select a valid metric series above first.";return;}
+ if(!Number.isInteger(period)||period<2||period>365){out.textContent="Cycle length must be an integer from 2 to 365 observations.";return;}
+ if(group.rows.length<2*period){out.textContent="This series has "+group.rows.length+" records; period "+period+" requires at least "+(2*period)+". Choose a shorter cycle or a longer series.";return;}
+ gpAiBusy(button,true);out.textContent="Decomposing "+group.rows.length+" observations into trend, seasonal and residual components…";
+ try{
+  const records=group.rows.slice(0,1000).map(row=>({record_id:row.record_id,plant:row.plant,metric:row.metric,value:Number(row.value),unit:row.unit,period_start:String(row.period_start).slice(0,10),period_end:String(row.period_end||row.period_start).slice(0,10),scope:row.scope,source_id:row.source_id,verification_status:row.verification_status}));
+  const report=await gpAiRequest("/api/v1/analytics/time-series?period="+period,{records});
+  out.textContent="";
+  const heading=document.createElement("strong");heading.textContent="STL complete — "+report.observation_count+" observations; "+report.residual_candidate_count+" residual review candidate(s)";out.appendChild(heading);
+  const summary=document.createElement("p");summary.textContent="Trend strength: "+report.trend_strength+" · Seasonal strength: "+report.seasonal_strength+" · Cycle: "+report.period_observations+" observations";out.appendChild(summary);
+  const pre=document.createElement("pre");pre.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto";pre.textContent=JSON.stringify(report,null,2);out.appendChild(pre);
+  const note=document.createElement("p");note.textContent="Interpretation caution: cycle length is based on observation count. Irregular sampling, short history and operating-regime changes can mislead decomposition. Review source quality and engineering context.";out.appendChild(note);
+  const wrap=document.getElementById("gpTimeSeriesChartWrap");wrap.style.display="block";
+  if(typeof Chart!=="undefined"){
+   const rows=report.observations||[];
+   if(gpTimeSeriesChart)gpTimeSeriesChart.destroy();
+   gpTimeSeriesChart=new Chart(document.getElementById("gpTimeSeriesChart"),{type:"line",data:{labels:rows.map(row=>String(row.period_start).slice(0,10)),datasets:[{label:"Observed ("+report.unit+")",data:rows.map(row=>row.value),borderColor:"#45d6c5",pointRadius:1,tension:.1},{label:"Trend",data:rows.map(row=>row.trend),borderColor:"#f4bd65",pointRadius:0,tension:.1},{label:"Seasonal component",data:rows.map(row=>row.seasonal),borderColor:"#6ca9ff",pointRadius:0,tension:.1}]},options:{responsive:true,interaction:{mode:"index",intersect:false},plugins:{legend:{labels:{color:"#eaf2ff"}}},scales:{x:{ticks:{color:"#91a4bf",maxTicksLimit:10},grid:{color:"#23354b"}},y:{ticks:{color:"#91a4bf"},grid:{color:"#23354b"}}}}});
+  }else{const fallback=document.createElement("p");fallback.textContent="Chart.js is unavailable; decomposition data remains available in the JSON report.";wrap.appendChild(fallback);}
+ }catch(error){out.textContent="Time-series analysis failed: "+error.message;}
+ finally{gpAiBusy(button,false);}
+}
+document.getElementById("gpTimeSeriesRun").addEventListener("click",gpTimeSeriesRun);
+
 document.getElementById("gpAiLoadAnomalySeries").addEventListener("click",gpAiLoadAnomalySeries);document.getElementById("gpAiRunAnomaly").addEventListener("click",gpAiRunAnomaly);
 document.getElementById("gpAiCheck").addEventListener("click",gpAiCheck);document.getElementById("gpAiAsk").addEventListener("click",gpAiAsk);document.getElementById("gpAiAnalyse").addEventListener("click",gpAiAnalyse);document.getElementById("gpAiClear").addEventListener("click",()=>{document.getElementById("gpAiQuestion").value="";gpAiRender("Cleared. Your local knowledge JSON is unchanged.");});
 
