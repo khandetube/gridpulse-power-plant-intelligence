@@ -132,3 +132,70 @@ def test_xlsx_export_endpoint_returns_real_excel_file():
     assert response.media_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     assert response.body[:2] == b"PK"
     assert "gridpulse_engineering_handoff.xlsx" in response.headers["content-disposition"]
+
+
+
+def test_local_ollama_llm_does_not_require_api_key(monkeypatch):
+    import json
+    from gridpulse import cad_engine
+
+    payload = {
+        "project_name": "Local model test",
+        "site_width": 20,
+        "site_length": 20,
+        "units": "m",
+        "design_basis": ["Conceptual only"],
+        "assets": [{
+            "tag": "P-101", "name": "Pump", "discipline": "Mechanical",
+            "shape": "pump", "x": 2, "y": 2, "z": 0,
+            "length": 3, "width": 2, "height": 2,
+            "material": "unspecified", "source": "llm_proposal"
+        }],
+        "routes": []
+    }
+    captured = {}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self, _limit):
+            return json.dumps({
+                "choices": [{"message": {"content": json.dumps(payload)}}]
+            }).encode()
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["headers"] = dict(request.header_items())
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setenv("GRIDPULSE_LLM_MODEL", "qwen2.5:7b")
+    monkeypatch.delenv("GRIDPULSE_LLM_API_KEY", raising=False)
+    monkeypatch.delenv("GRIDPULSE_LLM_BASE_URL", raising=False)
+    monkeypatch.setattr(cad_engine.urllib.request, "urlopen", fake_urlopen)
+
+    result = cad_engine._try_llm(
+        "conceptual pump layout", 20, 20, {"Mechanical"}, "process"
+    )
+
+    assert result is not None
+    assert result.assets[0].source == "llm_proposal"
+    assert captured["url"] == "http://localhost:11434/v1/chat/completions"
+    assert not any(name.lower() == "authorization" for name in captured["headers"])
+    assert captured["timeout"] <= 20
+
+
+def test_llm_adapter_stays_disabled_without_explicit_model(monkeypatch):
+    from gridpulse import cad_engine
+
+    monkeypatch.delenv("GRIDPULSE_LLM_MODEL", raising=False)
+    monkeypatch.delenv("GRIDPULSE_LLM_API_KEY", raising=False)
+    monkeypatch.delenv("GRIDPULSE_LLM_BASE_URL", raising=False)
+
+    assert cad_engine._try_llm(
+        "conceptual pump layout", 20, 20, {"Mechanical"}, "process"
+    ) is None
