@@ -88,7 +88,8 @@ def test_asset_envelope_audit_allows_touching_faces_and_marks_missing_geometry()
     assert result["overlap_count"] == 0
     assert result["unassessed_count"] == 1
     assert "U-101" in result["unassessed_assets"][0]
-    assert result["ok"] is True
+    assert result["ok"] is False
+    assert result["status"] == "incomplete"
 
 
 
@@ -131,3 +132,25 @@ def test_screening_status_cannot_pass_when_independent_tools_fail(monkeypatch):
 
     assert result["status"] == "completed_with_findings"
     assert result["stop_reason"] != "all_available_screening_checks_passed"
+
+
+
+def test_incomplete_asset_geometry_is_passed_to_revision_prompt(monkeypatch):
+    prompts = []
+    result = candidate("missing", mode="llm_structured_spec")
+    result["model"] = {
+        "site_width": 20, "site_length": 20, "units": "m",
+        "assets": [{"tag": "P-101", "x": 1, "y": 1}],
+        "routes": [],
+    }
+    sequence = iter([result, candidate("revised", findings=[], mode="llm_structured_spec")])
+
+    def fake_agent(prompt, *_args):
+        prompts.append(prompt)
+        return next(sequence)
+
+    monkeypatch.setattr(autonomous_agent, "run_design_agent", fake_agent)
+    autonomous_agent.run_autonomous_design_cycle("design a pump", max_iterations=2)
+
+    assert len(prompts) == 2
+    assert "geometry not assessed (P-101: missing" in prompts[1]
