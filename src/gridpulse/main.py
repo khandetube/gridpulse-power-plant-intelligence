@@ -152,6 +152,12 @@ class ObservationBatch(BaseModel):
         return self
 
 
+class UnitConversionInput(BaseModel):
+    value: float = Field(allow_inf_nan=False)
+    from_unit: str = Field(min_length=1, max_length=64)
+    to_unit: str = Field(min_length=1, max_length=64)
+
+
 class GenerationPerformanceInput(BaseModel):
     plant: str = Field(min_length=1, max_length=200)
     period_start: date
@@ -459,6 +465,19 @@ def analyze_observation_anomalies(
             status_code=503,
             detail="Advanced analytics dependencies are not installed; install the advanced-analytics extra.",
         ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/api/v1/analytics/units/convert")
+def convert_engineering_units(request: UnitConversionInput) -> dict[str, object]:
+    """Convert finite engineering values between dimensionally compatible units."""
+    try:
+        from gridpulse.unit_conversion import convert_value
+
+        return convert_value(request.value, request.from_unit, request.to_unit)
+    except ImportError as exc:
+        raise HTTPException(status_code=503, detail="Pint unit conversion dependency is unavailable.") from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
