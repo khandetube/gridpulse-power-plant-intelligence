@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy.stats import median_abs_deviation
 from sklearn.ensemble import IsolationForest
 
 
@@ -42,6 +43,21 @@ def detect_anomalies(
         raise ValueError("period_start must contain valid dates")
     frame = frame.sort_values(["period_start", "record_id"], kind="stable").reset_index(drop=True)
 
+    median = float(np.median(values))
+    mad = float(median_abs_deviation(values, scale=1.0, nan_policy="raise"))
+    robust_scores = (0.6744897501960817 * (values - median) / mad if mad > 0 else np.zeros_like(values))
+    statistical_candidates: list[dict[str, object]] = []
+    for index, score in enumerate(robust_scores):
+        if abs(float(score)) >= 3.5:
+            row = frame.iloc[index]
+            statistical_candidates.append({
+                "record_id": str(row["record_id"]),
+                "period_start": row["period_start"].isoformat(),
+                "value": float(row["value"]),
+                "robust_z_score": round(float(score), 6),
+                "source_id": str(row.get("source_id", "")),
+                "verification_status": str(row.get("verification_status", "unverified")),
+            })
     model = IsolationForest(
         n_estimators=200,
         contamination=contamination,
@@ -81,11 +97,20 @@ def detect_anomalies(
         },
         "flagged_count": len(flagged),
         "flagged_observations": flagged,
+        "robust_statistics": {
+            "method": "median absolute deviation (MAD)",
+            "median": median,
+            "median_absolute_deviation": mad,
+            "threshold_absolute_robust_z_score": 3.5,
+            "candidate_count": len(statistical_candidates),
+            "candidates": statistical_candidates,
+            "note": "When MAD is zero, robust scores are set to zero; no MAD candidates are emitted.",
+        },
         "limitations": [
             "Flags are review candidates, not alarms, diagnoses, or predictions.",
             "IsolationForest is unsupervised and may flag valid operating changes.",
-            "This version evaluates values only; it does not model seasonality, load, ambient conditions, or equipment context.",
-            "The algorithm does not verify source truth and does not connect to plant or dispatch systems.",
+            "Both statistical and ML screening evaluate values only; they do not model seasonality, load, ambient conditions, or equipment context.",
+            "MAD and IsolationForest use different assumptions and should be reviewed independently. The algorithms do not verify source truth and do not connect to plant or dispatch systems.",
             "Choose contamination based on domain review; it is not an estimated failure probability.",
         ],
     }
