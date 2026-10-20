@@ -47,7 +47,7 @@ Example request:
 
 Important boundaries:
 - The API requires the Python backend to be deployed; GitHub Pages is static and does not host this endpoint.
-- Revision iterations require the configured OpenAI-compatible model environment variables (`GRIDPULSE_LLM_BASE_URL`, `GRIDPULSE_LLM_API_KEY`, and `GRIDPULSE_LLM_MODEL`). Without these, the endpoint performs one deterministic screening pass and reports that it cannot revise autonomously.
+- Revision iterations require `GRIDPULSE_LLM_MODEL` and a reachable OpenAI-compatible inference endpoint. `GRIDPULSE_LLM_BASE_URL` defaults to local Ollama (`http://localhost:11434/v1`); `GRIDPULSE_LLM_API_KEY` is optional for local inference and only needed by providers that require authentication. Without an explicitly configured model, the endpoint performs one deterministic screening pass and reports that it cannot revise autonomously.
 - This is not yet a general-purpose autonomous agent: there is no persistent run memory, background job manager, external-tool execution, or live plant/SCADA/dispatch connection.
 - A passed software screening gate is not code compliance, safety approval, or permission to construct or operate equipment. Qualified engineers must verify all design inputs and outputs.
 
