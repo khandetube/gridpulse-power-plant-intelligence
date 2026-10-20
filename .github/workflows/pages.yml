@@ -55,7 +55,7 @@ jobs:
           print('Advanced 3D renderer and overlay guard prepared.')
           PY
       - name: Upload dashboard artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: "."
       - name: Deploy to GitHub Pages
