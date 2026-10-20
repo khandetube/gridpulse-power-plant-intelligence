@@ -5,7 +5,6 @@ import csv
 import os
 import sqlite3
 from datetime import datetime
-from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
