@@ -280,6 +280,7 @@ async function runSystemDiagnostics(){
   add("Readiness",ready.status==="fulfilled"?(ready.value.status||"unknown"):report.checks.readiness.detail);
   add("Source registry",sys.status==="fulfilled"?(sys.value.checks?.source_registry||"unknown"):"unavailable");
   add("Database integrity",sys.status==="fulfilled"?(sys.value.checks?.database||"unknown"):"unavailable");
+  add("Storage durability",sys.status==="fulfilled"?(sys.value.capabilities?.storage_durability||"unknown"):"unknown");
   add("Registered sources",sys.status==="fulfilled"?String(sys.value.registered_source_count??"unknown"):"unknown");
   if(sys.status==="fulfilled")Object.entries(sys.value.stored_record_counts||{}).forEach(([name,count])=>add(name,String(count)));
   add("LLM endpoint",llm.status==="fulfilled"?(llm.value.status||"unknown"):report.checks.llm.detail);
