@@ -4,11 +4,11 @@ This endpoint produces review candidates only; it is not a plant alarm or diagno
 """
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
+
+from typing import Any
 
 
 MINIMUM_RECORDS = 8
