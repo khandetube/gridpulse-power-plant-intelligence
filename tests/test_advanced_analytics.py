@@ -34,6 +34,29 @@ def test_isolation_forest_flags_extreme_candidate_and_preserves_provenance():
     assert "not alarms" in result["limitations"][0]
 
 
+
+def test_robust_mad_screening_flags_extreme_value_and_preserves_provenance():
+    result = detect_anomalies(
+        records([100, 101, 99, 100, 98, 102, 100, 99, 101, 1000]),
+        contamination=0.1,
+    )
+    statistics = result["robust_statistics"]
+    assert statistics["method"] == "median absolute deviation (MAD)"
+    assert statistics["candidate_count"] >= 1
+    assert all(
+        item["source_id"] == "SRC-TEST"
+        for item in statistics["candidates"]
+    )
+    assert statistics["threshold_absolute_robust_z_score"] == 3.5
+
+
+def test_robust_mad_screening_handles_constant_series_without_division_by_zero():
+    result = detect_anomalies(records([100] * 8))
+    statistics = result["robust_statistics"]
+    assert statistics["median_absolute_deviation"] == 0.0
+    assert statistics["candidate_count"] == 0
+
+
 def test_isolation_forest_requires_minimum_observation_count():
     with pytest.raises(ValueError, match="at least 8"):
         detect_anomalies(records([1, 2, 3, 4, 5, 6, 7]))
