@@ -55,3 +55,12 @@ def test_dashboard_exposes_stored_series_ml_screening() -> None:
     assert 'gpAiRequest("/api/v1/observations?limit=1000")' in html
     assert 'gpAiRequest("/api/v1/analytics/anomalies?contamination=0.05"' in html
     assert "not alarms, fault diagnoses, or failure probabilities" in html
+
+
+def test_dashboard_renders_anomaly_candidates_with_chartjs() -> None:
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert "chart.js@4.4.9/dist/chart.umd.min.js" in html
+    assert 'id="gpAiAnomalyChart"' in html
+    assert 'new Chart(document.getElementById("gpAiAnomalyChart")' in html
+    assert "MAD candidate" in html
+    assert "Chart.js could not load" in html
