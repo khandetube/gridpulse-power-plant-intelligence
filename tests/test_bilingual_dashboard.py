@@ -99,7 +99,7 @@ def test_excel_exports_include_metadata_quality_review_sheets() -> None:
 def test_main_dashboard_checks_backend_readiness_and_persists_connection_url() -> None:
     html = read_page("index.html")
     assert 'localStorage.setItem("gridpulse-api-base",base)' in html
-    assert 'sessionStorage.setItem("gridpulse-api-key",key)' in html
+    assert 'sessionStorage.setItem("gridpulse-api-key",key)' not in html
     assert 'gpAiRequest("/ready")' in html
     assert 'gpAiRequest("/api/v1/system/diagnostics")' in html
     assert 'AbortController()' in html
