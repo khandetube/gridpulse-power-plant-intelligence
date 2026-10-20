@@ -105,3 +105,14 @@ def test_main_dashboard_checks_backend_readiness_and_persists_connection_url() -
     assert 'AbortController()' in html
     assert "Check backend health" in html
     assert "Backend unavailable" in html
+
+
+def test_main_dashboard_can_sync_real_api_observations_without_losing_local_csv_rows() -> None:
+    html = read_page("index.html")
+    assert 'id="syncBackendObservations"' in html
+    assert 'gpAiRequest("/api/v1/observations?limit=1000")' in html
+    assert 'backend_origin:true' in html
+    assert 'record.verification_status' in html
+    assert 'Caller-supplied record; source truth is not independently verified.' in html
+    assert 'localOnly=importedMetrics.filter(record=>!record.backend_origin)' in html
+    assert 'renderMetrics();renderTrend();renderAnalytics();' in html
