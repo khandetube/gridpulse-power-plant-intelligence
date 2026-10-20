@@ -512,3 +512,34 @@ def test_unit_conversion_api_rejects_incompatible_dimensions():
     )
     assert response.status_code == 422
     assert "dimensionally incompatible" in response.json()["detail"]
+
+
+
+def test_time_series_api_returns_stl_components():
+    from datetime import date, timedelta
+
+    start = date(2026, 1, 1)
+    values = [100 + index * 0.5 + [0, 2, -1, 1, -2, 0, 1][index % 7] for index in range(21)]
+    records = []
+    for index, value in enumerate(values):
+        row = _observation(f"stl-{index:03d}", value)
+        row["period_start"] = (start + timedelta(days=index)).isoformat()
+        row["period_end"] = row["period_start"]
+        records.append(row)
+
+    response = client.post("/api/v1/analytics/time-series?period=7", json={"records": records})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["method"] == "statsmodels STL with robust fitting"
+    assert payload["observation_count"] == 21
+    assert len(payload["observations"]) == 21
+    assert "trend" in payload["observations"][0]
+    assert "seasonal" in payload["observations"][0]
+
+
+def test_time_series_api_rejects_insufficient_observations():
+    response = client.post(
+        "/api/v1/analytics/time-series?period=7",
+        json={"records": [_observation(f"short-{i}", i + 1) for i in range(13)]},
+    )
+    assert response.status_code == 422
