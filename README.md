@@ -22,6 +22,33 @@ GridPulse AI is an open-source analytics platform for power-generation reporting
 - Analytics API and interactive dashboard
 - Tested, reproducible ML experiments when appropriate labelled data is available
 
+## Advanced statistical and ML screening
+
+The runtime includes NumPy, pandas, and scikit-learn for reproducible numerical and tabular analysis. The endpoint `POST /api/v1/analytics/anomalies?contamination=0.05` accepts a source-labelled observation batch and applies a deterministic `IsolationForest` configuration to one comparable metric/unit series. It requires at least eight observations and returns flagged record IDs, dates, values, anomaly scores, and provenance labels. The contamination parameter is bounded to 0.01–0.20.
+
+Example request body:
+
+```json
+{
+  "records": [
+    {
+      "record_id": "example-001",
+      "plant": "Example plant",
+      "metric": "net_generation",
+      "value": 100.0,
+      "unit": "MWh",
+      "period_start": "2026-01-01",
+      "period_end": "2026-01-01",
+      "scope": "plant",
+      "source_id": "SRC-001",
+      "verification_status": "reviewed"
+    }
+  ]
+}
+```
+
+The example above illustrates the record schema only; a valid request needs at least eight observations and a registered source. ML flags are review candidates—not alarm thresholds, failure probabilities, fault diagnoses, or control instructions. The first version uses values only and does not model seasonality, load, ambient conditions, or equipment context. The algorithm does not independently verify the underlying data.
+
 ## Data policy
 Every imported record should include its source, publication date (when known), observation period, unit, scope (unit/plant/multiple plants), and verification status. Aggregated values must not be attributed to an individual plant unless the source explicitly supports that attribution.
 
