@@ -52,7 +52,13 @@ Important boundaries:
 - A passed software screening gate is not code compliance, safety approval, or permission to construct or operate equipment. Qualified engineers must verify all design inputs and outputs.
 
 
-### Open-source LLM inference (Ollama)
+### Independent 3D envelope screening
+
+The autonomous review registry now includes an independent axis-aligned 3D bounding-box overlap audit for assets that provide finite `x/y/z` coordinates and `length/width/height` dimensions. Positive-volume intersections are reported as potential clashes and count as failed review-tool evidence, preventing a false clean screening result. Face-to-face contact alone is not counted as overlap. Missing dimensions are explicitly listed as unassessed rather than assumed clash-free.
+
+This is a conservative first-pass heuristic, not a full CAD/BIM clash solver: it does not yet account for rotated geometry, nozzle projections, pipe insulation, electrical clearances, access/maintenance zones, fire separation or discipline-specific standards. It must not be treated as engineering approval.
+
+## Open-source LLM inference (Ollama)
 
 GridPulse can use a locally hosted open-weight model for structured design proposals through Ollama's OpenAI-compatible endpoint. This avoids requiring a paid API key for local inference; the model runs on the machine or server where Ollama is installed. See the [Ollama API guide](https://github.com/ollama/ollama/blob/main/docs/api/openai-compatibility.mdx).
 
