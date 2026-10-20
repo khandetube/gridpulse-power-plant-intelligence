@@ -1,9 +1,8 @@
 import csv
 from io import StringIO
 
-from fastapi.testclient import TestClient
-
 import pytest
+from fastapi.testclient import TestClient
 
 from gridpulse import main
 from gridpulse.main import app
