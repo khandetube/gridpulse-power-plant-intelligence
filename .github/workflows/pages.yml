@@ -38,14 +38,14 @@ jobs:
           from pathlib import Path
           p = Path('docs/prompt-to-engineering-cad.html')
           text = p.read_text(encoding='utf-8')
-          tag = '<script src="assets/gridpulse-advanced-3d.js"></script>'
-          if tag not in text:
+          tags = '<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script><script src="assets/gridpulse-advanced-3d.js"></script>'
+          if 'assets/gridpulse-advanced-3d.js' not in text:
               marker = '</body>'
               if marker not in text:
                   raise SystemExit('CAD page has no </body> marker; refusing unsafe injection')
-              text = text.replace(marker, tag + marker, 1)
+              text = text.replace(marker, tags + marker, 1)
               p.write_text(text, encoding='utf-8')
-          print('Advanced 3D renderer injected:', tag in text)
+          print('Advanced 3D renderer injected:', 'assets/gridpulse-advanced-3d.js' in text)
           PY
       - name: Upload dashboard artifact
         uses: actions/upload-pages-artifact@v3
