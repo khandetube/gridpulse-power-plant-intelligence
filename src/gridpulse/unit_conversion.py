@@ -23,7 +23,7 @@ def convert_value(value: float, from_unit: str, to_unit: str) -> dict[str, objec
     except DimensionalityError as exc:
         raise ValueError("source and target units are dimensionally incompatible") from exc
     except (ValueError, TypeError) as exc:
-        raise ValueError("invalid unit expression") from exc
+        raise ValueError("unknown source or target unit or invalid unit expression") from exc
 
     result = float(converted.magnitude)
     if not math.isfinite(result):
