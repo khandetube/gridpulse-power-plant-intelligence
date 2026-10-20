@@ -57,6 +57,13 @@ html[dir="rtl"] body{font-family:Tahoma,Arial,sans-serif}html[dir="rtl"] .shell{
         <div><label class="gp-ai-label" for="gpAiDocs">Local knowledge documents (JSON or .txt/.md files)</label><div class="gp-ai-upload"><input id="gpAiFiles" type="file" accept=".txt,.md,text/plain,text/markdown" multiple><button class="btn" id="gpAiLoadFiles" type="button">Load selected files</button></div><textarea id="gpAiDocs" rows="7" spellcheck="false"></textarea><small class="muted">Paste only documents you are authorised to use. The text is sent to the API address above; keep the API bound to your own computer. Demo content is synthetic and not an approved procedure.</small></div>
       </div>
       <div class="gp-ai-output" id="gpAiOutput" aria-live="polite"><strong>Ready for a local connection check.</strong><p>This GitHub Pages dashboard is static. AI calls need the GridPulse API running on your computer; natural-language generation additionally needs a compatible local GGUF model. Without that model, deterministic analysis and lexical source search remain available.</p></div>
+      <section class="card" style="margin-top:14px;background:#0b1727" aria-labelledby="gpAiAnomalyTitle">
+        <div class="card-head"><div><h2 id="gpAiAnomalyTitle">Machine-learning anomaly screening</h2><p>Choose a stored metric series with at least eight observations. Flags require engineering review.</p></div><span class="tag blue">Isolation Forest</span></div>
+        <div class="card-body">
+          <div class="gp-ai-toolbar"><button class="btn" id="gpAiLoadAnomalySeries" type="button">Load stored metric series</button><label for="gpAiAnomalySeries">Metric / unit<select id="gpAiAnomalySeries" disabled><option value="">Load stored observations first</option></select></label><button class="btn primary" id="gpAiRunAnomaly" type="button" disabled>Run anomaly screening</button></div>
+          <div class="gp-ai-output" id="gpAiAnomalyOutput" aria-live="polite"><strong>Not run.</strong><p>This feature reads observations from the configured GridPulse API. It does not use live plant telemetry.</p></div>
+        </div>
+      </section>
       <div class="gp-ai-foot">Safety boundary: research support only · no live SCADA/DCS data · no control, trip, dispatch or return-to-service commands.</div>
     </div>
   </article>
@@ -582,7 +589,50 @@ async function gpAiCheck(){
 }
 async function gpAiAsk(){const button=document.getElementById("gpAiAsk"),question=document.getElementById("gpAiQuestion").value.trim();if(!question){gpAiRender("Enter a question first.");return;}gpAiBusy(button,true);gpAiRender("Searching the supplied local documents for evidence…");try{let docs;try{docs=JSON.parse(gpAiDocsField.value);}catch(e){throw new Error("Knowledge documents must be valid JSON.");}if(!Array.isArray(docs)||!docs.length)throw new Error("Provide at least one document with title, source_id and text.");const search=await gpAiRequest("/api/v1/ai/knowledge/search",{query:question,documents:docs,limit:5});if(!search.results||!search.results.length){gpAiRender({answer:"No matching evidence found in the documents supplied. I will not ask the language model to answer without retrieved evidence.",retrieval:search});return;}const excerpts=search.results.map(r=>({source_id:r.source_id,title:r.title,start_line:r.start_line,end_line:r.end_line,excerpt:r.excerpt,score:r.score}));const answer=await gpAiRequest("/api/v1/ai/chat",{question:question+"\n\nUse only the retrieved evidence below. If it is insufficient, say so. Preserve source IDs and line references. Do not provide plant control instructions.",context_records:excerpts});gpAiRender({retrieved_evidence:excerpts,local_model_response:answer,notice:"Retrieved text is user-supplied and not automatically approved or verified."});}catch(e){gpAiRender("AI request failed: "+e.message+"\n\nNatural-language answers require a configured local GGUF model. Evidence search and deterministic analysis do not require one.");}finally{gpAiBusy(button,false);}}
 async function gpAiAnalyse(){const button=document.getElementById("gpAiAnalyse");gpAiBusy(button,true);try{const records=[];for(const m of (typeof METRICS!=="undefined"?METRICS:[]).concat(typeof importedMetrics!=="undefined"?importedMetrics:[])){const value=Number(m.value),id=String(m.record_id||m.id||"").trim(),source=String(m.source_id||m.source||"").trim(),start=String(m.period_start||"").slice(0,10),end=String(m.period_end||"").slice(0,10),scope=m.scope||"plant",status=m.verification_status||m.status||"unverified";if(!id||!source||!Number.isFinite(value)||!/^\d{4}-\d{2}-\d{2}$/.test(start)||!/^\d{4}-\d{2}-\d{2}$/.test(end)||!["unit","plant","multiple_plants","regional","national"].includes(scope)||!["unverified","reviewed","verified"].includes(status))continue;records.push({record_id:id,plant:String(m.plant||m.scope||"unspecified"),metric:String(m.metric||"unspecified"),value,unit:String(m.unit||"unspecified"),period_start:start,period_end:end,scope,source_id:source,verification_status:status});}if(!records.length)throw new Error("No dashboard observations meet the AI API schema. Import observations with dates, units, source IDs and verification status first.");const report=await gpAiRequest("/api/v1/ai/analyze",{records:records.slice(0,5000)});gpAiRender({analysed_records:Math.min(records.length,5000),analysis:report,notice:"Statistical candidates are not confirmed faults. Review provenance and operating context."});}catch(e){gpAiRender("Analysis failed: "+e.message);}finally{gpAiBusy(button,false);}}
-document.getElementById("gpAiLoadFiles").addEventListener("click",async function(){const input=document.getElementById("gpAiFiles");const files=Array.from(input.files||[]);if(!files.length){gpAiRender("Choose one or more text or Markdown files first.");return;}try{const current=JSON.parse(gpAiDocsField.value);if(!Array.isArray(current))throw new Error("Knowledge JSON must be an array.");const additions=[];for(const file of files){if(file.size>200000)throw new Error("File exceeds the 200000-character limit: "+file.name);const body=await file.text();if(body.trim())additions.push({title:file.name,source_id:"LOCAL-FILE-"+file.name.replace(/[^A-Za-z0-9._-]/g,"_"),text:body});}if(current.length+additions.length>40)throw new Error("At most 40 documents are supported.");gpAiDocsField.value=JSON.stringify(current.concat(additions),null,2);gpAiRender({loaded_count:additions.length,document_count:current.length+additions.length,notice:"Files are loaded in this browser only. PDF and scanned documents are not supported."});}catch(error){gpAiRender("Could not load documents: "+error.message);}});document.getElementById("gpAiCheck").addEventListener("click",gpAiCheck);document.getElementById("gpAiAsk").addEventListener("click",gpAiAsk);document.getElementById("gpAiAnalyse").addEventListener("click",gpAiAnalyse);document.getElementById("gpAiClear").addEventListener("click",()=>{document.getElementById("gpAiQuestion").value="";gpAiRender("Cleared. Your local knowledge JSON is unchanged.");});
+document.getElementById("gpAiLoadFiles").addEventListener("click",async function(){const input=document.getElementById("gpAiFiles");const files=Array.from(input.files||[]);if(!files.length){gpAiRender("Choose one or more text or Markdown files first.");return;}try{const current=JSON.parse(gpAiDocsField.value);if(!Array.isArray(current))throw new Error("Knowledge JSON must be an array.");const additions=[];for(const file of files){if(file.size>200000)throw new Error("File exceeds the 200000-character limit: "+file.name);const body=await file.text();if(body.trim())additions.push({title:file.name,source_id:"LOCAL-FILE-"+file.name.replace(/[^A-Za-z0-9._-]/g,"_"),text:body});}if(current.length+additions.length>40)throw new Error("At most 40 documents are supported.");gpAiDocsField.value=JSON.stringify(current.concat(additions),null,2);gpAiRender({loaded_count:additions.length,document_count:current.length+additions.length,notice:"Files are loaded in this browser only. PDF and scanned documents are not supported."});}catch(error){gpAiRender("Could not load documents: "+error.message);}});let gpAiAnomalyGroups=[];
+async function gpAiLoadAnomalySeries(){
+ const button=document.getElementById("gpAiLoadAnomalySeries"),select=document.getElementById("gpAiAnomalySeries"),run=document.getElementById("gpAiRunAnomaly"),out=document.getElementById("gpAiAnomalyOutput");
+ gpAiBusy(button,true);select.disabled=true;run.disabled=true;out.textContent="Loading stored observations from the configured API…";
+ try{
+  const response=await gpAiRequest("/api/v1/observations?limit=1000");
+  const records=Array.isArray(response.records)?response.records:[];
+  const groups=new Map();
+  for(const row of records){
+   if(!row||typeof row.metric!=="string"||typeof row.unit!=="string"||!Number.isFinite(Number(row.value))||!row.period_start||!row.source_id)continue;
+   const key=JSON.stringify([row.metric,row.unit]);
+   if(!groups.has(key))groups.set(key,[]);
+   groups.get(key).push(row);
+  }
+  gpAiAnomalyGroups=Array.from(groups.entries()).filter(([,rows])=>rows.length>=8).map(([key,rows])=>({key,rows,metric:rows[0].metric,unit:rows[0].unit}));
+  select.textContent="";
+  if(!gpAiAnomalyGroups.length){
+   const option=document.createElement("option");option.value="";option.textContent="No eligible series (minimum 8 records)";select.appendChild(option);
+   out.textContent="No metric/unit group with at least eight valid stored observations was found. Import source-labelled observations and try again.";return;
+  }
+  for(const group of gpAiAnomalyGroups){
+   const option=document.createElement("option");option.value=group.key;option.textContent=group.metric+" ("+group.unit+") — "+group.rows.length+" records";select.appendChild(option);
+  }
+  select.disabled=false;run.disabled=false;
+  out.textContent="Loaded "+records.length+" stored records. "+gpAiAnomalyGroups.length+" eligible metric/unit series are available. Select a series and run screening.";
+ }catch(error){out.textContent="Could not load stored observations: "+error.message;}
+ finally{gpAiBusy(button,false);}
+}
+async function gpAiRunAnomaly(){
+ const button=document.getElementById("gpAiRunAnomaly"),out=document.getElementById("gpAiAnomalyOutput"),key=document.getElementById("gpAiAnomalySeries").value;
+ const group=gpAiAnomalyGroups.find(item=>item.key===key);
+ if(!group){out.textContent="Load and select a valid metric series first.";return;}
+ gpAiBusy(button,true);out.textContent="Running Isolation Forest on "+group.rows.length+" observations…";
+ try{
+  const report=await gpAiRequest("/api/v1/analytics/anomalies?contamination=0.05",{records:group.rows.slice(0,1000).map(row=>({record_id:row.record_id,plant:row.plant,metric:row.metric,value:Number(row.value),unit:row.unit,period_start:String(row.period_start).slice(0,10),period_end:String(row.period_end||row.period_start).slice(0,10),scope:row.scope,source_id:row.source_id,verification_status:row.verification_status}))});
+  out.textContent="";
+  const heading=document.createElement("strong");heading.textContent="Screening complete — "+report.flagged_count+" review candidate(s) from "+report.observation_count+" observations";out.appendChild(heading);
+  const pre=document.createElement("pre");pre.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto";pre.textContent=JSON.stringify(report,null,2);out.appendChild(pre);
+  const note=document.createElement("p");note.textContent="Important: these are statistical candidates, not alarms, fault diagnoses, or failure probabilities. Verify source quality and operating context before drawing conclusions.";out.appendChild(note);
+ }catch(error){out.textContent="Anomaly screening failed: "+error.message;}
+ finally{gpAiBusy(button,false);}
+}
+document.getElementById("gpAiLoadAnomalySeries").addEventListener("click",gpAiLoadAnomalySeries);document.getElementById("gpAiRunAnomaly").addEventListener("click",gpAiRunAnomaly);
+document.getElementById("gpAiCheck").addEventListener("click",gpAiCheck);document.getElementById("gpAiAsk").addEventListener("click",gpAiAsk);document.getElementById("gpAiAnalyse").addEventListener("click",gpAiAnalyse);document.getElementById("gpAiClear").addEventListener("click",()=>{document.getElementById("gpAiQuestion").value="";gpAiRender("Cleared. Your local knowledge JSON is unchanged.");});
 
 /* Smart Excel reporting: all sheets are generated in-browser from the currently available dashboard records. */
 let gpExcelLoader;
