@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+from itertools import pairwise
 from typing import Any
 
 
@@ -40,7 +42,7 @@ def _finite(value: Any) -> float | None:
         number = float(value)
     except (TypeError, ValueError, OverflowError):
         return None
-    return number if number == number and abs(number) != float("inf") else None
+    return number if math.isfinite(number) else None
 
 
 def _segment_intersects_rect(
@@ -93,7 +95,7 @@ def _route_near_asset(route: dict[str, Any], asset: dict[str, Any], tolerance: f
         return True
     return any(
         _segment_intersects_rect(a[0], a[1], b[0], b[1], xmin, ymin, xmax, ymax)
-        for a, b in zip(points, points[1:])
+        for a, b in pairwise(points)
     )
 
 
