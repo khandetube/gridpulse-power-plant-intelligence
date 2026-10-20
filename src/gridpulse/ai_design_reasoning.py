@@ -1,8 +1,8 @@
 """Evidence-first engineering reasoning; never fabricates missing values."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import math
+from dataclasses import asdict, dataclass
 from typing import Any
 
 RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
